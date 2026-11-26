@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   LogRepository,
   QueryBuilder,
@@ -6,18 +6,39 @@ import {
   RequestLogRepository,
   RequestLogSource,
 } from '@novu/application-generic';
+import { ActivityRetentionService } from '../../../shared/services/activity-retention.service';
 import { GetRequestsResponseDto, RequestLogResponseDto } from '../../dtos/get-requests.response.dto';
 import { requestLogSelectColumns } from '../../shared/select.const';
 import { GetRequestsCommand } from './get-requests.command';
 
+function createdGteToIsoString(createdGte: number): string {
+  const createdGteDate = new Date(createdGte);
+
+  if (Number.isNaN(createdGteDate.getTime())) {
+    throw new BadRequestException(
+      `Invalid createdGte: ${createdGte}. Please provide a Unix timestamp in milliseconds.`
+    );
+  }
+
+  return createdGteDate.toISOString();
+}
+
 @Injectable()
 export class GetRequests {
-  constructor(private readonly requestLogRepository: RequestLogRepository) {}
+  constructor(
+    private readonly requestLogRepository: RequestLogRepository,
+    private readonly activityRetentionService: ActivityRetentionService
+  ) {}
 
   async execute(command: GetRequestsCommand): Promise<GetRequestsResponseDto> {
     const limit = command.limit || 10;
     const page = command.page || 0;
     const offset = page * limit;
+
+    const retentionRange = await this.activityRetentionService.resolve({
+      organizationId: command.organizationId,
+      after: command.createdGte ? createdGteToIsoString(command.createdGte) : undefined,
+    });
 
     const queryBuilder = new QueryBuilder<RequestLog>({
       environmentId: command.environmentId,
@@ -43,8 +64,11 @@ export class GetRequests {
       queryBuilder.whereEquals('source', command.source);
     }
 
-    if (command.createdGte) {
-      queryBuilder.whereGreaterThanOrEqual('created_at', LogRepository.formatDateTime64(new Date(command.createdGte)));
+    if (retentionRange.after) {
+      queryBuilder.whereGreaterThanOrEqual(
+        'created_at',
+        LogRepository.formatDateTime64(new Date(retentionRange.after))
+      );
     }
 
     const safeWhere = queryBuilder.build();

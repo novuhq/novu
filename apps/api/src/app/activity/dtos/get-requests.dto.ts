@@ -91,9 +91,10 @@ export class GetRequestsDto {
   transactionId?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter requests created after this timestamp (Unix timestamp)',
+    description:
+      "Filter requests created after this timestamp (Unix timestamp in milliseconds). Defaults to the start of your plan's activity retention window; an earlier timestamp returns 402.",
     minimum: 0,
-    example: 1640995200,
+    example: 1640995200000,
   })
   @IsOptional()
   @Type(() => Number)

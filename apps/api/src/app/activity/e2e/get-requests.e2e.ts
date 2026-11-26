@@ -6,9 +6,10 @@ import {
   RequestLogSource,
   RequestLogSourceEnum,
 } from '@novu/application-generic';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { format, isAfter, subHours } from 'date-fns';
+import { format, isAfter, subDays, subHours } from 'date-fns';
 import { generateTransactionId } from '../../shared/helpers';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { RequestLogResponseDto } from '../dtos/get-requests.response.dto';
@@ -279,6 +280,74 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
       .query({ source: 'not-a-valid-source' });
 
     expect(rejectedResponse.status).to.be.equal(422);
+  });
+
+  it("should only return logs inside the plan's retention window when createdGte is omitted", async () => {
+    const baseRequestLog: Omit<RequestLog, 'id' | 'expires_at' | 'transaction_id' | 'created_at'> = {
+      user_id: session.user._id,
+      environment_id: session.environment._id,
+      organization_id: session.organization._id,
+      status_code: 200,
+      path: '/test-path',
+      url: '/test-url',
+      url_pattern: '/test-url-pattern/:id',
+      hostname: 'localhost',
+      method: 'GET',
+      ip: '127.0.0.1',
+      user_agent: 'test-agent',
+      request_body: '{}',
+      response_body: '{}',
+      auth_type: 'ApiKey',
+      duration_ms: 42,
+      source: RequestLogSourceEnum.HTTP,
+    };
+    const recentLog = {
+      ...baseRequestLog,
+      transaction_id: generateTransactionId(),
+      created_at: LogRepository.formatDateTime64(new Date()) as any,
+    };
+    const threeDaysOldLog = {
+      ...baseRequestLog,
+      transaction_id: generateTransactionId(),
+      created_at: LogRepository.formatDateTime64(subDays(new Date(), 3)) as any,
+    };
+
+    await requestLogRepository.createMany([recentLog, threeDaysOldLog], {
+      organizationId: session.organization._id,
+      environmentId: session.environment._id,
+      userId: session.user._id,
+    });
+
+    const { body: freeBody } = await session.testAgent.get('/v1/activity/requests').expect(200);
+
+    expect(freeBody.total, 'free plan total').to.be.equal(1);
+    expect(freeBody.data.map((log: RequestLogResponseDto) => log.transactionId)).to.deep.equal([
+      recentLog.transaction_id,
+    ]);
+
+    await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
+
+    const { body: businessBody } = await session.testAgent.get('/v1/activity/requests').expect(200);
+
+    expect(businessBody.total, 'business plan total').to.be.equal(2);
+    expect(businessBody.data.map((log: RequestLogResponseDto) => log.transactionId)).to.have.members([
+      recentLog.transaction_id,
+      threeDaysOldLog.transaction_id,
+    ]);
+  });
+
+  it("should reject a createdGte older than the plan's retention window", async () => {
+    const { body } = await session.testAgent
+      .get('/v1/activity/requests')
+      .query({ createdGte: subDays(new Date(), 2).getTime() })
+      .expect(402);
+
+    expect(body.message).to.contain("exceeds your plan's retention period");
+
+    await session.testAgent
+      .get('/v1/activity/requests')
+      .query({ createdGte: subHours(new Date(), 2).getTime() })
+      .expect(200);
   });
 });
 
