@@ -28,7 +28,14 @@ const CARD_SHADOW = 'shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,
  * Getting-started cards, shown above the channel list while the environment has no real (non-demo)
  * integrations. `isInboxConnected` flips the Inbox card to its success state.
  */
-export function IntegrationStoreZeroState({ isInboxConnected }: { isInboxConnected: boolean }) {
+export function IntegrationStoreZeroState({
+  isInboxConnected,
+  isInboxHmacEnabled,
+}: {
+  isInboxConnected: boolean;
+  /** The Inbox integration's saved HMAC setting; undefined when the member can't read its credentials. */
+  isInboxHmacEnabled?: boolean;
+}) {
   return (
     // Grayscale smoothing and Inter's cv09/ss11 match how the design renders text; subpixel smoothing makes
     // light-on-colour text (the mock's buttons, the bubble) look heavier than in Figma.
@@ -38,7 +45,7 @@ export function IntegrationStoreZeroState({ isInboxConnected }: { isInboxConnect
         <span className="text-text-soft block">Novu delivers every notification.</span>
       </h2>
       <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-2">
-        {isInboxConnected ? <InboxConnectedCard /> : <InboxCard />}
+        {isInboxConnected ? <InboxConnectedCard /> : <InboxCard isHmacEnabled={isInboxHmacEnabled} />}
         <ChannelsCard />
       </div>
     </div>
@@ -109,12 +116,12 @@ function OrbitRing({ size, className }: { size: number; className: string }) {
   );
 }
 
-function InboxCard() {
+function InboxCard({ isHmacEnabled }: { isHmacEnabled?: boolean }) {
   const { currentEnvironment } = useEnvironment();
   const [isCopied, setIsCopied] = useState(false);
-  // New Production environments turn on HMAC for the Inbox, so the prompt explains the subscriber hash there.
+  // The Inbox's saved HMAC setting decides; without it, go by new Production environments turning HMAC on.
   const prompt = buildInboxSetupPrompt(currentEnvironment?.identifier ?? 'YOUR_APPLICATION_IDENTIFIER', {
-    requiresHmac: currentEnvironment?.type === EnvironmentTypeEnum.PROD,
+    requiresHmac: isHmacEnabled ?? currentEnvironment?.type === EnvironmentTypeEnum.PROD,
   });
 
   const copyPrompt = async () => {

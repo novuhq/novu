@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ChatProviderIdEnum, EmailProviderIdEnum } from '../types';
+import { ChatProviderIdEnum, EmailProviderIdEnum, PushProviderIdEnum, SmsProviderIdEnum } from '../types';
 import {
   isMaskedSecret,
   MASKED_SECRET_FILL,
@@ -52,6 +52,25 @@ describe('maskSecretCredentials', () => {
     expect(isMaskedSecret(masked.apiToken)).toBe(true);
     expect(masked.token).toBe('verify-token-1234567890');
   });
+
+  it('masks MessageBird and Azure SMS access keys', () => {
+    const messagebird = maskSecretCredentials(SmsProviderIdEnum.MessageBird, { accessKey: 'live_abcdefghijklmnop' });
+    const azure = maskSecretCredentials(SmsProviderIdEnum.AzureSms, {
+      accessKey: 'endpoint=https://acme.communication.azure.com/;accesskey=abcdefghijklmnop',
+    });
+
+    expect(isMaskedSecret(messagebird.accessKey)).toBe(true);
+    expect(isMaskedSecret(azure.accessKey)).toBe(true);
+  });
+
+  it("masks a legacy FCM service account kept in `user`, and only FCM's", () => {
+    const serviceAccount = JSON.stringify({ project_id: 'acme', private_key: '-----BEGIN PRIVATE KEY-----' });
+    const fcm = maskSecretCredentials(PushProviderIdEnum.FCM, { user: serviceAccount });
+    const smtp = maskSecretCredentials(EmailProviderIdEnum.CustomSMTP, { user: 'mailer@acme.com' });
+
+    expect(fcm.user).toBe(MASKED_SECRET_FILL);
+    expect(smtp.user).toBe('mailer@acme.com');
+  });
 });
 
 describe('restoreMaskedCredentials', () => {
@@ -70,6 +89,22 @@ describe('restoreMaskedCredentials', () => {
     const { credentials } = restoreMaskedCredentials(SENDGRID, { apiKey: 'SG.new-key-0000000000' }, stored);
 
     expect(credentials.apiKey).toBe('SG.new-key-0000000000');
+  });
+
+  it('puts back a MessageBird access key and a legacy FCM service account', () => {
+    const accessKey = 'live_abcdefghijklmnop';
+    const serviceAccount = JSON.stringify({ project_id: 'acme', private_key: '-----BEGIN PRIVATE KEY-----' });
+    const messagebird = SmsProviderIdEnum.MessageBird;
+    const fcm = PushProviderIdEnum.FCM;
+
+    expect(
+      restoreMaskedCredentials(messagebird, maskSecretCredentials(messagebird, { accessKey }), { accessKey })
+        .credentials
+    ).toEqual({ accessKey });
+    expect(
+      restoreMaskedCredentials(fcm, maskSecretCredentials(fcm, { user: serviceAccount }), { user: serviceAccount })
+        .credentials
+    ).toEqual({ user: serviceAccount });
   });
 
   it('reports a mask that matches no stored secret', () => {

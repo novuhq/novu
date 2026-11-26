@@ -183,6 +183,22 @@ function isRealIntegration(
   );
 }
 
+/**
+ * The environment's saved Inbox HMAC setting. Members who can't read credentials get them empty, so it is unknown
+ * (undefined) to them.
+ */
+function getInboxHmacSetting(integrations: IIntegration[] | undefined, environmentId: string | undefined) {
+  const inbox = integrations?.find(
+    (integration) =>
+      integration._environmentId === environmentId &&
+      integration.channel === ChannelTypeEnum.IN_APP &&
+      !isAgentInboxProvider(integration.providerId)
+  );
+  const hmac = inbox?.credentials?.hmac;
+
+  return typeof hmac === 'boolean' ? hmac : undefined;
+}
+
 export function IntegrationsList({
   onItemClick,
   excludeIntegrationIds,
@@ -210,6 +226,7 @@ export function IntegrationsList({
       !isAgentInboxProvider(integration.providerId) &&
       !!integration.connected
   );
+  const isInboxHmacEnabled = getInboxHmacSetting(integrations, environmentId);
 
   // Whether this visit opened with no real integrations is decided once per environment, so the cards stay
   // (and flip to "Inbox connected") when the user connects something here; a reload shows the regular store.
@@ -307,7 +324,9 @@ export function IntegrationsList({
 
   return (
     <div className={variant === 'connectSheet' ? 'space-y-4' : 'space-y-6'}>
-      {isZeroState && <IntegrationStoreZeroState isInboxConnected={isInboxConnected} />}
+      {isZeroState && (
+        <IntegrationStoreZeroState isInboxConnected={isInboxConnected} isInboxHmacEnabled={isInboxHmacEnabled} />
+      )}
       {channels.map((channel) => {
         const channelIntegrations = groupedIntegrations?.[channel] ?? [];
 

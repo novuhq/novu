@@ -96,7 +96,9 @@ export function useWhatsAppStoreSignup({
           configurations: data.configurations,
           name: data.name,
           identifier: data.identifier,
-          active: data.active,
+          // Paused until setup finishes: an unfinished one with no credentials mustn't take over sends.
+          // "Connect provider" then saves the form's own Active setting.
+          active: false,
           _environmentId: environment._id,
           rules: data.rules ?? null,
         });

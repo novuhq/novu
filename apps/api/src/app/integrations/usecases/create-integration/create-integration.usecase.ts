@@ -225,7 +225,10 @@ export class CreateIntegration {
   }
 
   /** Masked values in the request stand for the secrets of the integration being duplicated; put those in. */
-  private async restoreMaskedSecrets(command: CreateIntegrationCommand, environment: EnvironmentEntity): Promise<void> {
+  private async restoreMaskedSecrets(
+    command: CreateIntegrationCommand,
+    environment: EnvironmentEntity
+  ): Promise<ICredentialsDto | undefined> {
     const secretsToCopy = await this.getSecretsToCopy(command, environment);
 
     if (command.credentials) {
@@ -242,6 +245,8 @@ export class CreateIntegration {
         secretsToCopy?.configurations
       );
     }
+
+    return secretsToCopy?.credentials;
   }
 
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
@@ -253,7 +258,7 @@ export class CreateIntegration {
       throw new NotFoundException(`Environment with id ${command.environmentId} not found`);
     }
 
-    await this.restoreMaskedSecrets(command, environment);
+    const copiedCredentials = await this.restoreMaskedSecrets(command, environment);
 
     await this.validate(command);
     assertValidIntegrationRules(command.rules);
@@ -290,7 +295,11 @@ export class CreateIntegration {
       const name = command.name ?? defaultName;
       const identifier = command.identifier ?? `${slugify(name)}-${shortid.generate()}`;
 
-      const managedCredentials = applyManagedCredentialsOnCreate(command.providerId, command.credentials ?? {});
+      const managedCredentials = applyManagedCredentialsOnCreate(
+        command.providerId,
+        command.credentials ?? {},
+        copiedCredentials
+      );
 
       const query: IntegrationQuery = {
         name,

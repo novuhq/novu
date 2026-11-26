@@ -100,7 +100,7 @@ function watchAzureSetup(
   };
 }
 
-/** The integration as the form has it, with no credentials yet: the Azure setup saves those on the server. */
+/** The integration as the form has it, paused and with no credentials yet: the Azure setup saves those on the server. */
 function emptyIntegrationOf(
   provider: IProviderConfig,
   environment: IEnvironment,
@@ -113,7 +113,9 @@ function emptyIntegrationOf(
     configurations: data.configurations,
     name: data.name,
     identifier: data.identifier,
-    active: data.active,
+    // Paused until setup finishes: an unfinished one with no credentials mustn't take over sends.
+    // "Connect provider" then saves the form's own Active setting.
+    active: false,
     _environmentId: environment._id,
     rules: data.rules ?? null,
   };

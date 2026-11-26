@@ -1,4 +1,5 @@
 import {
+  ChatProviderIdEnum,
   CredentialsKeyEnum,
   EnvironmentTypeEnum,
   getUnusedTwilioAuthCredentialKeys,
@@ -86,6 +87,10 @@ function getCopiedCredentials(integration: IIntegration, provider: IProviderConf
       ? getUnusedTwilioAuthCredentialKeys(credentials.authMethod as string | undefined)
       : []
   );
+  // A WhatsApp number connected by Embedded Signup runs on Novu's Meta app, whose secret the copy uses too.
+  if (provider.id === ChatProviderIdEnum.WhatsAppBusiness && credentials.isNovuManaged === true) {
+    unusedKeys.add(CredentialsKeyEnum.SecretKey);
+  }
   const missingRequiredSecret = provider.credentials.some(
     (cred) => secretKeys.has(cred.key) && cred.required && !unusedKeys.has(cred.key) && !hasValue(credentials[cred.key])
   );

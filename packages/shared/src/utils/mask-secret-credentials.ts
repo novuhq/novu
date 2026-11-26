@@ -1,4 +1,4 @@
-import { ChatProviderIdEnum, CredentialsKeyEnum } from '../types';
+import { ChatProviderIdEnum, CredentialsKeyEnum, PushProviderIdEnum } from '../types';
 
 /** A fixed run, so a masked value doesn't give away how long the secret is. */
 export const MASKED_SECRET_FILL = '•'.repeat(16);
@@ -22,6 +22,8 @@ export const MASKED_CREDENTIAL_KEYS: readonly string[] = [
   CredentialsKeyEnum.Password,
   CredentialsKeyEnum.ServiceAccount,
   CredentialsKeyEnum.SigningSecret,
+  // MessageBird's access key and Azure SMS's connection string.
+  CredentialsKeyEnum.AccessKey,
 ];
 
 /** `sk_live_abc123def456` becomes `sk_••••••••••••••••f456`; a short `hunter2024` becomes `••••••••••••••••2024`. */
@@ -48,7 +50,17 @@ export function isMaskedSecret(value: unknown): value is string {
 }
 
 function isMaskedCredential(providerId: string, key: string, value: unknown): value is string {
-  if (!MASKED_CREDENTIAL_KEYS.includes(key) || typeof value !== 'string' || value === '') {
+  if (typeof value !== 'string' || value === '') {
+    return false;
+  }
+
+  // Legacy FCM integrations keep the whole service account JSON, private key included, in `user`. Elsewhere `user`
+  // is a login name.
+  if (providerId === PushProviderIdEnum.FCM && key === CredentialsKeyEnum.User) {
+    return true;
+  }
+
+  if (!MASKED_CREDENTIAL_KEYS.includes(key)) {
     return false;
   }
 

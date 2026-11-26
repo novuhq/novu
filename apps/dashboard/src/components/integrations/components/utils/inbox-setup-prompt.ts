@@ -1,4 +1,3 @@
-import { API_HOSTNAME } from '@/config';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 
 const DEFAULT_API_URL = 'https://api.novu.co';
@@ -9,9 +8,11 @@ const DEFAULT_SOCKET_URL = 'https://ws.novu.co';
  * so EU and self-hosted apps need them; same rule as the welcome guide.
  */
 function getServerProps(): string {
+  // Both follow the selected region, like the dashboard's own requests.
+  const apiHostname = apiHostnameManager.getApiHostname();
   const socketHostname = apiHostnameManager.getWebSocketHostname();
   const props = [
-    API_HOSTNAME !== DEFAULT_API_URL ? `backendUrl="${API_HOSTNAME}"` : '',
+    apiHostname !== DEFAULT_API_URL ? `backendUrl="${apiHostname}"` : '',
     socketHostname !== DEFAULT_SOCKET_URL ? `socketUrl="${socketHostname.replace(/^https:\/\//, 'wss://')}"` : '',
   ].filter(Boolean);
 

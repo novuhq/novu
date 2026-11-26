@@ -470,14 +470,18 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
       expect(setResponse.status).to.equal(200);
       expect(setResponse.body.data.configurations.inboundWebhookSigningKey).to.equal(maskSecret(SIGNING_KEY));
 
-      for (const authorization of [undefined, `ApiKey ${session.apiKey}`]) {
-        const request = session.testAgent.get('/v1/integrations');
-        const { body } = await (authorization ? request.set('authorization', authorization) : request);
-        const listed = body.data.find((integration) => integration._id === integrationId);
+      const { body: sessionBody } = await session.testAgent.get('/v1/integrations');
+      const listedForSession = sessionBody.data.find((integration) => integration._id === integrationId);
+      expect(listedForSession.configurations.inboundWebhookSigningKey).to.equal(maskSecret(SIGNING_KEY));
+      expect(JSON.stringify(sessionBody)).to.not.include(SIGNING_KEY);
 
-        expect(listed.configurations.inboundWebhookSigningKey).to.equal(maskSecret(SIGNING_KEY));
-        expect(JSON.stringify(body)).to.not.include(SIGNING_KEY);
-      }
+      // API-key callers may not see credentials, so they get no signing key at all.
+      const { body: apiKeyBody } = await session.testAgent
+        .get('/v1/integrations')
+        .set('authorization', `ApiKey ${session.apiKey}`);
+      const listedForApiKey = apiKeyBody.data.find((integration) => integration._id === integrationId);
+      expect(listedForApiKey.configurations).to.not.have.property('inboundWebhookSigningKey');
+      expect(JSON.stringify(apiKeyBody)).to.not.include(SIGNING_KEY);
 
       const keepResponse = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
         configurations: { inboundWebhookEnabled: false, inboundWebhookSigningKey: maskSecret(SIGNING_KEY) },
