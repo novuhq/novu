@@ -8,6 +8,7 @@ import { GenerateUniqueApiKey } from './generate-unique-api-key/generate-unique-
 import { GetApiKeys } from './get-api-keys/get-api-keys.usecase';
 import { GetEnvironment } from './get-environment';
 import { GetMyEnvironments } from './get-my-environments/get-my-environments.usecase';
+import { GetSubscriberSessionStats } from './get-subscriber-session-stats/get-subscriber-session-stats.usecase';
 import { RegenerateApiKeys } from './regenerate-api-keys/regenerate-api-keys.usecase';
 import { UpdateEnvironment } from './update-environment/update-environment.usecase';
 import { UpdateSubscriberTokensSetting } from './update-subscriber-tokens-setting/update-subscriber-tokens-setting.usecase';
@@ -26,4 +27,5 @@ export const USE_CASES = [
   DeleteEnvironment,
   BuildDashboardInboxHashes,
   UpdateSubscriberTokensSetting,
+  GetSubscriberSessionStats,
 ];

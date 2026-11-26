@@ -10,6 +10,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
@@ -46,6 +47,7 @@ import {
 import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
 import { DashboardInboxHashesResponseDto } from './dtos/dashboard-inbox-hashes-response.dto';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
+import { SubscriberSessionStatsQueryDto, SubscriberSessionStatsResponseDto } from './dtos/subscriber-session-stats.dto';
 import {
   SubscriberTokensSettingResponseDto,
   UpdateSubscriberTokensSettingRequestDto,
@@ -65,6 +67,8 @@ import { GetApiKeys } from './usecases/get-api-keys/get-api-keys.usecase';
 import { GetEnvironment, GetEnvironmentCommand } from './usecases/get-environment';
 import { GetMyEnvironmentsCommand } from './usecases/get-my-environments/get-my-environments.command';
 import { GetMyEnvironments } from './usecases/get-my-environments/get-my-environments.usecase';
+import { GetSubscriberSessionStatsCommand } from './usecases/get-subscriber-session-stats/get-subscriber-session-stats.command';
+import { GetSubscriberSessionStats } from './usecases/get-subscriber-session-stats/get-subscriber-session-stats.usecase';
 import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api-keys.usecase';
 import { UpdateEnvironmentCommand } from './usecases/update-environment/update-environment.command';
 import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
@@ -92,6 +96,7 @@ export class EnvironmentsControllerV1 {
     private deleteEnvironmentUsecase: DeleteEnvironment,
     private buildDashboardInboxHashesUsecase: BuildDashboardInboxHashes,
     private updateSubscriberTokensSettingUsecase: UpdateSubscriberTokensSetting,
+    private getSubscriberSessionStatsUsecase: GetSubscriberSessionStats,
     private organizationRepository: CommunityOrganizationRepository,
     private featureFlagService: FeatureFlagsService
   ) {}
@@ -130,6 +135,24 @@ export class EnvironmentsControllerV1 {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
+      })
+    );
+  }
+
+  @Get('/me/subscriber-session-stats')
+  @ApiOperation({ summary: 'Count subscriber sessions of the current environment by auth method and SDK client' })
+  @ApiResponse(SubscriberSessionStatsResponseDto)
+  @ApiExcludeEndpoint()
+  @SkipPermissionsCheck()
+  async getSubscriberSessionStats(
+    @UserSession() user: UserSessionData,
+    @Query() query: SubscriberSessionStatsQueryDto
+  ): Promise<SubscriberSessionStatsResponseDto> {
+    return await this.getSubscriberSessionStatsUsecase.execute(
+      GetSubscriberSessionStatsCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        days: query.days,
       })
     );
   }
