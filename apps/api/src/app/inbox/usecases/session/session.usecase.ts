@@ -30,6 +30,7 @@ import {
   ContextRepository,
   EnvironmentEntity,
   EnvironmentRepository,
+  IntegrationEntity,
   IntegrationRepository,
   MessageRepository,
   MessageTemplateRepository,
@@ -55,7 +56,9 @@ import {
   ResourceTypeEnum,
   Schedule,
   StepTypeEnum,
+  SubscriberSessionAuthMethodEnum,
 } from '@novu/shared';
+import { isSubscriberTokensEnabled } from '../../../agents/shared/assert-subscriber-tokens-enabled';
 import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environment-response.dto';
@@ -67,6 +70,7 @@ import { GetOrganizationSettingsCommand } from '../../../organization/usecases/g
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { ScheduleDto } from '../../../shared/dtos/schedule';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
+import { NovuTokens, SubscriberLoginProfile } from '../../../shared/services/novu-tokens.service';
 import {
   SubscriberSessionAuthStatsService,
   SubscriberSessionSourceEnum,
@@ -79,16 +83,29 @@ import {
   KEYLESS_SUBSCRIBER_ID,
   KEYLESS_WORKFLOW_IDENTIFIER,
 } from '../../utils';
-import { validateContextHmacEncryption, validateHmacEncryption } from '../../utils/encryption';
+import { invalidHmacHashError, validateContextHmacEncryption, validateHmacEncryption } from '../../utils/encryption';
 import { isKeylessEnvironmentExpired } from '../../utils/keyless-expiry';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { UpdatePreferencesCommand } from '../update-preferences/update-preferences.command';
 import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
 import { SessionCommand } from './session.command';
+import { parseSubscriberLoginGrant, signTokenSession, subscriberTokenExpiredError } from './token-session';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 const MAX_NOTIFICATIONS_COUNT = 100;
+
+type SessionAuth =
+  | { method: SubscriberSessionAuthMethodEnum.HMAC | SubscriberSessionAuthMethodEnum.NONE }
+  | { method: SubscriberSessionAuthMethodEnum.TOKEN; expiresAt: number };
+
+interface SessionIdentity {
+  environment: EnvironmentEntity;
+  inAppIntegration: IntegrationEntity;
+  subscriber: { subscriberId: string } & SubscriberLoginProfile;
+  context?: ContextPayload;
+  auth: SessionAuth;
+}
 
 @Injectable()
 export class Session {
@@ -120,81 +137,20 @@ export class Session {
     private updatePreferencesUsecase: UpdatePreferences,
     private keylessAbuseGuard: KeylessAbuseGuardService,
     private subscriberSessionAuthStatsService: SubscriberSessionAuthStatsService,
-    private apiKeyRevocationService: ApiKeyRevocationService
+    private apiKeyRevocationService: ApiKeyRevocationService,
+    private novuTokens: NovuTokens
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   @LogDecorator()
   async execute(command: SessionCommand): Promise<SubscriberSessionResponseDto> {
-    this.validateRequestData(command.requestData);
+    const { subscriberToken } = command.requestData;
+    const { environment, inAppIntegration, subscriber, context, auth } = subscriberToken
+      ? await this.resolveTokenIdentity(subscriberToken, command.requestData.applicationIdentifier)
+      : await this.resolveHashIdentity(command);
 
-    const subscriber = this.buildPlatformSubscriber(command.requestData);
-    const applicationIdentifier = await this.getApplicationIdentifier(command.requestData, command.clientIp);
-
-    const environment = await this.environmentRepository.findEnvironmentByIdentifier(applicationIdentifier);
-    if (!environment) {
-      throw new BadRequestException('Please provide a valid application identifier');
-    }
-
-    const selection = await this.selectIntegration.execute(
-      SelectIntegrationCommand.create({
-        environmentId: environment._id,
-        organizationId: environment._organizationId,
-        channelType: ChannelTypeEnum.IN_APP,
-        providerId: InAppProviderIdEnum.Novu,
-        filterData: {},
-      })
-    );
-
-    if (!selection) {
-      throw new NotFoundException('The active in-app integration could not be found');
-    }
-    const { integration: inAppIntegration } = selection;
-
-    const environmentApiKeys = await this.apiKeyRevocationService.getSigningKeys({
-      organizationId: environment._organizationId,
-      environmentId: environment._id,
-      apiKeys: environment.apiKeys,
-    });
-    const hmacValid = isHmacValidForAnyKey(
-      environmentApiKeys,
-      subscriber.subscriberId,
-      command.requestData.subscriberHash
-    );
-
-    // Before the checks below, so a hash rejected because its key no longer signs is recorded too.
-    await this.apiKeyRevocationService.recordOldKeySubscriberHash({
-      organizationId: environment._organizationId,
-      environmentId: environment._id,
-      apiKeys: environment.apiKeys,
-      signingKeys: environmentApiKeys,
-      subscriberId: subscriber.subscriberId,
-      subscriberHash: command.requestData.subscriberHash,
-      source: SubscriberSessionSourceEnum.INBOX,
-    });
-
-    if (inAppIntegration.credentials.hmac) {
-      validateHmacEncryption({
-        apiKeys: environmentApiKeys,
-        subscriberId: subscriber.subscriberId,
-        subscriberHash: command.requestData.subscriberHash,
-      });
-
-      if (command.requestData.context) {
-        validateContextHmacEncryption({
-          apiKeys: environmentApiKeys,
-          context: command.requestData.context,
-          contextHash: command.requestData.contextHash,
-        });
-      }
-    }
-
-    const contextKeys = await this.resolveContexts(
-      environment._id,
-      environment._organizationId,
-      command.requestData.context
-    );
+    const contextKeys = await this.resolveContexts(environment._id, environment._organizationId, context);
 
     const subscriberEntity = await this.createSubscriber.execute(
       CreateOrUpdateSubscriberCommand.create({
@@ -207,9 +163,10 @@ export class Session {
         email: subscriber.email,
         avatar: subscriber.avatar,
         locale: subscriber.locale,
-        data: subscriber.data as CustomDataType,
+        data: subscriber.data,
         timezone: subscriber.timezone,
-        allowUpdate: hmacValid,
+        allowUpdate:
+          auth.method === SubscriberSessionAuthMethodEnum.HMAC || auth.method === SubscriberSessionAuthMethodEnum.TOKEN,
       })
     );
 
@@ -252,7 +209,9 @@ export class Session {
     }
 
     const [token, organization] = await Promise.all([
-      this.authService.getSubscriberWidgetToken(subscriberEntity, contextKeys),
+      auth.method === SubscriberSessionAuthMethodEnum.TOKEN
+        ? signTokenSession(subscriberEntity, contextKeys, auth.expiresAt)
+        : this.authService.getSubscriberWidgetToken(subscriberEntity, contextKeys),
       this.organizationRepository.findById(environment._organizationId),
     ]);
 
@@ -308,7 +267,7 @@ export class Session {
     if (!isDashboardSession) {
       void this.subscriberSessionAuthStatsService.record({
         environmentId: environment._id,
-        hmacValid,
+        authMethod: auth.method,
         clientVersion: command.clientVersion,
         source: SubscriberSessionSourceEnum.INBOX,
       });
@@ -325,6 +284,113 @@ export class Session {
       schedule,
       contextKeys,
     };
+  }
+
+  private async resolveHashIdentity(command: SessionCommand): Promise<SessionIdentity> {
+    this.validateRequestData(command.requestData);
+
+    const subscriber = this.buildPlatformSubscriber(command.requestData);
+    const applicationIdentifier = await this.getApplicationIdentifier(command.requestData, command.clientIp);
+
+    const environment = await this.environmentRepository.findEnvironmentByIdentifier(applicationIdentifier);
+    if (!environment) {
+      throw new BadRequestException('Please provide a valid application identifier');
+    }
+
+    const inAppIntegration = await this.selectInAppIntegration(environment);
+
+    const environmentApiKeys = await this.apiKeyRevocationService.getSigningKeys({
+      organizationId: environment._organizationId,
+      environmentId: environment._id,
+      apiKeys: environment.apiKeys,
+    });
+    const hmacValid = isHmacValidForAnyKey(
+      environmentApiKeys,
+      subscriber.subscriberId,
+      command.requestData.subscriberHash
+    );
+
+    await this.apiKeyRevocationService.recordOldKeySubscriberHash({
+      organizationId: environment._organizationId,
+      environmentId: environment._id,
+      apiKeys: environment.apiKeys,
+      signingKeys: environmentApiKeys,
+      subscriberId: subscriber.subscriberId,
+      subscriberHash: command.requestData.subscriberHash,
+      source: SubscriberSessionSourceEnum.INBOX,
+    });
+
+    if (inAppIntegration.credentials.hmac) {
+      validateHmacEncryption({
+        apiKeys: environmentApiKeys,
+        subscriberId: subscriber.subscriberId,
+        subscriberHash: command.requestData.subscriberHash,
+      });
+
+      if (command.requestData.context) {
+        validateContextHmacEncryption({
+          apiKeys: environmentApiKeys,
+          context: command.requestData.context,
+          contextHash: command.requestData.contextHash,
+        });
+      }
+    }
+
+    return {
+      environment,
+      inAppIntegration,
+      subscriber: { ...subscriber, data: subscriber.data as CustomDataType },
+      context: command.requestData.context,
+      auth: { method: hmacValid ? SubscriberSessionAuthMethodEnum.HMAC : SubscriberSessionAuthMethodEnum.NONE },
+    };
+  }
+
+  private async resolveTokenIdentity(token: string, applicationIdentifier?: string): Promise<SessionIdentity> {
+    const grant = parseSubscriberLoginGrant(this.novuTokens.verify('subscriberLogin', token));
+
+    const environment = await this.environmentRepository.findOne({ _id: grant.environmentId });
+    if (!environment || (applicationIdentifier && applicationIdentifier !== environment.identifier)) {
+      throw invalidHmacHashError();
+    }
+
+    const enabled = await isSubscriberTokensEnabled({
+      featureFlagsService: this.featureFlagsService,
+      environmentId: environment._id,
+      organizationId: environment._organizationId,
+    });
+    if (!enabled) {
+      throw invalidHmacHashError();
+    }
+
+    if (grant.isExpired) {
+      throw subscriberTokenExpiredError();
+    }
+
+    return {
+      environment,
+      inAppIntegration: await this.selectInAppIntegration(environment),
+      subscriber: { ...grant.profile, subscriberId: grant.subscriberId },
+      context: grant.context,
+      auth: { method: SubscriberSessionAuthMethodEnum.TOKEN, expiresAt: grant.expiresAt },
+    };
+  }
+
+  private async selectInAppIntegration(environment: EnvironmentEntity): Promise<IntegrationEntity> {
+    const selection = await this.selectIntegration.execute(
+      SelectIntegrationCommand.create({
+        environmentId: environment._id,
+        organizationId: environment._organizationId,
+        channelType: ChannelTypeEnum.IN_APP,
+        providerId: InAppProviderIdEnum.Novu,
+        filterData: {},
+      })
+    );
+
+    if (!selection) {
+      throw new NotFoundException('The active in-app integration could not be found');
+    }
+
+    return selection.integration;
   }
 
   private async createDefaultSchedule({

@@ -10,7 +10,7 @@ alwaysApply: false
 ### Testing Conventions
 
 **General**
-- Match the test style and tooling already used in the same app (Mocha for API/worker, Playwright for dashboard).
+- Match the test style and tooling already used in the same app (Mocha for API/worker, Vitest for dashboard).
 - Shared test utilities and setup helpers live in `libs/testing` — use them instead of rolling custom harnesses.
 - Never mock MongoDB models directly; use the test harness in `libs/testing` which manages real database state.
 
@@ -22,9 +22,9 @@ alwaysApply: false
 - Bootstrap a NestJS testing module for integration-style unit tests rather than mocking the entire DI container.
 
 **Dashboard (`apps/dashboard`)**
-- E2E tests: `cd apps/dashboard && pnpm test:e2e` (Playwright — start dashboard first)
+- Unit tests: `cd apps/dashboard && pnpm test` (Vitest, matches `src/**/*.spec.ts`)
 - Lint: `cd apps/dashboard && pnpm check`
-- Tests live in `apps/dashboard/tests/` (or `e2e/`).
+- Browser flows are covered by TesterArmy on the PR's Novu Box (`docker/box/README.md`), not by tests in this repo.
 
 **Worker (`apps/worker`)**
 - Unit tests: `cd apps/worker && pnpm test` (Mocha + SWC, matches `src/**/**/*.spec.ts`)

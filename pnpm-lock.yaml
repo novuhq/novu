@@ -1213,33 +1213,15 @@ importers:
       '@biomejs/biome':
         specifier: 2.2.0
         version: 2.2.0
-      '@clerk/backend':
-        specifier: ^3.4.11
-        version: 3.4.11(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@clerk/shared':
         specifier: ^4.23.0
         version: 4.23.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@clerk/testing':
-        specifier: ^2.0.31
-        version: 2.0.31(@playwright/test@1.58.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@faker-js/faker':
-        specifier: ^10.5.0
-        version: 10.6.0
       '@hookform/devtools':
         specifier: ^4.3.0
         version: 4.3.1(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@novu/dal':
-        specifier: workspace:*
-        version: link:../../libs/dal
       '@novu/ee-auth':
         specifier: workspace:*
         version: link:../../enterprise/packages/auth
-      '@novu/testing':
-        specifier: workspace:*
-        version: link:../../libs/testing
-      '@playwright/test':
-        specifier: ^1.55.1
-        version: 1.58.2
       '@sentry/vite-plugin':
         specifier: 5.4.0
         version: 5.4.0(rollup@4.67.3)(webpack@5.106.2)
@@ -1282,12 +1264,6 @@ importers:
       cross-fetch:
         specifier: ^4.0.0
         version: 4.0.0
-      dotenv:
-        specifier: ^16.6.1
-        version: 16.6.1
-      express:
-        specifier: ^4.21.0
-        version: 4.21.2
       globals:
         specifier: ^15.9.0
         version: 15.14.0
@@ -2293,6 +2269,9 @@ importers:
       '@novu/dal':
         specifier: workspace:*
         version: link:../../../libs/dal
+      '@novu/ee-auth':
+        specifier: workspace:*
+        version: link:../auth
       '@novu/shared':
         specifier: workspace:*
         version: link:../../../packages/shared
@@ -2874,9 +2853,6 @@ importers:
       '@pulsecron/pulse':
         specifier: 1.6.8
         version: 1.6.8(@aws-sdk/credential-providers@3.1052.0)(gcp-metadata@5.3.0)(socks@2.8.9)
-      '@segment/analytics-node':
-        specifier: ^1.1.4
-        version: 1.1.4
       '@sentry/node':
         specifier: ^10.63.0
         version: 10.63.0(@opentelemetry/core@2.8.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0))
@@ -7481,18 +7457,6 @@ packages:
       react:
         optional: true
       react-dom:
-        optional: true
-
-  '@clerk/testing@2.0.31':
-    resolution: {integrity: sha512-kA1de4n+OMHyjVUgwgtEbYh06fqb2SInNwvbgOJCdTVtYM6l9dbxHC1Qvfg4WMzxNBCSq7QZH2Vl/Exm3NAzxQ==}
-    engines: {node: '>=20.9.0'}
-    peerDependencies:
-      '@playwright/test': ^1
-      cypress: ^13 || ^14
-    peerDependenciesMeta:
-      '@playwright/test':
-        optional: true
-      cypress:
         optional: true
 
   '@clerk/types@4.101.20':
@@ -20362,10 +20326,6 @@ packages:
 
   dotenv@16.6.1:
     resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
-    engines: {node: '>=12'}
-
-  dotenv@17.2.2:
-    resolution: {integrity: sha512-Sf2LSQP+bOlhKWWyhFsn0UsfdK/kCWRv1iuA2gXAwt3dyNabr6QSj00I2V10pidqz69soatm9ZwZvpQMTIOd5Q==}
     engines: {node: '>=12'}
 
   dotenv@17.2.4:
@@ -34651,17 +34611,6 @@ snapshots:
     optionalDependencies:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
-
-  '@clerk/testing@2.0.31(@playwright/test@1.58.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
-    dependencies:
-      '@clerk/backend': 3.4.11(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@clerk/shared': 4.23.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      dotenv: 17.2.2
-    optionalDependencies:
-      '@playwright/test': 1.58.2
-    transitivePeerDependencies:
-      - react
-      - react-dom
 
   '@clerk/types@4.101.20(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
@@ -51636,8 +51585,6 @@ snapshots:
   dotenv@16.5.0: {}
 
   dotenv@16.6.1: {}
-
-  dotenv@17.2.2: {}
 
   dotenv@17.2.4: {}
 

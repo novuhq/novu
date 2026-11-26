@@ -75,7 +75,6 @@
     "@opentelemetry/sdk-trace-node": "2.7.1",
     "@opentelemetry/semantic-conventions": "1.39.0",
     "@pulsecron/pulse": "1.6.8",
-    "@segment/analytics-node": "^1.1.4",
     "@sentry/node": "^10.63.0",
     "@team-plain/typescript-sdk": "5.8.0",
     "@tufjs/canonical-json": "^2.0.0",

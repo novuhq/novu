@@ -17,6 +17,7 @@ import { parseApprovalActionId } from '@novu/framework/internal';
 import {
   AGENT_REPLY_METADATA_KEYS,
   AgentReplyPolicyEnum,
+  AgentSubscriberAccessEnum,
   ENDPOINT_TYPES,
   isDashboardWebChatSubscriberId,
 } from '@novu/shared';
@@ -54,6 +55,7 @@ import { extractMsTeamsTenantId } from '../../shared/util/msteams-activity';
 import { type AutoProvisionPlatform, shouldAutoProvisionInbound } from '../../shared/util/platform-endpoint-config';
 import { asRecord } from '../../shared/util/raw-record';
 import { extractWorkspaceId } from '../../shared/util/workspace-id';
+import { decideInboundAccess, type InboundAccess, type InboundSender, replyToRefusal } from '../access/inbound-access';
 import { InboundAckService } from '../ack/inbound-ack.service';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
@@ -63,8 +65,7 @@ import {
   isAgentProvisionedSubscriber,
 } from '../conversation/agent-subscriber-resolver.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
-import { admitByAccessRule, postAccessRuleRefusal } from '../reply/admit-by-access-rule';
-import { maybeReplyUnresolvedSubscriberAccess } from '../reply/maybe-reply-unresolved-subscriber-access';
+import type { AgentRuntime } from '../runtime/agent-runtime.port';
 import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../runtime/platform-thread.util';
@@ -895,14 +896,23 @@ export class AgentInboundHandler implements OnModuleInit {
       workflowOrigin,
       conversationService: this.conversationService,
       logger: this.logger,
-    });
+      isRefused: async (platformUserId) => {
+        const authorResolution = await this.resolveSubscriber({
+          agentId,
+          config,
+          platformUserId,
+          operation: 'resolve-subscriber-thread-history',
+        });
+        const access = await this.decideInboundAccess({
+          event: AgentEventEnum.ON_MESSAGE,
+          config,
+          resolution: authorResolution,
+          sender: await this.loadTurnSender({ config, conversation, resolution: authorResolution, platformUserId }),
+          emailSenderUnverified: false,
+        });
 
-    await this.recordInboundMessage(agentId, config, conversation, message, {
-      subscriberId,
-      platformThreadId,
-      storedAttachments,
-      event,
-      isFirstMessage,
+        return access.verdict === 'refuse';
+      },
     });
 
     const [subscriber, agent] = await Promise.all([
@@ -931,6 +941,7 @@ export class AgentInboundHandler implements OnModuleInit {
       bridgeUrl: bridgeUrlOverride,
       lookupFailed: contextLookupFailed,
     } = await this.connectionContextResolver.resolve(config, message.raw, message.author?.userId);
+    const sender: InboundSender = { subscriber, context, bridgeUrlOverride, contextLookupFailed };
 
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
@@ -938,10 +949,7 @@ export class AgentInboundHandler implements OnModuleInit {
       agent: agent ?? { _id: agentId },
       config,
       conversation,
-      subscriber,
-      context,
-      bridgeUrlOverride,
-      contextLookupFailed,
+      ...sender,
       subscriberResolution: resolution,
       message,
       event,
@@ -953,9 +961,25 @@ export class AgentInboundHandler implements OnModuleInit {
       unseenThreadMessages,
     };
 
+    const access = await this.decideInboundAccess({
+      event,
+      config,
+      resolution,
+      sender,
+      emailSenderUnverified: !isVerifiedEmailSender,
+    });
+    await this.recordInboundMessage(agentId, config, conversation, message, {
+      subscriberId,
+      platformThreadId,
+      storedAttachments,
+      event,
+      isFirstMessage,
+      accessRefused: access.verdict === 'refuse',
+    });
+
     // An unmentioned message in a shared thread stays silent, so a refused sender learns nothing there.
     if (
-      await this.refusedByAccessRule(turn, {
+      await this.stopUnlessAdmitted(turn, access, {
         emailSenderUnverified: !isVerifiedEmailSender,
         silent: requiresExplicitMention(thread, message, mentionContext),
       })
@@ -963,9 +987,7 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    // On buttonless platforms (iMessage/SMS) a pending tool approval is
-    // answered by texting back YES / NO — consume before the subscriber-access
-    // gate so an unresolved/restricted sender can still settle a pending approval.
+    // On buttonless platforms (iMessage/SMS) a pending tool approval is answered by texting back YES / NO.
     if (
       event === AgentEventEnum.ON_MESSAGE &&
       (await this.replyApprovalInterceptor.tryHandleAsApprovalReply(turn, runtime))
@@ -995,18 +1017,6 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    if (
-      await maybeReplyUnresolvedSubscriberAccess({
-        turn,
-        logger: this.logger,
-        outboundGateway: this.outboundGateway,
-        conversationService: this.conversationService,
-        emailSenderUnverified: !isVerifiedEmailSender,
-      })
-    ) {
-      return;
-    }
-
     if (!config.isManaged) {
       await this.inboundAck.showWorkingSignal({
         agentId,
@@ -1020,29 +1030,56 @@ export class AgentInboundHandler implements OnModuleInit {
     await runtime.dispatch(turn);
   }
 
-  /** Rule-mode admission. Replies to a refused sender unless `silent` or the event is a reaction or delete. */
-  private async refusedByAccessRule(
+  private decideInboundAccess(input: Parameters<typeof decideInboundAccess>[0]): Promise<InboundAccess> {
+    return decideInboundAccess(input, this.featureFlagsService);
+  }
+
+  /** Replies to a refusal when the event speaks. Returns true unless the sender was admitted. */
+  private async stopUnlessAdmitted(
     turn: ConversationTurn,
+    access: InboundAccess,
     opts: { emailSenderUnverified?: boolean; silent?: boolean } = {}
   ): Promise<boolean> {
-    const admission = await admitByAccessRule(turn, {
-      logger: this.logger,
-      featureFlagsService: this.featureFlagsService,
-    });
-    if (admission.admitted) {
-      return false;
+    const logContext = {
+      agentId: turn.agentId,
+      environmentId: turn.config.environmentId,
+      organizationId: turn.config.organizationId,
+      platform: turn.config.platform,
+      conversationId: turn.conversation._id,
+      event: turn.event,
+    };
+
+    if (access.verdict === 'drop') {
+      this.logger.warn(
+        { ...logContext, senderPlatformUserId: turn.platformUserId },
+        'Managed open-access leftover without subscriber — skipping dispatch without denial reply'
+      );
     }
 
-    if (!opts.silent) {
-      await postAccessRuleRefusal(turn, admission.refusal, {
+    if (access.verdict === 'refuse' && turn.config.subscriberAccess === AgentSubscriberAccessEnum.RULE) {
+      const { refusal } = access;
+      this.logger.warn(
+        {
+          ...logContext,
+          subscriberId: turn.subscriber?.subscriberId,
+          refusal: refusal.kind,
+          ...(refusal.kind === 'error' ? { reason: refusal.reason } : {}),
+        },
+        'Agent access rule refused inbound event'
+      );
+    }
+
+    if (access.verdict === 'refuse') {
+      await replyToRefusal(turn, access.refusal, {
         logger: this.logger,
         outboundGateway: this.outboundGateway,
         conversationService: this.conversationService,
-        emailSenderUnverified: opts.emailSenderUnverified,
+        emailSenderUnverified: opts.emailSenderUnverified ?? false,
+        silent: opts.silent,
       });
     }
 
-    return true;
+    return access.verdict !== 'admit';
   }
 
   /**
@@ -1269,9 +1306,10 @@ export class AgentInboundHandler implements OnModuleInit {
       storedAttachments?: StoredAttachment[];
       event: AgentEventEnum;
       isFirstMessage: boolean;
+      accessRefused?: boolean;
     }
   ): Promise<void> {
-    const { subscriberId, platformThreadId, storedAttachments, event, isFirstMessage } = context;
+    const { subscriberId, platformThreadId, storedAttachments, event, isFirstMessage, accessRefused } = context;
     const senderType = subscriberId
       ? ConversationActivitySenderTypeEnum.SUBSCRIBER
       : ConversationActivitySenderTypeEnum.PLATFORM_USER;
@@ -1300,6 +1338,7 @@ export class AgentInboundHandler implements OnModuleInit {
       hasPlatformAttachments: Boolean(message.attachments?.length),
       platformMessageId: message.id,
       identifier: config.platform === AgentPlatformEnum.WEB_CHAT ? message.id : undefined,
+      accessRefused,
       environmentId: config.environmentId,
       organizationId: config.organizationId,
     });
@@ -1880,6 +1919,25 @@ export class AgentInboundHandler implements OnModuleInit {
         ? message.metadata.editedAt.toISOString()
         : new Date().toISOString();
 
+    const event = AgentEventEnum.ON_MESSAGE_UPDATED;
+    const sender = await this.loadTurnSender({ config, conversation, resolution, platformUserId, raw: message.raw });
+    const access = await this.decideInboundAccess({
+      event,
+      config,
+      resolution,
+      sender,
+      emailSenderUnverified: false,
+    });
+
+    // The agent gets the version it already read, never the platform's copy of a refused one.
+    const stored = message.id
+      ? await this.conversationService.resolveCurrentMessage(config.environmentId, conversation._id, message.id)
+      : null;
+    const previousForAgent =
+      previousMessage && !stored?.accessRefused
+        ? withText(previousMessage, agentVisibleText(stored, previousMessage.text))
+        : null;
+
     if (message.id) {
       await this.conversationService.updateInboundMessage({
         conversationId: conversation._id,
@@ -1888,6 +1946,7 @@ export class AgentInboundHandler implements OnModuleInit {
         richContent,
         hasPlatformAttachments: Boolean(message.attachments?.length),
         editedAt,
+        accessRefused: access.verdict === 'refuse',
         environmentId: config.environmentId,
         organizationId: config.organizationId,
       });
@@ -1915,25 +1974,27 @@ export class AgentInboundHandler implements OnModuleInit {
       integrationIdentifier: config.integrationIdentifier,
       platform: config.platform,
       conversationId: conversation._id,
-      agentEvent: AgentEventEnum.ON_MESSAGE_UPDATED,
+      agentEvent: event,
       isFirstMessageInThread: false,
     });
 
-    await this.dispatchExistingConversationTurn({
+    const { turn, runtime } = await this.buildExistingConversationTurn({
       agentId,
       config,
       conversation,
       thread,
       platformThreadId: thread.id,
       message,
-      previousMessage: previousMessage ?? null,
-      event: AgentEventEnum.ON_MESSAGE_UPDATED,
+      previousMessage: previousForAgent,
+      event,
       resolution,
       platformUserId,
       raw: message.raw,
       storedAttachments,
       deliveryRevision: editedAt,
+      sender,
     });
+    await this.dispatchExistingConversationTurn(turn, runtime, access);
   }
 
   async handleMessageDeleted(agentId: string, config: ResolvedAgentConfig, event: MessageDeletedEvent): Promise<void> {
@@ -1981,6 +2042,16 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
+    const agentEvent = AgentEventEnum.ON_MESSAGE_DELETED;
+    const sender = await this.loadTurnSender({ config, conversation, resolution, platformUserId, raw: event.raw });
+    const access = await this.decideInboundAccess({
+      event: agentEvent,
+      config,
+      resolution,
+      sender,
+      emailSenderUnverified: false,
+    });
+
     if (event.messageId) {
       await this.conversationService.deleteInboundMessage({
         conversationId: conversation._id,
@@ -2013,11 +2084,11 @@ export class AgentInboundHandler implements OnModuleInit {
       integrationIdentifier: config.integrationIdentifier,
       platform: config.platform,
       conversationId: conversation._id,
-      agentEvent: AgentEventEnum.ON_MESSAGE_DELETED,
+      agentEvent,
       isFirstMessageInThread: false,
     });
 
-    await this.dispatchExistingConversationTurn({
+    const { turn, runtime } = await this.buildExistingConversationTurn({
       agentId,
       config,
       conversation,
@@ -2025,12 +2096,14 @@ export class AgentInboundHandler implements OnModuleInit {
       platformThreadId: threadId,
       message,
       previousMessage: null,
-      event: AgentEventEnum.ON_MESSAGE_DELETED,
+      event: agentEvent,
       resolution,
       platformUserId,
       raw: event.raw,
       deliveryRevision: 'deleted',
+      sender,
     });
+    await this.dispatchExistingConversationTurn(turn, runtime, access);
   }
 
   async handleReaction(agentId: string, config: ResolvedAgentConfig, event: InboundReactionEvent): Promise<void> {
@@ -2093,7 +2166,8 @@ export class AgentInboundHandler implements OnModuleInit {
       conversationId: conversation._id,
     });
 
-    await this.dispatchExistingConversationTurn({
+    const sender = await this.loadTurnSender({ config, conversation, resolution, platformUserId, raw: event.raw });
+    const { turn, runtime } = await this.buildExistingConversationTurn({
       agentId,
       config,
       conversation,
@@ -2106,7 +2180,19 @@ export class AgentInboundHandler implements OnModuleInit {
       platformUserId,
       raw: event.raw,
       reaction,
+      sender,
     });
+    await this.dispatchExistingConversationTurn(
+      turn,
+      runtime,
+      await this.decideInboundAccess({
+        event: AgentEventEnum.ON_REACTION,
+        config,
+        resolution,
+        sender,
+        emailSenderUnverified: false,
+      })
+    );
   }
 
   private async recordInboundReaction(
@@ -2136,6 +2222,11 @@ export class AgentInboundHandler implements OnModuleInit {
         environmentId: config.environmentId,
         organizationId: config.organizationId,
       });
+    }
+
+    // A reaction from an admitted sender must not carry what a refused sender wrote.
+    if (sourceActivity?.accessRefused) {
+      return { emoji: event.emoji.name, added: event.added, messageId: event.messageId };
     }
 
     let sourceMessageStoredAttachments = extractStoredAttachments(sourceActivity);
@@ -2203,7 +2294,7 @@ export class AgentInboundHandler implements OnModuleInit {
     return this.resolveSubscriber({ agentId, config, platformUserId, operation: `resolve-subscriber-${operation}` });
   }
 
-  private async dispatchExistingConversationTurn(params: {
+  private async buildExistingConversationTurn(params: {
     agentId: string;
     config: ResolvedAgentConfig;
     conversation: ConversationEntity;
@@ -2219,31 +2310,17 @@ export class AgentInboundHandler implements OnModuleInit {
     storedAttachments?: StoredAttachment[];
     deliveryRevision?: string;
     reaction?: BridgeReaction;
-  }): Promise<void> {
+    sender: InboundSender;
+  }): Promise<{ turn: ConversationTurn; runtime: AgentRuntime }> {
     const { agentId, config, conversation, thread, platformThreadId, message, event, resolution } = params;
     const subscriberId = getResolvedSubscriberId(resolution);
 
-    const [subscriber, agent] = await Promise.all([
-      subscriberId
-        ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
-        : Promise.resolve(null),
-      this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
-        '_id',
-        'runtime',
-        'managedRuntime',
-      ]),
+    const agent = await this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
+      '_id',
+      'runtime',
+      'managedRuntime',
     ]);
-
-    const {
-      context,
-      bridgeUrl: bridgeUrlOverride,
-      lookupFailed: contextLookupFailed,
-    } = await this.connectionContextResolver.resolve(
-      config,
-      params.raw,
-      params.platformUserId,
-      this.conversationService.getPrimaryChannel(conversation).workspace?.id
-    );
+    const { subscriber, context, bridgeUrlOverride, contextLookupFailed } = params.sender;
     const runtime = this.runtimeResolver.resolve(agent);
     const workflowOriginResolution = await this.workflowOriginService.resolve({
       agentId,
@@ -2285,26 +2362,48 @@ export class AgentInboundHandler implements OnModuleInit {
       workflowOrigin: workflowOrigin ?? undefined,
     };
 
-    if (await this.refusedByAccessRule(turn)) {
+    return { turn, runtime };
+  }
+
+  private async loadTurnSender(params: {
+    config: ResolvedAgentConfig;
+    conversation: ConversationEntity;
+    resolution: SubscriberResolution | undefined;
+    platformUserId?: string;
+    raw?: unknown;
+  }): Promise<InboundSender> {
+    const { config, conversation } = params;
+    const subscriberId = getResolvedSubscriberId(params.resolution);
+
+    const [subscriber, { context, bridgeUrl, lookupFailed }] = await Promise.all([
+      subscriberId
+        ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
+        : Promise.resolve(null),
+      this.connectionContextResolver.resolve(
+        config,
+        params.raw,
+        params.platformUserId,
+        this.conversationService.getPrimaryChannel(conversation).workspace?.id
+      ),
+    ]);
+
+    return { subscriber, context, bridgeUrlOverride: bridgeUrl, contextLookupFailed: lookupFailed };
+  }
+
+  private async dispatchExistingConversationTurn(
+    turn: ConversationTurn,
+    runtime: AgentRuntime,
+    access: InboundAccess
+  ): Promise<void> {
+    const { event } = turn;
+
+    if (await this.stopUnlessAdmitted(turn, access)) {
       return;
     }
 
     if (
       event === AgentEventEnum.ON_REACTION &&
       (await this.replyApprovalInterceptor.tryHandleAsApprovalReaction(turn, runtime))
-    ) {
-      return;
-    }
-
-    if (
-      event === AgentEventEnum.ON_MESSAGE_UPDATED &&
-      (await maybeReplyUnresolvedSubscriberAccess({
-        turn,
-        logger: this.logger,
-        outboundGateway: this.outboundGateway,
-        conversationService: this.conversationService,
-        emailSenderUnverified: false,
-      }))
     ) {
       return;
     }
@@ -2441,6 +2540,7 @@ export class AgentInboundHandler implements OnModuleInit {
       bridgeUrl: bridgeUrlOverride,
       lookupFailed: contextLookupFailed,
     } = await this.connectionContextResolver.resolve(config, rawEvent, userId);
+    const sender: InboundSender = { subscriber, context, bridgeUrlOverride, contextLookupFailed };
 
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {
@@ -2448,10 +2548,7 @@ export class AgentInboundHandler implements OnModuleInit {
       agent: agent ?? { _id: agentId },
       config,
       conversation,
-      subscriber,
-      context,
-      bridgeUrlOverride,
-      contextLookupFailed,
+      ...sender,
       subscriberResolution: actionResolution,
       message: null,
       event: AgentEventEnum.ON_ACTION,
@@ -2463,7 +2560,14 @@ export class AgentInboundHandler implements OnModuleInit {
       workflowOrigin: workflowOrigin ?? undefined,
     };
 
-    if (await this.refusedByAccessRule(turn)) {
+    const access = await this.decideInboundAccess({
+      event: AgentEventEnum.ON_ACTION,
+      config,
+      resolution: actionResolution,
+      sender,
+      emailSenderUnverified: false,
+    });
+    if (await this.stopUnlessAdmitted(turn, access)) {
       return;
     }
 
@@ -2608,14 +2712,30 @@ function eventToThread(event: MessageDeletedEvent, conversation: ConversationEnt
   return { id: event.threadId, channelId: event.channelId, isDM: conversation.isDirectMessage !== false } as Thread;
 }
 
+/** A stored message's text as the agent may read it: never refused text, never a refused edit's text. */
+function agentVisibleText(stored: ConversationActivityEntity | null, platformText: string | undefined): string {
+  if (!stored) {
+    return platformText ?? '';
+  }
+
+  return stored.accessRefused ? '' : stored.content;
+}
+
+/** A copy of a platform message with other text. `Message` is a class, so a spread would drop its methods. */
+function withText(message: Message, text: string): Message {
+  return Object.assign(Object.create(Object.getPrototypeOf(message)), message, { text });
+}
+
 function stubDeletedMessage(event: MessageDeletedEvent, existing: ConversationActivityEntity | null): Message {
+  const text = agentVisibleText(existing, event.previousMessage?.text);
+
   if (event.previousMessage) {
-    return event.previousMessage;
+    return withText(event.previousMessage, text);
   }
 
   return {
     id: event.messageId,
-    text: existing?.content ?? '',
+    text,
     author: {
       userId: existing?.senderId ?? '',
       fullName: existing?.senderName ?? '',

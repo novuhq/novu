@@ -314,7 +314,8 @@ Prerequisites:
 
 - Admin consent has already connected the organization's tenant (see above).
 - The subscriber exists in Novu.
-- Application permission `TeamsAppInstallation.ReadWriteSelfForUser.All` and delegated `User.Read` are configured in Azure (see [Add Microsoft Graph app permissions](/platform/integrations/chat/ms-teams-azure-setup#add-microsoft-graph-app-permissions)).
+- Application permissions `AppCatalog.Read.All` and `TeamsAppInstallation.ReadWriteSelfForUser.All`, and delegated `User.Read`, are configured in Azure (see [Add Microsoft Graph app permissions](/platform/integrations/chat/ms-teams-azure-setup#add-microsoft-graph-app-permissions)).
+- Your Teams app is published to the organization's app catalog, and its **Application (client) ID** is your bot's app ID (see [Create a Teams app](/platform/integrations/chat/ms-teams-azure-setup#create-a-teams-app)). Novu finds the app by that ID, whether the manifest uses it as its `id` or only as the bot's `botId`.
 
 Run a **separate** OAuth flow - do not set `autoLinkUser: true` on `generateConnectOAuthUrl`. Use `generateLinkUserOAuthUrl` instead:
 

@@ -118,6 +118,16 @@ const commands: Record<string, Command> = {
       );
     },
   },
+  flag: onBox(
+    '[key] [value | --unset]',
+    "force a feature flag (true, 5) in this box only, whatever LaunchDarkly serves; it outlasts syncs,\napplies and sleep. --unset gives it back to LaunchDarkly; no key lists the box's forced flags",
+    async (target, parsed) => {
+      await target.ready();
+
+      return target.box(['flag', ...parsed.args, ...(parsed.flag('unset') ? ['--unset'] : [])]);
+    },
+    { unset: { type: 'boolean' } }
+  ),
   down: onBox('', 'save the box to its snapshot and stop it; the next request wakes it', (target) => target.down()),
   delete: onBox('', 'stop the box, forget its snapshot, delete its test users', (target) => target.delete()),
   deploy: {

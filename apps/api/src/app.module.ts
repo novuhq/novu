@@ -231,7 +231,7 @@ if (process.env.SENTRY_DSN) {
   modules.unshift(SentryModule.forRoot());
 }
 
-if (process.env.SEGMENT_TOKEN) {
+if (process.env.MIXPANEL_TOKEN) {
   modules.push(AnalyticsModule);
 }
 

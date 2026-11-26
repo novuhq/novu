@@ -12,6 +12,7 @@ interface TokenKindSpec {
 
 export const TOKEN_KINDS = {
   subscriberLogin: { typ: 'novu-subscriber-login+jwt', maxLifetimeSeconds: 60 * 60 },
+  subscriberTopicGrant: { typ: 'novu-subscriber-topic-grant+jwt', maxLifetimeSeconds: 60 },
 } as const satisfies Record<string, TokenKindSpec>;
 
 export type TokenKind = keyof typeof TOKEN_KINDS;
@@ -32,11 +33,23 @@ export type SubscriberLoginClaims = {
   jti: string;
 };
 
-type TokenClaims = {
-  subscriberLogin: SubscriberLoginClaims;
+export type SubscriberTopicGrantClaims = {
+  iss: EnvironmentId;
+  aud: 'novu';
+  sub: SubscriberId;
+  topic: string;
+  jti: string;
 };
 
-export type TokenVerification = { ok: true; claims: JwtPayload } | { ok: false; reason: 'expired' | 'invalid' };
+type TokenClaims = {
+  subscriberLogin: SubscriberLoginClaims;
+  subscriberTopicGrant: SubscriberTopicGrantClaims;
+};
+
+export type TokenVerification =
+  | { ok: true; claims: JwtPayload }
+  | { ok: false; reason: 'expired'; claims: JwtPayload }
+  | { ok: false; reason: 'invalid' };
 
 export interface SignedToken {
   token: string;
@@ -162,7 +175,16 @@ export class NovuTokens {
     try {
       claims = jwt.verify(token, publicKey, { algorithms: [ALGORITHM] }) as JwtPayload;
     } catch (error) {
-      return { ok: false, reason: error instanceof TokenExpiredError ? 'expired' : 'invalid' };
+      if (!(error instanceof TokenExpiredError)) {
+        return INVALID;
+      }
+
+      const expiredClaims = jwt.verify(token, publicKey, {
+        algorithms: [ALGORITHM],
+        ignoreExpiration: true,
+      }) as JwtPayload;
+
+      return { ok: false, reason: 'expired', claims: expiredClaims };
     }
 
     const nowSeconds = Math.floor(Date.now() / 1000);

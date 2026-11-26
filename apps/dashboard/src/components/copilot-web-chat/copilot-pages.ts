@@ -1,14 +1,28 @@
 import { CopilotPageEnum } from '@novu/shared';
+import type { IconType } from 'react-icons';
+import {
+  RiBarChart2Line,
+  RiBarChartBoxLine,
+  RiGroup2Line,
+  RiPlugLine,
+  RiStore3Line,
+  RiUser3Line,
+} from 'react-icons/ri';
 import { matchPath } from 'react-router-dom';
 import { isWorkflowEditorPath, ROUTES } from '@/utils/routes';
+import { type CopilotPageContext, type CopilotSuggestion, getCopilotContextLabel } from './copilot-web-chat-utils';
 
 /** What the Copilot shows on a dashboard page outside the workflow editor. */
 export type CopilotPageConfig = {
   /** The `ROUTES` patterns that belong to the page. */
   routes: readonly string[];
+  /** The composer chip: the page's navigation icon always leads it; the label shows while nothing on the page is open. */
+  chip: { label: string; icon: IconType };
   emptyState: { title: string; body: string };
   placeholder: string;
   suggestions: readonly string[];
+  /** Leads every suggestion row. */
+  suggestionIcon: IconType;
 };
 
 /** A page listed in `COPILOT_PAGES` stays off until it has an entry here; a new page plugs in by adding one. */
@@ -20,6 +34,7 @@ export const COPILOT_PAGE_CONFIGS: Partial<Record<CopilotPageEnum, CopilotPageCo
       ROUTES.ACTIVITY_REQUESTS,
       ROUTES.ACTIVITY_CONVERSATIONS,
     ],
+    chip: { label: 'Activity', icon: RiBarChartBoxLine },
     emptyState: {
       title: 'Ask about Activity',
       body: 'I read runs, steps and provider responses. Every answer names the environment it used.',
@@ -30,6 +45,7 @@ export const COPILOT_PAGE_CONFIGS: Partial<Record<CopilotPageEnum, CopilotPageCo
       'Did my last trigger reach Novu?',
       'Which workflows had errors today?',
     ],
+    suggestionIcon: RiBarChart2Line,
   },
   [CopilotPageEnum.INTEGRATIONS]: {
     routes: [
@@ -38,6 +54,7 @@ export const COPILOT_PAGE_CONFIGS: Partial<Record<CopilotPageEnum, CopilotPageCo
       ROUTES.INTEGRATIONS_CONNECT_PROVIDER,
       ROUTES.INTEGRATIONS_UPDATE,
     ],
+    chip: { label: 'Integrations', icon: RiStore3Line },
     emptyState: {
       title: 'Ask about integrations',
       body: 'I check which providers are set up, active and primary in each environment. Credentials never go through this chat.',
@@ -48,6 +65,18 @@ export const COPILOT_PAGE_CONFIGS: Partial<Record<CopilotPageEnum, CopilotPageCo
       'Which email provider is primary in each environment?',
       'Turn on activity tracking for my email provider',
     ],
+    suggestionIcon: RiPlugLine,
+  },
+  [CopilotPageEnum.SUBSCRIBERS]: {
+    routes: [ROUTES.SUBSCRIBERS, ROUTES.CREATE_SUBSCRIBER, ROUTES.EDIT_SUBSCRIBER],
+    chip: { label: 'Subscribers', icon: RiGroup2Line },
+    emptyState: {
+      title: 'Ask about subscribers',
+      body: 'I check which channels can reach a subscriber and why not. Every answer names the environment it used.',
+    },
+    placeholder: 'Ask about a subscriber…',
+    suggestions: ['Can we reach jane@acme.com on SMS?', "Why didn't user_123 get their last notification?"],
+    suggestionIcon: RiUser3Line,
   },
 };
 
@@ -72,19 +101,49 @@ export function resolveActiveCopilotPage(
   return page && enabledPages.includes(page) ? page : undefined;
 }
 
-export type CopilotPageCopy = Omit<CopilotPageConfig, 'routes' | 'suggestions'> & { suggestions: string[] };
+/** What the thread panel shows before the first message, and the composer under it. */
+export type CopilotPanelCopy = {
+  emptyState: { title: string; body: string };
+  placeholder: string;
+  suggestions: CopilotSuggestion[];
+  /** What Copilot uses from the open page; none while there is nothing to name. */
+  chip?: { label: string; icon?: IconType };
+};
 
-/** The page's empty state, composer placeholder and suggestions, led by `question` about what is open on it. */
-export function getCopilotPageCopy(page: CopilotPageEnum, question?: string): CopilotPageCopy | undefined {
-  const config = COPILOT_PAGE_CONFIGS[page];
-  if (!config) return undefined;
+// The workflow editor's copy, from the first Copilot design: the v2 design has no workflow editor variant yet.
+const WORKFLOW_EDITOR_COPY = {
+  emptyState: {
+    title: 'Novu Copilot',
+    body: 'Suggests improvements, fills gaps, and applies best practices as you build.',
+  },
+  placeholder: 'Ask anything about this page…',
+};
 
+/**
+ * On a Copilot page: its copy, its suggestions led by `question` about what is open, and its chip naming the open
+ * resource or else the page. In the workflow editor: the suggestions it registered and a chip naming the workflow/step.
+ */
+export function getCopilotPanelCopy(context: CopilotPageContext | undefined): CopilotPanelCopy {
+  const config = context?.page ? COPILOT_PAGE_CONFIGS[context.page] : undefined;
+  const contextLabel = getCopilotContextLabel(context);
+
+  if (!config) {
+    return {
+      ...WORKFLOW_EDITOR_COPY,
+      suggestions: context?.suggestions ?? [],
+      chip: contextLabel ? { label: contextLabel } : undefined,
+    };
+  }
+
+  const question = context?.question;
   const suggestions = config.suggestions.filter((suggestion) => suggestion !== question);
+  const labels = question ? [question, ...suggestions] : suggestions;
 
   return {
     emptyState: config.emptyState,
     placeholder: config.placeholder,
-    suggestions: question ? [question, ...suggestions] : suggestions,
+    suggestions: labels.map((label) => ({ label, icon: config.suggestionIcon })),
+    chip: { label: contextLabel || config.chip.label, icon: config.chip.icon },
   };
 }
 

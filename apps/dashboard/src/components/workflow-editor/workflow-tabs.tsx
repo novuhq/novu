@@ -1,22 +1,12 @@
 import {
   AiAgentTypeEnum,
   AiResourceTypeEnum,
-  AiWorkflowSuggestion,
   EnvironmentTypeEnum,
   PermissionsEnum,
   ResourceOriginEnum,
-  StepTypeEnum,
 } from '@novu/shared';
-import { FC, SVGProps, useCallback, useMemo, useState } from 'react';
-import { IconType } from 'react-icons/lib';
-import {
-  RiArrowDownSLine,
-  RiCodeSSlashLine,
-  RiFileCopyLine,
-  RiListCheck3,
-  RiPlayCircleLine,
-  RiQuillPenLine,
-} from 'react-icons/ri';
+import { useCallback, useMemo, useState } from 'react';
+import { RiArrowDownSLine, RiCodeSSlashLine, RiFileCopyLine, RiPlayCircleLine } from 'react-icons/ri';
 import { Link, useMatch, useNavigate, useParams } from 'react-router-dom';
 import { useWorkflowEditorRoutes } from '@/components/workflow-editor/use-workflow-editor-routes';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
@@ -34,20 +24,19 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { AiChatProvider, NovuCopilotPanel, useAiChat } from '../ai-sidekick';
 import { SidekickToast } from '../ai-sidekick/sidekick-toast';
 import {
-  type CopilotSuggestion,
   CopilotWebChatCanvasToast,
   type EditorCopilotMode,
   useCopilotWebChatSidebar,
   useWorkflowEditorCopilot,
 } from '../copilot-web-chat';
 import { DeleteWorkflowDialog } from '../delete-workflow-dialog';
-import { Code2 } from '../icons/code-2';
 import { Button } from '../primitives/button';
 import { ButtonGroupItem, ButtonGroupRoot } from '../primitives/button-group';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../primitives/dropdown-menu';
 import { ToastClose, ToastIcon } from '../primitives/sonner';
 import { showErrorToast, showSuccessToast, showToast } from '../primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
+import { getWorkflowNewChatSuggestions, isContentStepType } from './new-chat-suggestions';
 import { CopilotSidebar, CopilotSidebarSkeleton } from './steps/layout/copilot-sidebar';
 import { getInitialPayload, getInitialSubscriber } from './steps/utils/preview-context-storage.utils';
 import { TestWorkflowDrawer } from './test-workflow/test-workflow-drawer';
@@ -64,37 +53,6 @@ const WORKFLOW_MUTATION_DATA_EVENTS = new Set([
   'data-workflow-metadata-updated',
   'data-payload-schema-updated',
 ]);
-
-function getNewChatSuggestions(workflow: ReturnType<typeof useWorkflow>['workflow']) {
-  const suggestions: { label: AiWorkflowSuggestion; icon: IconType | FC<SVGProps<SVGSVGElement>> }[] = [
-    { label: AiWorkflowSuggestion.AUTOCOMPLETE, icon: RiListCheck3 },
-  ];
-
-  const hasAnySteps = (workflow?.steps?.length ?? 0) > 0;
-  if (hasAnySteps) {
-    suggestions.push({ label: AiWorkflowSuggestion.APPLY_CONDITIONS, icon: Code2 });
-  }
-
-  const hasContentSteps = workflow?.steps.some((step) =>
-    [
-      StepTypeEnum.EMAIL,
-      StepTypeEnum.SMS,
-      StepTypeEnum.PUSH,
-      StepTypeEnum.IN_APP,
-      StepTypeEnum.CHAT,
-      StepTypeEnum.TOOL,
-    ].includes(step.type)
-  );
-  if (hasContentSteps) {
-    suggestions.push({ label: AiWorkflowSuggestion.IMPROVE_MESSAGING, icon: RiQuillPenLine });
-  }
-
-  if (workflow?.steps.some((step) => Object.keys(step.issues?.controls ?? {}).length > 0)) {
-    suggestions.push({ label: AiWorkflowSuggestion.FIX_WORKFLOW_ISSUES, icon: RiListCheck3 });
-  }
-
-  return suggestions;
-}
 
 function showTriggerFailedToast(workflowName: string | undefined) {
   showToast({
@@ -244,14 +202,12 @@ function WorkflowCanvasPane({
   copilotMode,
   isReadOnly,
   steps,
-  suggestions,
 }: {
   copilotMode: EditorCopilotMode | null;
   isReadOnly: boolean;
   steps: NonNullable<ReturnType<typeof useWorkflow>['workflow']>['steps'] | undefined;
-  suggestions: CopilotSuggestion[];
 }) {
-  const webChatSidebar = useCopilotWebChatSidebar({ copilotMode, suggestions });
+  const webChatSidebar = useCopilotWebChatSidebar({ copilotMode });
   const canvas = <WorkflowCanvas isReadOnly={isReadOnly} steps={steps || []} />;
 
   switch (copilotMode) {
@@ -339,9 +295,17 @@ export const WorkflowTabs = () => {
     isExternalWorkflow ||
     !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
     !isDevEnvironment;
+  const hasSteps = (workflow?.steps?.length ?? 0) > 0;
+  const hasContentSteps = !!workflow?.steps.some((step) => isContentStepType(step.type));
+  const hasIssues = !!workflow?.steps.some((step) => Object.keys(step.issues?.controls ?? {}).length > 0);
+  const newChatSuggestions = useMemo(
+    () => getWorkflowNewChatSuggestions({ hasSteps, hasContentSteps, hasIssues }),
+    [hasSteps, hasContentSteps, hasIssues]
+  );
   const copilotMode = useWorkflowEditorCopilot({
     workflowId: workflow?._id,
     workflowLabel: workflow?.workflowId,
+    suggestions: newChatSuggestions,
     onRefetch: () => refetchWorkflow({ cancelRefetch: true }),
   });
   // Memoize subscriber data and payload for integration instructions
@@ -484,8 +448,6 @@ export const WorkflowTabs = () => {
 
   const { deleteWorkflow, isPending: isDeletePending } = useDeleteWorkflow();
 
-  const newChatSuggestions = useMemo(() => getNewChatSuggestions(workflow), [workflow]);
-
   const aiChatConfig = useMemo(
     () => ({
       resourceType: AiResourceTypeEnum.WORKFLOW,
@@ -617,12 +579,7 @@ export const WorkflowTabs = () => {
           </div>
         </TabsList>
         <TabsContent value="workflow" className="flex mt-0 h-full max-w-full overflow-hidden">
-          <WorkflowCanvasPane
-            copilotMode={copilotMode}
-            isReadOnly={isReadOnly}
-            steps={workflow?.steps}
-            suggestions={newChatSuggestions}
-          />
+          <WorkflowCanvasPane copilotMode={copilotMode} isReadOnly={isReadOnly} steps={workflow?.steps} />
         </TabsContent>
         <TabsContent value="activity" className="mt-0 h-full max-w-full">
           <WorkflowActivity />

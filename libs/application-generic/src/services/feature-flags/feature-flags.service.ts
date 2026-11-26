@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { parseFeatureFlagOverrides } from '@novu/shared';
 import { LaunchDarklyFeatureFlagsService } from './launch-darkly.service';
 import { ProcessEnvFeatureFlagsService } from './process-env.service';
 
@@ -10,7 +11,13 @@ const LOG_CONTEXT = 'FeatureFlagsService';
 export class FeatureFlagsService {
   public service: IFeatureFlagsService;
 
+  private readonly overrides = parseFeatureFlagOverrides(process.env.FEATURE_FLAG_OVERRIDES);
+
   public async initialize(): Promise<void> {
+    if (Object.keys(this.overrides).length) {
+      Logger.warn(`Feature flags forced by FEATURE_FLAG_OVERRIDES: ${JSON.stringify(this.overrides)}`, LOG_CONTEXT);
+    }
+
     const Service = process.env.LAUNCH_DARKLY_SDK_KEY ? LaunchDarklyFeatureFlagsService : ProcessEnvFeatureFlagsService;
 
     this.service = new Service();
@@ -37,6 +44,10 @@ export class FeatureFlagsService {
   }
   // the T_Result is inferred from the usage within the context.defaultValue in FeatureFlagContext
   public async getFlag<T_Result>(context: FeatureFlagContext<T_Result>): Promise<T_Result> {
+    if (Object.hasOwn(this.overrides, context.key)) {
+      return this.overrides[context.key] as T_Result;
+    }
+
     return this.service.getFlag(context);
   }
 }
