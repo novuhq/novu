@@ -1,6 +1,6 @@
 import { CredentialsKeyEnum, type IConfigCredential } from '@novu/shared';
-import { type DragEvent, useEffect, useId, useRef, useState } from 'react';
-import { type Control, type UseFormSetValue, useController } from 'react-hook-form';
+import { type DragEvent, useId, useRef, useState } from 'react';
+import { type Control, type UseFormSetValue, useWatch } from 'react-hook-form';
 import { RiInformationFill, RiLinkM, RiUploadCloud2Line } from 'react-icons/ri';
 import { SetupButton } from '@/components/agents/setup-guide-primitives';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
@@ -27,8 +27,12 @@ function isPrivateKey(text: string) {
 
 const KEY_RULES = {
   required: 'Add the .p8 auth key',
-  validate: (value: string | undefined) =>
-    !value?.trim() || isPrivateKey(value) ? true : 'Use the .p8 auth key Apple downloaded',
+  // `required` lets whitespace through, so an empty-looking key is caught here too.
+  validate: (value: string | undefined) => {
+    if (!value?.trim()) return 'Add the .p8 auth key';
+
+    return isPrivateKey(value) ? true : 'Use the .p8 auth key Apple downloaded';
+  },
 };
 
 /**
@@ -94,6 +98,13 @@ export function ApnsKeyUpload({
   const [detectedKeyId, setDetectedKeyId] = useState<string>();
   const [fileError, setFileError] = useState<string>();
   const [isDragging, setIsDragging] = useState(false);
+  const keyValue = useWatch({ control, name: KEY_FIELD });
+  const keyIdValue = useWatch({ control, name: KEY_ID_FIELD });
+  const hasKey = typeof keyValue === 'string' && isPrivateKey(keyValue);
+  const isKeyIdDetected = !!detectedKeyId && keyIdValue === detectedKeyId;
+  // From the form's values, not only this upload's state: switching to Manual and back remounts this with no file
+  // name, and a key without a Key ID still needs its field.
+  const showsKeyIdField = hasKey && !isKeyIdDetected;
 
   const readFile = async (file: File | undefined) => {
     if (!file || isReadOnly) return;
@@ -192,7 +203,7 @@ export function ApnsKeyUpload({
                   </>
                 )}
               </button>
-              {hasFile && !error && detectedKeyId && (
+              {hasFile && !error && isKeyIdDetected && (
                 <p className="text-paragraph-xs text-text-sub flex items-center gap-1" aria-live="polite">
                   <RiInformationFill className="text-text-soft size-4 shrink-0" />
                   Key ID {detectedKeyId} detected
@@ -208,11 +219,14 @@ export function ApnsKeyUpload({
           );
         }}
       />
-      {fileName && !detectedKeyId && keyIdCredential && (
+      {showsKeyIdField && keyIdCredential && (
         <CredentialSection
           credential={{
             ...keyIdCredential,
-            description: 'The file was renamed, so copy the Key ID from Keys in Apple Developer.',
+            description:
+              fileName && !detectedKeyId
+                ? 'The file was renamed, so copy the Key ID from Keys in Apple Developer.'
+                : 'Copy the Key ID from Keys in Apple Developer.',
           }}
           control={control}
           isReadOnly={isReadOnly}
@@ -230,7 +244,7 @@ const ENVIRONMENT_OPTIONS = [
 /**
  * Which APNs server Novu sends to. Apple keeps device tokens apart: Xcode debug builds get Sandbox tokens, while
  * TestFlight and App Store builds get Production ones. Stored as the `secure` switch: on sends to Production.
- * It starts on Production, as most tokens come from TestFlight and App Store builds.
+ * It starts on Production (the form's default), as most tokens come from TestFlight and App Store builds.
  */
 export function ApnsEnvironmentField({
   control,
@@ -242,14 +256,6 @@ export function ApnsEnvironmentField({
   isReadOnly?: boolean;
 }) {
   const labelId = useId();
-  const {
-    field: { value, onChange },
-  } = useController({ control, name: ENVIRONMENT_FIELD });
-
-  // The integration stores a boolean, so the switch's value goes in as one; unset is the default, Production.
-  useEffect(() => {
-    if (value === undefined) onChange(true);
-  }, [value, onChange]);
 
   return (
     <FormField

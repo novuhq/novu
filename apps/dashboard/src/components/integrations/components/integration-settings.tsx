@@ -284,7 +284,9 @@ export function IntegrationSettings({
           identifier: generateSlug(provider?.displayName ?? ''),
           active: true,
           primary: true,
-          credentials: {},
+          // APNs' setup starts on Production, as most device tokens come from TestFlight and App Store builds.
+          credentials:
+            setupLayout && provider?.id === PushProviderIdEnum.APNS ? { [CredentialsKeyEnum.Secure]: true } : {},
           // The email setup guides turn on activity tracking where it is available.
           // A string, as the form types it; the integration schema stores it as a boolean.
           configurations:

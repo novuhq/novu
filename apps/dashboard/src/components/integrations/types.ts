@@ -18,7 +18,7 @@ export type IntegrationFormData = {
   identifier: string;
   active: boolean;
   primary: boolean;
-  credentials: Record<string, string>;
+  credentials: Record<string, string | boolean>;
   configurations: Record<string, string>;
   check: boolean;
   environmentId: string;
