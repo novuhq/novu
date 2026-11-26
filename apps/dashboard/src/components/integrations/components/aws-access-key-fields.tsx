@@ -1,5 +1,5 @@
 import { CredentialsKeyEnum, type IConfigCredential } from '@novu/shared';
-import { type DragEvent, useId, useRef, useState } from 'react';
+import { type DragEvent, useEffect, useId, useRef, useState } from 'react';
 import { type Control, type UseFormSetValue, useWatch } from 'react-hook-form';
 import { RiInformationFill, RiLinkM, RiUploadCloud2Line } from 'react-icons/ri';
 import { SetupButton } from '@/components/agents/setup-guide-primitives';
@@ -51,6 +51,12 @@ export function AwsAccessKeyUpload({
   const keyId = useWatch({ control, name: KEY_ID_FIELD });
   const secret = useWatch({ control, name: SECRET_FIELD });
   const hasKey = isAwsAccessKeyId(keyId) && !!secret?.trim();
+
+  // A key that arrives another way, pasted or typed, replaces what a file that couldn't be read left behind.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the key changes, whatever it changed to
+  useEffect(() => {
+    setFileError(undefined);
+  }, [keyId, secret]);
 
   const readFile = async (file: File | undefined) => {
     if (!file || isReadOnly) return;

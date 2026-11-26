@@ -162,8 +162,9 @@ const GUIDES: Record<GuidedSetupProviderId, CredentialsGuide> = {
   [EmailProviderIdEnum.SES]: {
     sourceStep: {
       title: 'Create an IAM user for Novu',
+      // IAM user names take no spaces or dashes other than the hyphen, so "Novu – Development" is "Novu-Development".
       description: (keyName) =>
-        `In IAM, create a user named “${keyName}” and attach the send-only policy as an inline policy. Then, under Security credentials, create an access key and download the .csv file.`,
+        `In IAM, create a user named “${keyName.replace(/[^A-Za-z0-9+=,.@_]+/g, '-')}” and attach the send-only policy as an inline policy. Then, under Security credentials, create an access key and download the .csv file.`,
       buttonLabel: 'Open AWS IAM',
       url: 'https://console.aws.amazon.com/iam/home#/users/create',
       copyable: { label: 'Copy send-only policy', value: SES_SEND_POLICY },

@@ -10,6 +10,9 @@ import {
 // AWS's documentation examples, not real credentials.
 const ID = 'AKIAIOSFODNN7EXAMPLE';
 const SECRET = 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY';
+// Stand-ins for other services' keys, built here so no secret-shaped literal sits in the repository.
+const OTHER_ID = `AKIA${'B'.repeat(16)}`;
+const OTHER_SECRET = 'x'.repeat(40);
 const BOTH = { [CredentialsKeyEnum.ApiKey]: ID, [CredentialsKeyEnum.SecretKey]: SECRET };
 
 describe('isLikelyAwsCredentialsBlock', () => {
@@ -54,9 +57,49 @@ describe('parseAwsCredentials', () => {
   });
 
   it('skips commented-out lines and values that are not a region', () => {
-    const env = `# AWS_ACCESS_KEY_ID=AKIAOLDOLDOLDOLDOLD1\nAWS_ACCESS_KEY_ID=${ID}\nAWS_REGION=somewhere`;
+    const env = `# AWS_ACCESS_KEY_ID=${OTHER_ID}\nAWS_ACCESS_KEY_ID=${ID}\nAWS_REGION=somewhere`;
 
     expect(parseAwsCredentials(env)).toEqual({ [CredentialsKeyEnum.ApiKey]: ID });
+  });
+
+  it('prefers the AWS variables over other services’ keys in a full .env', () => {
+    const env = [
+      `APP_SECRET_KEY=${OTHER_SECRET}`,
+      `BACKUP_SECRET_ACCESS_KEY=${OTHER_SECRET}`,
+      `BACKUP_ACCESS_KEY_ID=${OTHER_ID}`,
+      `AWS_ACCESS_KEY_ID=${ID}`,
+      `AWS_SECRET_ACCESS_KEY=${SECRET}`,
+    ].join('\n');
+
+    expect(parseAwsCredentials(env)).toEqual(BOTH);
+  });
+
+  it('does not guess a secret from another variable when the AWS one is missing', () => {
+    const env = `APP_SECRET_KEY=${OTHER_SECRET}\nAWS_ACCESS_KEY_ID=${ID}`;
+
+    expect(parseAwsCredentials(env)).toEqual({ [CredentialsKeyEnum.ApiKey]: ID });
+  });
+
+  it('reads one profile of a credentials file, not a mix', () => {
+    const file = [
+      '[default]',
+      'region = us-east-1',
+      '[profile novu]',
+      `aws_access_key_id = ${ID}`,
+      `aws_secret_access_key = ${SECRET}`,
+      'region = eu-west-1',
+      '[profile other]',
+      `aws_access_key_id = ${OTHER_ID}`,
+      'region = ap-south-1',
+    ].join('\n');
+
+    expect(parseAwsCredentials(file)).toEqual({ ...BOTH, [CredentialsKeyEnum.Region]: 'eu-west-1' });
+  });
+
+  it('leaves the region out when only another profile names one', () => {
+    const file = `[default]\nregion = us-east-1\n[novu]\naws_access_key_id = ${ID}\naws_secret_access_key = ${SECRET}`;
+
+    expect(parseAwsCredentials(file)).toEqual(BOTH);
   });
 
   it('returns nothing for unrelated text', () => {

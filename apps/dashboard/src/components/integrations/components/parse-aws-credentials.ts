@@ -65,6 +65,46 @@ export function isLikelyAwsCredentialsBlock(text: string): boolean {
   return ACCESS_KEY_ID_PATTERN.test(trimmed) && /[=:,\n]/.test(trimmed);
 }
 
+const PROFILE_HEADER_PATTERN = /^\[[^\]]+\]$/;
+
+/** The lines of the profile that holds an access key, or every line when the text has no `[profile]` headers. */
+function pickProfile(lines: string[]): string[] {
+  if (!lines.some((line) => PROFILE_HEADER_PATTERN.test(line))) return lines;
+
+  const profiles: string[][] = [[]];
+  for (const line of lines) {
+    if (PROFILE_HEADER_PATTERN.test(line)) profiles.push([]);
+    else profiles[profiles.length - 1].push(line);
+  }
+
+  return profiles.find((profile) => ACCESS_KEY_ID_PATTERN.test(profile.join('\n'))) ?? [];
+}
+
+/**
+ * The values of the variables that name AWS credentials. A name that starts with `aws` wins over one that only
+ * ends the same way (`BACKUP_ACCESS_KEY_ID`), wherever each is in the text; among equals, the first is kept.
+ */
+function readAssignments(lines: string[]): ParsedAwsCredentials {
+  const fromAwsNames: ParsedAwsCredentials = {};
+  const fromOtherNames: ParsedAwsCredentials = {};
+
+  for (const line of lines) {
+    const assignment = line.match(ASSIGNMENT_PATTERN);
+    if (!assignment) continue;
+
+    const name = assignment[1].toLowerCase().replace(/[\s_]+/g, '');
+    const value = unquote(assignment[2]);
+    if (!value) continue;
+
+    const target = name.startsWith('aws') ? fromAwsNames : fromOtherNames;
+    if (name.endsWith('accesskeyid')) target[CredentialsKeyEnum.ApiKey] ??= value;
+    else if (name.endsWith('secretaccesskey')) target[CredentialsKeyEnum.SecretKey] ??= value;
+    else if (name.endsWith('region') && REGION_PATTERN.test(value)) target[CredentialsKeyEnum.Region] ??= value;
+  }
+
+  return { ...fromOtherNames, ...fromAwsNames };
+}
+
 /**
  * Best-effort read of AWS credentials from the access key CSV, environment variables (`AWS_ACCESS_KEY_ID=…`), or a
  * credentials file (`aws_access_key_id = …`). The region comes along when the text names one.
@@ -77,26 +117,23 @@ export function parseAwsCredentials(text: string): ParsedAwsCredentials {
     .map((line) => line.trim())
     .filter((line) => line && !line.startsWith('#'));
 
-  const parsed = parseAccessKeysCsv(lines);
+  // A credentials file can hold several profiles; only the one with the access key is read, so its key is never
+  // paired with another profile's region.
+  const profileLines = pickProfile(lines);
+  const parsed = parseAccessKeysCsv(profileLines);
+  const named = readAssignments(profileLines);
 
-  for (const line of lines) {
-    const assignment = line.match(ASSIGNMENT_PATTERN);
-    if (!assignment) continue;
+  parsed[CredentialsKeyEnum.ApiKey] ??= named[CredentialsKeyEnum.ApiKey];
+  parsed[CredentialsKeyEnum.SecretKey] ??= named[CredentialsKeyEnum.SecretKey];
+  parsed[CredentialsKeyEnum.Region] ??= named[CredentialsKeyEnum.Region];
 
-    const name = assignment[1].toLowerCase().replace(/[\s_]+/g, '');
-    const value = unquote(assignment[2]);
-    if (!value) continue;
-
-    if (name.endsWith('accesskeyid')) parsed[CredentialsKeyEnum.ApiKey] ??= value;
-    else if (name.endsWith('secretaccesskey') || name.endsWith('secretkey')) {
-      parsed[CredentialsKeyEnum.SecretKey] ??= value;
-    } else if (name.endsWith('region') && REGION_PATTERN.test(value)) parsed[CredentialsKeyEnum.Region] ??= value;
-  }
-
-  // Unlabelled text, such as the two values copied one under the other: found by their shape.
-  const joined = lines.join('\n');
+  // Unlabelled text, such as the two values copied one under the other: found by their shape. A secret is only
+  // guessed this way when no variable is named, so another service's 40-character secret in a .env isn't taken.
+  const joined = profileLines.join('\n');
   parsed[CredentialsKeyEnum.ApiKey] ??= joined.match(ACCESS_KEY_ID_PATTERN)?.[0];
-  parsed[CredentialsKeyEnum.SecretKey] ??= joined.match(SECRET_KEY_PATTERN)?.[0];
+  if (!profileLines.some((line) => ASSIGNMENT_PATTERN.test(line))) {
+    parsed[CredentialsKeyEnum.SecretKey] ??= joined.match(SECRET_KEY_PATTERN)?.[0];
+  }
 
   for (const key of Object.keys(parsed) as AwsCredentialField[]) {
     if (parsed[key] === undefined) delete parsed[key];
