@@ -1,6 +1,5 @@
-import { isOAuthToken, NovuApiUtils } from "../utils/api";
-import type { OAuthContext } from "./context";
-import { serviceUnavailableResponse, unauthorizedResponse } from "./responses";
+import { NovuApiUtils } from "../utils/api";
+import { apiKeyUnauthorizedResponse, serviceUnavailableResponse } from "./responses";
 
 function isInitializeRequest(bodyText: string): boolean {
 	try {
@@ -13,16 +12,14 @@ function isInitializeRequest(bodyText: string): boolean {
 }
 
 /**
- * Validate the caller's credential against the live Novu API at initialize
- * time so a bad credential fails fast. Applies to both OAuth tokens and API
- * keys; a rejected credential yields a 401 whose OAuth-ness matches the token
- * (API keys never get the OAuth discovery challenge).
+ * Validate an API key against the live Novu API at initialize time so a bad
+ * key fails fast. OAuth tokens skip this: Clerk already verified them, audience
+ * included, before the request got here.
  */
-export async function gateInitializeWithOAuthProbe(
+export async function gateInitializeWithApiKeyProbe(
 	request: Request,
 	token: string,
 	apiUrl: string,
-	ctx: OAuthContext,
 ): Promise<{ reject: Response } | { forwardBody: string | null }> {
 	if (request.method !== "POST") {
 		return { forwardBody: null };
@@ -34,7 +31,7 @@ export async function gateInitializeWithOAuthProbe(
 		try {
 			const response = await NovuApiUtils.fetchCurrentUser(token, apiUrl);
 			if (response.status === 401 || response.status === 403) {
-				return { reject: unauthorizedResponse(ctx, { oauth: isOAuthToken(token) }) };
+				return { reject: apiKeyUnauthorizedResponse() };
 			}
 			if (!response.ok) return { reject: serviceUnavailableResponse() };
 		} catch {

@@ -1,5 +1,7 @@
+import type { McpAuthOptions } from "@clerk/mcp-tools/hono";
+import { OAUTH_SCOPES } from "./scopes";
+
 export const PRM_PATH = "/.well-known/oauth-protected-resource";
-export const DCR_PATH = "/oauth/register";
 export const AS_METADATA_PATHS = [
 	"/.well-known/oauth-authorization-server",
 	"/.well-known/openid-configuration",
@@ -17,48 +19,35 @@ export const MCP_CORS_HEADERS: Record<string, string> = {
 		"Authorization, Content-Type, mcp-session-id, mcp-protocol-version",
 	"Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
 	"Access-Control-Allow-Origin": "*",
-	"Access-Control-Expose-Headers": "mcp-session-id",
+	// Browser-based MCP clients can only start sign-in if they can read the challenge.
+	"Access-Control-Expose-Headers": "mcp-session-id, WWW-Authenticate",
 	"Access-Control-Max-Age": "86400",
 };
 
 /**
- * Per-request OAuth context. `issuer` is the Clerk authorization server this
- * deployment proxies to, sourced from the `CLERK_OAUTH_ISSUER` secret. When it
- * is `null` the deployment has no OAuth configured (self-hosted mode): the
- * discovery endpoints 404 and 401 challenges omit the OAuth metadata so clients
- * fall back to API-key auth. `origin`/`resource`/`prmUrl` are derived from the
- * request URL (each deployment is pinned to a single host).
+ * OAuth is on when the deployment has the keys of the Clerk instance that
+ * issues its tokens: `CLERK_PUBLISHABLE_KEY` names the authorization server
+ * (Clerk's Frontend API), `CLERK_SECRET_KEY` verifies tokens. Without both the
+ * deployment is API-key only (self-hosted mode): the discovery endpoints 404
+ * and the 401 challenge carries no OAuth metadata.
  */
-export type OAuthContext = {
-	origin: string;
-	resource: string;
-	prmUrl: string;
-	issuer: string | null;
-};
-
-function trimTrailingSlashes(value: string): string {
-	let end = value.length;
-	while (end > 0 && value[end - 1] === "/") end--;
-
-	return value.slice(0, end);
+export function isOAuthEnabled(env: Env): boolean {
+	return Boolean(env.CLERK_PUBLISHABLE_KEY && env.CLERK_SECRET_KEY);
 }
 
-function resolveIssuer(env: Env): string | null {
-	const issuer = env.CLERK_OAUTH_ISSUER?.trim();
-	return issuer ? trimTrailingSlashes(issuer) : null;
-}
-
-export function resolveOrigin(request: Request): string {
-	return new URL(request.url).origin;
-}
-
-export function resolveOAuthContext(env: Env, request: Request): OAuthContext {
-	const origin = resolveOrigin(request);
+/**
+ * Options shared by `mcpAuth` and the protected resource metadata, so the
+ * metadata lists the scopes the challenge asks for. Each deployment is pinned
+ * to one host, so the resource is the origin of the request.
+ */
+export function clerkAuthOptions(origin: string): McpAuthOptions {
 	return {
-		issuer: resolveIssuer(env),
-		// RFC 9728: PRM `resource` must exactly match the MCP endpoint URL.
-		origin,
-		prmUrl: `${origin}${PRM_PATH}`,
-		resource: origin,
+		challengeScopes: [...OAUTH_SCOPES],
+		// An unauthenticated `initialize` would open a Durable Object session with
+		// no credential, so every MCP request needs a token.
+		discoverable: false,
+		// RFC 9728: the resource is the MCP endpoint, which is the origin root.
+		// Clerk accepts a token whose `aud` is this URL with or without the slash.
+		resourceUrl: origin,
 	};
 }

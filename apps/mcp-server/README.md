@@ -68,8 +68,11 @@ regional endpoint:
 **1. OAuth (recommended)** — No API key to copy/paste. When your MCP client first
 connects, the server responds with a `401` and an OAuth discovery document
 (`/.well-known/oauth-protected-resource`) that points the client at Novu's
-authorization server (Clerk). Your client opens the Novu sign-in + consent screen,
-you pick an organization, and the client receives an access token automatically.
+authorization server (Clerk). The client registers with Clerk directly, opens the
+Novu sign-in + consent screen, you pick an organization, and the client receives
+an access token automatically. The server verifies every token with Clerk,
+including that it was issued for this server's URL, using Clerk's
+[`@clerk/mcp-tools`](https://github.com/clerk/mcp-tools).
 
 Any MCP client that supports remote OAuth (Cursor, Claude, ChatGPT, Windsurf, …)
 handles this flow for you — just add the server URL with no header.
@@ -259,12 +262,12 @@ Configuration is read from `.dev.vars` (gitignored) — copy
 - `NOVU_API_URL` — the Novu API this server proxies to (e.g. `http://localhost:3000`
   for a self-hosted API, or `https://api.novu.co` / `https://eu.api.novu.co` for cloud).
 - `NOVU_REGION` — the display label surfaced by `whoami`.
-- `CLERK_OAUTH_ISSUER` — the Clerk authorization server for OAuth. Leave empty to
-  disable OAuth entirely and run API-key-only (the self-hosted mode).
-- `CLERK_SECRET_KEY` — secret key of the Clerk instance that stores agent feedback.
-  When set, the server registers Clerk's `submit_feedback` tool and reports show in
-  that instance's Clerk Dashboard. Leave empty to omit the tool. In deployed
-  environments set it with `wrangler secret put CLERK_SECRET_KEY --env <us|eu|staging>`.
+- `CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` — keys of the Clerk instance
+  that issues this deployment's OAuth tokens (the one your Novu API trusts). With
+  both set, the server offers OAuth; leave either empty to run API-key-only (the
+  self-hosted mode). The secret key also registers Clerk's `submit_feedback` tool,
+  and reports show in that instance's Clerk Dashboard. In deployed environments
+  set them with `wrangler secret put <name> --env <us|eu|staging>`.
 
 For local development against a **self-hosted Novu API** on `http://localhost:3000`,
 set `NOVU_API_URL="http://localhost:3000"` in `.dev.vars` and use your instance's
@@ -288,16 +291,16 @@ API key (OAuth is Novu Cloud only):
 
 ### OAuth in local development
 
-To exercise OAuth locally, set `CLERK_OAUTH_ISSUER` in `.dev.vars` to a Clerk
-authorization server your Novu API trusts (e.g. `https://clerk.dashboard.novu.co`
-for US). The MCP endpoint origin is derived from the request URL, so run the dev
-server and point your MCP client at the same URL (e.g. `http://localhost:8787/`).
-RFC 9728 requires the PRM `resource` field to exactly match the MCP endpoint URL;
-connecting via a different host/port than the server is bound to causes clients
-like Cursor to discard the metadata and register without the `user:org:read` scope.
+To exercise OAuth locally, set `CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` in
+`.dev.vars` to the keys of a Clerk instance your Novu API trusts. The MCP endpoint
+origin is derived from the request URL, so run the dev server and point your MCP
+client at the same URL (e.g. `http://localhost:8787/`). RFC 9728 requires the PRM
+`resource` field to exactly match the MCP endpoint URL, and Clerk only accepts a
+token whose audience is that URL, so add it as an MCP server in the Clerk
+Dashboard (**Agents → MCP servers**) and connect through the same host and port.
 
-When `CLERK_OAUTH_ISSUER` is empty, the OAuth discovery endpoints return `404` and
-`401` responses omit the OAuth metadata, so clients fall back to API-key auth.
+When either key is empty, the OAuth discovery endpoints return `404` and `401`
+responses omit the OAuth metadata, so clients fall back to API-key auth.
 
 ### Deploying your own instance
 
@@ -313,18 +316,25 @@ deployments live under named environments:
 Use staging to test changes against the Novu staging API before deploying US or
 EU. It is a separate worker (`novu-mcp-server-staging`) with its own Durable
 Object sessions, so deploying it never touches production. For OAuth on staging,
-set its issuer once with `wrangler secret put CLERK_OAUTH_ISSUER --env staging`
-to the Clerk instance the staging dashboard signs in with; until then staging
-accepts API keys only.
+set `CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` once with
+`wrangler secret put <name> --env staging` to the keys of the Clerk instance the
+staging dashboard signs in with; until then staging accepts API keys only.
+
+Each deployment's URL must also be registered in its Clerk instance under
+**Agents → MCP servers**. That turns on the `aud` claim Clerk verifies tokens
+against. Clients register through Clerk's Client ID Metadata Documents or dynamic
+client registration, so both should be published on the instance's OAuth
+applications page, with default scopes for dynamic clients that include
+`user:org:read`.
 
 To deploy your own instance, fork the [Novu repo](https://github.com/novuhq/novu), and in `apps/mcp-server` add an environment under `env`
 (or edit an existing one) with your own `routes`, `NOVU_API_URL`, and
 `NOVU_REGION`, then deploy it with `wrangler deploy --env <name>`. A self-deployed
 instance works out of the box with API-key authentication against whatever
 `NOVU_API_URL` points at — including a self-hosted Novu API. OAuth on your own
-deployment requires setting the `CLERK_OAUTH_ISSUER` secret
-(`wrangler secret put CLERK_OAUTH_ISSUER --env <name>`) to an authorization
-server that your Novu API trusts; leave it unset for API-key-only.
+deployment requires setting the `CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`
+secrets (`wrangler secret put <name> --env <name>`) to a Clerk instance your
+Novu API trusts; leave them unset for API-key-only.
 
 ### Scripts
 

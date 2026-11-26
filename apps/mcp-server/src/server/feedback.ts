@@ -1,4 +1,4 @@
-import { submitFeedbackTool } from "@clerk/mcp-tools/feedback";
+import { submitFeedbackTool } from "@clerk/mcp-tools/tools";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 export const FEEDBACK_SERVER_INFO = { name: "Novu MCP Server", version: "1.0.0" };

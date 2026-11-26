@@ -1,13 +1,14 @@
 export {
+	AS_METADATA_PATHS,
+	clerkAuthOptions,
 	DISCOVERY_CORS_HEADERS,
+	isOAuthEnabled,
 	MCP_CORS_HEADERS,
-	type OAuthContext,
-	resolveOAuthContext,
-	resolveOrigin,
+	PRM_PATH,
 } from "./context";
-export { handleDiscovery } from "./discovery";
-export { gateInitializeWithOAuthProbe } from "./gate";
+export { gateInitializeWithApiKeyProbe } from "./gate";
 export {
+	apiKeyUnauthorizedResponse,
+	oauthDisabledResponse,
 	serviceUnavailableResponse,
-	unauthorizedResponse,
 } from "./responses";

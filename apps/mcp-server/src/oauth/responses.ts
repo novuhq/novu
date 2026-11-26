@@ -1,34 +1,23 @@
-import type { OAuthContext } from "./context";
 import { DISCOVERY_CORS_HEADERS, MCP_CORS_HEADERS } from "./context";
-import { OAUTH_SCOPE_PARAM } from "./scopes";
-
-export function discoveryJsonResponse(body: unknown, status: number): Response {
-	return new Response(JSON.stringify(body), {
-		headers: { "Content-Type": "application/json", ...DISCOVERY_CORS_HEADERS },
-		status,
-	});
-}
-
-export function discoveryOptionsResponse(): Response {
-	return new Response(null, { headers: DISCOVERY_CORS_HEADERS, status: 204 });
-}
 
 export function oauthDisabledResponse(): Response {
-	return discoveryJsonResponse(
-		{
+	return new Response(
+		JSON.stringify({
 			error: "not_found",
 			error_description: "OAuth is not enabled on this deployment",
+		}),
+		{
+			headers: { "Content-Type": "application/json", ...DISCOVERY_CORS_HEADERS },
+			status: 404,
 		},
-		404,
 	);
 }
 
-export function unauthorizedResponse(ctx: OAuthContext, options?: { oauth?: boolean }): Response {
-	const offerOAuth = options?.oauth !== false && ctx.issuer !== null;
-	const wwwAuthenticate = offerOAuth
-		? `Bearer scope="${OAUTH_SCOPE_PARAM}", resource_metadata="${ctx.prmUrl}"`
-		: "Bearer";
-
+/**
+ * 401 for a missing or rejected API key. It carries no OAuth metadata, so a
+ * client that presented an API key never starts the OAuth flow.
+ */
+export function apiKeyUnauthorizedResponse(): Response {
 	return new Response(
 		JSON.stringify({
 			error: "unauthorized",
@@ -37,7 +26,7 @@ export function unauthorizedResponse(ctx: OAuthContext, options?: { oauth?: bool
 		{
 			headers: {
 				"Content-Type": "application/json",
-				"WWW-Authenticate": wwwAuthenticate,
+				"WWW-Authenticate": "Bearer",
 				...MCP_CORS_HEADERS,
 			},
 			status: 401,
@@ -58,5 +47,3 @@ export function serviceUnavailableResponse(): Response {
 		},
 	);
 }
-
-export { DISCOVERY_CORS_HEADERS, MCP_CORS_HEADERS } from "./context";

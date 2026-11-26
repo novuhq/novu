@@ -38,10 +38,11 @@
 	 * Per-deployment config. `NOVU_API_URL` is the Novu API base URL this
 	 * deployment proxies to; `NOVU_REGION` is the display label surfaced by
 	 * `whoami` and used to reject mismatched legacy `?region=` params. Both are
-	 * public, non-secret. The Clerk OAuth issuer is NOT declared here — it is a
-	 * Cloudflare secret (`wrangler secret put CLERK_OAUTH_ISSUER`) so it stays
-	 * out of the public repo. When the secret is unset, OAuth is disabled and
-	 * the deployment is API-key only (the self-hosted story). Local dev overrides
+	 * public, non-secret. The Clerk keys are NOT declared here — they are
+	 * Cloudflare secrets (`wrangler secret put CLERK_PUBLISHABLE_KEY` and
+	 * `CLERK_SECRET_KEY`), both from the Clerk instance that issues this
+	 * deployment's OAuth tokens. When either is unset, OAuth is disabled and the
+	 * deployment is API-key only (the self-hosted story). Local dev overrides
 	 * all of these via `.dev.vars`.
 	 */
 	"vars": {
@@ -113,9 +114,10 @@
 		},
 		/**
 		 * Staging, for testing against the Novu staging API before a US/EU deploy
-		 * (`pnpm deploy:staging`). OAuth needs its own `CLERK_OAUTH_ISSUER` secret
-		 * (`wrangler secret put CLERK_OAUTH_ISSUER --env staging`) set to the Clerk
-		 * instance the staging API trusts; without it, staging is API-key only.
+		 * (`pnpm deploy:staging`). OAuth needs the `CLERK_PUBLISHABLE_KEY` and
+		 * `CLERK_SECRET_KEY` secrets (`wrangler secret put <name> --env staging`)
+		 * of the Clerk instance the staging API trusts; without them, staging is
+		 * API-key only.
 		 */
 		"staging": {
 			"name": "novu-mcp-server-staging",
