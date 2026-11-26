@@ -35,7 +35,7 @@ export class GetRequests {
     const page = command.page || 0;
     const offset = page * limit;
 
-    const retentionRange = await this.activityRetentionService.resolve({
+    const createdAfter = await this.activityRetentionService.resolveAfter({
       organizationId: command.organizationId,
       after: command.createdGte ? createdGteToIsoString(command.createdGte) : undefined,
     });
@@ -64,11 +64,8 @@ export class GetRequests {
       queryBuilder.whereEquals('source', command.source);
     }
 
-    if (retentionRange.after) {
-      queryBuilder.whereGreaterThanOrEqual(
-        'created_at',
-        LogRepository.formatDateTime64(new Date(retentionRange.after))
-      );
+    if (createdAfter) {
+      queryBuilder.whereGreaterThanOrEqual('created_at', LogRepository.formatDateTime64(new Date(createdAfter)));
     }
 
     const safeWhere = queryBuilder.build();

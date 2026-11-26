@@ -8,6 +8,8 @@ interface ResolveActivityRetentionRangeOptions {
   before?: string;
 }
 
+type ResolveActivityRetentionStartOptions = Pick<ResolveActivityRetentionRangeOptions, 'organizationId' | 'after'>;
+
 interface AssertWithinActivityRetentionOptions {
   organizationId: string;
   createdAt: Date;
@@ -80,8 +82,16 @@ function isBeforeRetentionWindow(date: Date, earliestAllowedDate: Date): boolean
   return date < bufferedEarliestAllowedDate;
 }
 
-function formatEarliestAllowedDate(earliestAllowedDate: Date): string {
-  return earliestAllowedDate.toISOString().split('T')[0];
+const RANGE_EXCEEDS_RETENTION = "Requested date range exceeds your plan's retention period.";
+const RECORD_EXCEEDS_RETENTION = "This activity is older than your plan's retention period.";
+
+function retentionExceeded(reason: string, earliestAllowedDate: Date): HttpException {
+  return new HttpException(
+    `${reason} ` +
+      `The earliest accessible date for your plan is ${earliestAllowedDate.toISOString().split('T')[0]}. ` +
+      `Please upgrade your plan to access older activities.`,
+    HttpStatus.PAYMENT_REQUIRED
+  );
 }
 
 @Injectable()
@@ -116,18 +126,35 @@ export class ActivityRetentionService {
       isBeforeRetentionWindow(resolvedAfterDate, earliestAllowedDate) ||
       isBeforeRetentionWindow(resolvedBeforeDate, earliestAllowedDate)
     ) {
-      throw new HttpException(
-        `Requested date range exceeds your plan's retention period. ` +
-          `The earliest accessible date for your plan is ${formatEarliestAllowedDate(earliestAllowedDate)}. ` +
-          `Please upgrade your plan to access older activities.`,
-        HttpStatus.PAYMENT_REQUIRED
-      );
+      throw retentionExceeded(RANGE_EXCEEDS_RETENTION, earliestAllowedDate);
     }
 
     return {
       after: resolvedAfterDate.toISOString(),
       before: resolvedBeforeDate.toISOString(),
     };
+  }
+
+  /** For endpoints that filter by a start date only: no end date is implied, so a start in the future is not an error. */
+  async resolveAfter({ organizationId, after }: ResolveActivityRetentionStartOptions): Promise<string | undefined> {
+    const policy = await this.getPolicy(organizationId);
+    const afterDate = after ? parseAndValidateDate(after, 'after') : undefined;
+
+    if (policy.kind === 'unlimited') {
+      return afterDate?.toISOString();
+    }
+
+    const earliestAllowedDate = new Date(Date.now() - policy.durationMs);
+
+    if (!afterDate) {
+      return earliestAllowedDate.toISOString();
+    }
+
+    if (isBeforeRetentionWindow(afterDate, earliestAllowedDate)) {
+      throw retentionExceeded(RANGE_EXCEEDS_RETENTION, earliestAllowedDate);
+    }
+
+    return afterDate.toISOString();
   }
 
   /** For by-ID reads: a record that a list endpoint can no longer return is not readable by its ID either. */
@@ -140,12 +167,7 @@ export class ActivityRetentionService {
     const earliestAllowedDate = new Date(Date.now() - policy.durationMs);
 
     if (isBeforeRetentionWindow(createdAt, earliestAllowedDate)) {
-      throw new HttpException(
-        `This activity is older than your plan's retention period. ` +
-          `The earliest accessible date for your plan is ${formatEarliestAllowedDate(earliestAllowedDate)}. ` +
-          `Please upgrade your plan to access older activities.`,
-        HttpStatus.PAYMENT_REQUIRED
-      );
+      throw retentionExceeded(RECORD_EXCEEDS_RETENTION, earliestAllowedDate);
     }
   }
 

@@ -348,6 +348,13 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
       .get('/v1/activity/requests')
       .query({ createdGte: subHours(new Date(), 2).getTime() })
       .expect(200);
+
+    const { body: aheadBody } = await session.testAgent
+      .get('/v1/activity/requests')
+      .query({ createdGte: Date.now() + 60 * 1000 })
+      .expect(200);
+
+    expect(aheadBody.total, 'a createdGte ahead of the server clock').to.equal(0);
   });
 
   it("should reject a request log older than the plan's retention window by ID", async () => {

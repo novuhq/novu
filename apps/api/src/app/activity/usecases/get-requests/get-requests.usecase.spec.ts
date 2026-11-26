@@ -15,17 +15,17 @@ describe('GetRequests', () => {
     });
   }
 
-  function buildUsecase(resolve = stub().resolves({ after: retentionStart, before: '2026-11-26T12:00:00.000Z' })) {
+  function buildUsecase(resolveAfter = stub().resolves(retentionStart)) {
     const requestLogRepository = {
       find: stub().resolves({ data: [] }),
       count: stub().resolves(0),
     };
-    const activityRetentionService = { resolve };
+    const activityRetentionService = { resolveAfter };
 
     return {
       usecase: new GetRequests(requestLogRepository as never, activityRetentionService as never),
       requestLogRepository,
-      resolve,
+      resolveAfter,
     };
   }
 
@@ -36,11 +36,11 @@ describe('GetRequests', () => {
   }
 
   it('limits the logs to the retention window when createdGte is missing', async () => {
-    const { usecase, requestLogRepository, resolve } = buildUsecase();
+    const { usecase, requestLogRepository, resolveAfter } = buildUsecase();
 
     await usecase.execute(buildCommand());
 
-    expect(resolve.firstCall.args[0]).to.deep.equal({ organizationId: 'organization-id', after: undefined });
+    expect(resolveAfter.firstCall.args[0]).to.deep.equal({ organizationId: 'organization-id', after: undefined });
     expect(createdAtCondition(requestLogRepository)).to.deep.equal({
       field: 'created_at',
       operator: '>=',
@@ -50,13 +50,11 @@ describe('GetRequests', () => {
 
   it('checks createdGte, sent in epoch milliseconds, against the retention window', async () => {
     const createdGte = Date.parse('2026-11-26T08:30:00.000Z');
-    const { usecase, requestLogRepository, resolve } = buildUsecase(
-      stub().resolves({ after: '2026-11-26T08:30:00.000Z', before: '2026-11-26T12:00:00.000Z' })
-    );
+    const { usecase, requestLogRepository, resolveAfter } = buildUsecase(stub().resolves('2026-11-26T08:30:00.000Z'));
 
     await usecase.execute(buildCommand({ createdGte }));
 
-    expect(resolve.firstCall.args[0]).to.deep.equal({
+    expect(resolveAfter.firstCall.args[0]).to.deep.equal({
       organizationId: 'organization-id',
       after: '2026-11-26T08:30:00.000Z',
     });
@@ -79,7 +77,7 @@ describe('GetRequests', () => {
   });
 
   it('leaves the logs unbounded when the plan keeps everything', async () => {
-    const { usecase, requestLogRepository } = buildUsecase(stub().resolves({ after: undefined, before: undefined }));
+    const { usecase, requestLogRepository } = buildUsecase(stub().resolves(undefined));
 
     await usecase.execute(buildCommand());
 
@@ -87,7 +85,7 @@ describe('GetRequests', () => {
   });
 
   it('rejects a createdGte outside the range of a date with 400', async () => {
-    const { usecase, resolve } = buildUsecase();
+    const { usecase, resolveAfter } = buildUsecase();
 
     try {
       await usecase.execute(buildCommand({ createdGte: 1e20 }));
@@ -97,6 +95,6 @@ describe('GetRequests', () => {
       expect((error as HttpException).getStatus()).to.equal(HttpStatus.BAD_REQUEST);
     }
 
-    expect(resolve.called).to.equal(false);
+    expect(resolveAfter.called).to.equal(false);
   });
 });

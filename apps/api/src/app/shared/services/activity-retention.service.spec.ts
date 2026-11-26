@@ -151,6 +151,57 @@ describe('ActivityRetentionService', () => {
     expect(range).to.deep.equal({ after: undefined, before: undefined });
   });
 
+  describe('resolveAfter', () => {
+    const dayMs = 24 * 60 * 60 * 1000;
+    const now = new Date('2026-11-26T12:00:00.000Z');
+
+    it('defaults to the start of the retention window', async () => {
+      sandbox.useFakeTimers(now);
+      stubOrganization(ApiServiceLevelEnum.PRO);
+
+      expect(await service.resolveAfter({ organizationId: 'org-123' })).to.equal(
+        new Date(now.getTime() - 7 * dayMs).toISOString()
+      );
+    });
+
+    it('accepts a start ahead of the server clock, since no end date is implied', async () => {
+      sandbox.useFakeTimers(now);
+      stubOrganization(ApiServiceLevelEnum.PRO);
+      const ahead = new Date(now.getTime() + 5 * 1000).toISOString();
+
+      expect(await service.resolveAfter({ organizationId: 'org-123', after: ahead })).to.equal(ahead);
+    });
+
+    it('rejects a start older than the window with 402', async () => {
+      sandbox.useFakeTimers(now);
+      stubOrganization(ApiServiceLevelEnum.PRO);
+
+      try {
+        await service.resolveAfter({
+          organizationId: 'org-123',
+          after: new Date(now.getTime() - 8 * dayMs).toISOString(),
+        });
+        expect.fail('Expected the start to exceed retention');
+      } catch (error) {
+        expect(error).to.be.instanceOf(HttpException);
+        expect((error as HttpException).getStatus()).to.equal(HttpStatus.PAYMENT_REQUIRED);
+        expect((error as HttpException).message).to.contain(
+          "Requested date range exceeds your plan's retention period"
+        );
+      }
+    });
+
+    it('leaves the start unbounded when self-hosted', async () => {
+      process.env.IS_SELF_HOSTED = 'true';
+      stubOrganization(ApiServiceLevelEnum.FREE);
+
+      expect(await service.resolveAfter({ organizationId: 'org-123' })).to.equal(undefined);
+      expect(await service.resolveAfter({ organizationId: 'org-123', after: '2020-01-01T00:00:00.000Z' })).to.equal(
+        '2020-01-01T00:00:00.000Z'
+      );
+    });
+  });
+
   describe('assertWithinRetention', () => {
     const hourMs = 60 * 60 * 1000;
     const dayMs = 24 * hourMs;
