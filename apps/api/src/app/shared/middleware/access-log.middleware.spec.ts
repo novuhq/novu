@@ -61,6 +61,9 @@ describe('buildAccessLog', () => {
         'cf-ipcountry': 'DE',
         'user-agent': 'Mozilla/5.0',
         origin: 'https://dashboard.novu.co',
+        'idempotency-key': 'evt_01h8x',
+        'sentry-trace': 'a1b2c3d4e5f60718293a4b5c6d7e8f90-1234567890abcdef-1',
+        'x-amzn-trace-id': 'Root=1-67891233-abcdef012345678912345678',
       },
       routePath: '/v1/environments/:environmentId/api-keys',
       authScheme: 'Bearer',
@@ -78,6 +81,9 @@ describe('buildAccessLog', () => {
       country: 'DE',
       userAgent: 'Mozilla/5.0',
       origin: 'https://dashboard.novu.co',
+      idempotencyKey: 'evt_01h8x',
+      sentryTrace: 'a1b2c3d4e5f60718293a4b5c6d7e8f90-1234567890abcdef-1',
+      amznTraceId: 'Root=1-67891233-abcdef012345678912345678',
       authScheme: 'Bearer',
       organizationId: 'org-id',
       environmentId: 'env-id',
@@ -183,11 +189,24 @@ describe('buildAccessLog', () => {
   });
 
   it('cuts a long header value short', () => {
-    const req = buildRequest({ headers: { 'user-agent': 'a'.repeat(1000), origin: 'b'.repeat(1000) } });
+    const req = buildRequest({
+      headers: {
+        'user-agent': 'a'.repeat(1000),
+        origin: 'b'.repeat(1000),
+        'idempotency-key': 'c'.repeat(1000),
+        'sentry-trace': 'd'.repeat(1000),
+        'x-amzn-trace-id': 'e'.repeat(1000),
+        'cf-ipcountry': 'f'.repeat(1000),
+      },
+    });
     const line = buildAccessLog(req, buildResponse(), MEASURED);
 
     expect(line.userAgent).to.have.length(256);
     expect(line.origin).to.have.length(256);
+    expect(line.idempotencyKey).to.have.length(256);
+    expect(line.sentryTrace).to.have.length(256);
+    expect(line.amznTraceId).to.have.length(256);
+    expect(line.country).to.have.length(256);
   });
 
   it('marks a request the caller hung up on', () => {
