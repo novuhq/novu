@@ -231,6 +231,57 @@ describe('ResourceValidatorService workflow limits', () => {
     });
   });
 
+  describe('workflow limit usage', () => {
+    it('reports the free-tier cap as reached at the cap', async () => {
+      const { service, count } = buildService();
+      count.resolves(FREE_TIER_MAX_WORKFLOWS);
+
+      const usage = await service.getWorkflowLimitUsage(ENVIRONMENT_ID);
+
+      expect(usage).to.deep.equal({
+        used: FREE_TIER_MAX_WORKFLOWS,
+        limit: FREE_TIER_MAX_WORKFLOWS,
+        limitSource: 'plan',
+        isLimitReached: true,
+      });
+    });
+
+    it('reports room left below the cap', async () => {
+      const { service, count } = buildService({ organization: { apiServiceLevel: ApiServiceLevelEnum.PRO } });
+      count.resolves(FREE_TIER_MAX_WORKFLOWS);
+
+      const usage = await service.getWorkflowLimitUsage(ENVIRONMENT_ID);
+
+      expect(usage).to.deep.equal({
+        used: FREE_TIER_MAX_WORKFLOWS,
+        limit: 20,
+        limitSource: 'plan',
+        isLimitReached: false,
+      });
+    });
+
+    it('reports a system limit for an unlimited tier', async () => {
+      const { service, count } = buildService({ organization: { apiServiceLevel: ApiServiceLevelEnum.BUSINESS } });
+      count.resolves(SYSTEM_LIMITS.WORKFLOWS);
+
+      const usage = await service.getWorkflowLimitUsage(ENVIRONMENT_ID);
+
+      expect(usage).to.include({ limit: SYSTEM_LIMITS.WORKFLOWS, limitSource: 'system', isLimitReached: true });
+    });
+
+    it('matches validateWorkflowLimit for an override below the free-tier cap', async () => {
+      const { service, count } = buildService({
+        flags: { [FeatureFlagsKeysEnum.MAX_WORKFLOW_LIMIT_NUMBER]: FREE_TIER_MAX_WORKFLOWS - 2 },
+      });
+      count.resolves(FREE_TIER_MAX_WORKFLOWS - 1);
+
+      await service.validateWorkflowLimit(ENVIRONMENT_ID);
+      const usage = await service.getWorkflowLimitUsage(ENVIRONMENT_ID);
+
+      expect(usage.isLimitReached).to.equal(false);
+    });
+  });
+
   describe('counting', () => {
     it('excludes demo workflows from the count', async () => {
       const { service, count } = buildService();

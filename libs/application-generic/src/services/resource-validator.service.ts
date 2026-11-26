@@ -17,6 +17,7 @@ import {
   FREE_TIER_LEGACY_MAX_WORKFLOWS,
   FREE_TIER_MAX_WORKFLOWS,
   getFeatureForTierAsNumber,
+  ResourceLimitSource,
   ResourceOriginEnum,
   ResourceTypeEnum,
   UNLIMITED_VALUE,
@@ -64,6 +65,15 @@ export const MIN_VALIDATION_LIMITS = {
 /* Tiers whose active workflow count is capped by the plan's workflow limit */
 const ACTIVE_WORKFLOW_LIMITED_TIERS: ApiServiceLevelEnum[] = [ApiServiceLevelEnum.FREE, ApiServiceLevelEnum.PRO];
 
+export interface WorkflowLimitUsage {
+  /** Workflows that count toward the limit; demo workflows don't. */
+  used: number;
+  limit: number;
+  limitSource: ResourceLimitSource;
+  /** Whether creating another workflow would be rejected. */
+  isLimitReached: boolean;
+}
+
 @Injectable()
 export class ResourceValidatorService {
   constructor(
@@ -101,18 +111,13 @@ export class ResourceValidatorService {
   }
 
   async validateWorkflowLimit(environmentId: string): Promise<void> {
-    const workflowsCount = await this.notificationTemplateRepository.count({
-      _environmentId: environmentId,
-      'triggers.identifier': { $nin: DEMO_WORKFLOWS_IDENTIFIER },
-    });
+    const workflowsCount = await this.countLimitedWorkflows(environmentId);
 
     if (workflowsCount < MIN_VALIDATION_LIMITS.WORKFLOWS) {
       return;
     }
 
-    const environment = await this.getEnvironment(environmentId);
-    const organization = await this.getOrganization(environment._organizationId);
-    const { limit, limitSource } = await this.resolveWorkflowLimit(environment, organization);
+    const { limit, limitSource } = await this.resolveEnvironmentWorkflowLimit(environmentId);
 
     if (workflowsCount >= limit) {
       throwPlanLimitExceeded({
@@ -122,6 +127,36 @@ export class ResourceValidatorService {
         currentCount: workflowsCount,
       });
     }
+  }
+
+  /**
+   * The environment's workflows against the limit `validateWorkflowLimit` enforces, so a caller can tell before
+   * creating one whether the create would be blocked.
+   */
+  async getWorkflowLimitUsage(environmentId: string): Promise<WorkflowLimitUsage> {
+    const used = await this.countLimitedWorkflows(environmentId);
+    const { limit, limitSource } = await this.resolveEnvironmentWorkflowLimit(environmentId);
+
+    return {
+      used,
+      limit,
+      limitSource,
+      isLimitReached: used >= MIN_VALIDATION_LIMITS.WORKFLOWS && used >= limit,
+    };
+  }
+
+  private countLimitedWorkflows(environmentId: string): Promise<number> {
+    return this.notificationTemplateRepository.count({
+      _environmentId: environmentId,
+      'triggers.identifier': { $nin: DEMO_WORKFLOWS_IDENTIFIER },
+    });
+  }
+
+  private async resolveEnvironmentWorkflowLimit(environmentId: string) {
+    const environment = await this.getEnvironment(environmentId);
+    const organization = await this.getOrganization(environment._organizationId);
+
+    return this.resolveWorkflowLimit(environment, organization);
   }
 
   /**

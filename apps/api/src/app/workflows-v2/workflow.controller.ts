@@ -26,6 +26,7 @@ import {
   PreviewCommand,
   PreviewUsecase,
   RequirePermissions,
+  ResourceValidatorService,
   StepResponseDto,
   UpsertStepDataCommand,
   UpsertWorkflowCommand,
@@ -58,6 +59,7 @@ import {
   TestHttpEndpointRequestDto,
   TestHttpEndpointResponseDto,
   UpdateWorkflowDto,
+  WorkflowLimitUsageResponseDto,
   WorkflowTestDataResponseDto,
 } from './dtos';
 import {
@@ -93,7 +95,8 @@ export class WorkflowController {
     private buildStepDataUsecase: BuildStepDataUsecase,
     private patchWorkflowUsecase: PatchWorkflowUsecase,
     private duplicateWorkflowUseCase: DuplicateWorkflowUseCase,
-    private testHttpEndpointUsecase: TestHttpEndpointUsecase
+    private testHttpEndpointUsecase: TestHttpEndpointUsecase,
+    private resourceValidatorService: ResourceValidatorService
   ) {}
 
   @Post('')
@@ -188,6 +191,22 @@ export class WorkflowController {
           : undefined,
       integrationOverrides: 'integrationOverrides' in step ? (step.integrationOverrides ?? null) : undefined,
     }));
+  }
+
+  @Get('/usage/limit')
+  @ApiExcludeEndpoint()
+  @ApiOperation({
+    summary: 'Get workflow limit usage',
+    description:
+      'Returns how many workflows the environment has against its workflow limit, so the dashboard can tell before ' +
+      'a create or duplicate whether it would be rejected.',
+  })
+  @ApiResponse(WorkflowLimitUsageResponseDto)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
+  async getWorkflowLimitUsage(
+    @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData
+  ): Promise<WorkflowLimitUsageResponseDto> {
+    return this.resourceValidatorService.getWorkflowLimitUsage(user.environmentId);
   }
 
   @Get(':workflowId')
