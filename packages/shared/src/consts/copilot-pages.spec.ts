@@ -46,7 +46,7 @@ describe('parseCopilotPages', () => {
   });
 
   it('drops unknown names and duplicates', () => {
-    expect(parseCopilotPages(['activity', 'workflows', 'activity', 3])).toEqual([CopilotPageEnum.ACTIVITY]);
+    expect(parseCopilotPages(['activity', 'not-a-page', 'activity', 3])).toEqual([CopilotPageEnum.ACTIVITY]);
   });
 
   it('keeps every page off for a missing or unusable value', () => {
