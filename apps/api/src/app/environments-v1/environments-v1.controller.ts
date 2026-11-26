@@ -143,7 +143,7 @@ export class EnvironmentsControllerV1 {
   @ApiOperation({ summary: 'Count subscriber sessions of the current environment by auth method and SDK client' })
   @ApiResponse(SubscriberSessionStatsResponseDto)
   @ApiExcludeEndpoint()
-  @SkipPermissionsCheck()
+  @RequirePermissions(PermissionsEnum.API_KEY_READ)
   async getSubscriberSessionStats(
     @UserSession() user: UserSessionData,
     @Query() query: SubscriberSessionStatsQueryDto
