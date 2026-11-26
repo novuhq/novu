@@ -65,6 +65,44 @@ describe('List Channel Connections - /channel-connections (GET) #novu-v2', () =>
     expect(contextResult.data.some((conn) => conn.identifier === connectionWithContext.identifier)).to.be.true;
   });
 
+  it('should list only subscriber connections when connectionMode is subscriber', async () => {
+    const integration = await createSlackIntegration(session);
+    const subscriber = await createSubscribersService(session).createSubscriber();
+
+    const subscriberConnection = await createConnection(novuClient, integration.identifier, subscriber.subscriberId);
+    await createConnection(novuClient, integration.identifier, undefined, { tenant: 'acme' });
+
+    const { body } = await session.testAgent
+      .get('/v1/channel-connections')
+      .query({ integrationIdentifier: integration.identifier, connectionMode: 'subscriber' })
+      .expect(200);
+
+    expect(body.data.map((conn: { identifier: string }) => conn.identifier)).to.deep.equal([
+      subscriberConnection.identifier,
+    ]);
+    expect(body.totalCount).to.equal(1);
+  });
+
+  it('should list only shared connections when connectionMode is shared', async () => {
+    const integration = await createSlackIntegration(session);
+    const subscriber = await createSubscribersService(session).createSubscriber();
+
+    await createConnection(novuClient, integration.identifier, subscriber.subscriberId);
+    const sharedConnection = await createConnection(novuClient, integration.identifier, undefined, {
+      tenant: 'acme',
+    });
+
+    const { body } = await session.testAgent
+      .get('/v1/channel-connections')
+      .query({ integrationIdentifier: integration.identifier, connectionMode: 'shared' })
+      .expect(200);
+
+    expect(body.data.map((conn: { identifier: string }) => conn.identifier)).to.deep.equal([
+      sharedConnection.identifier,
+    ]);
+    expect(body.totalCount).to.equal(1);
+  });
+
   it('should support pagination', async () => {
     const integration = await createSlackIntegration(session);
     const subscribersService = createSubscribersService(session);
