@@ -96,6 +96,8 @@ Each attachment object requires three fields:
 | `name` | `string`            | The file name, including its extension (for example `report.pdf`).                            |
 | `mime` | `string`            | The MIME type of the file (for example `application/pdf`).                                    |
 
+An attachment can also set `channels`, the list of channels that send it. Without `channels`, email steps send the attachment. With `channels`, email steps send it only when the list includes `email`. To send the same file with Slack or Microsoft Teams messages too, use `channels: ['email', 'chat']`. See [Chat file attachments](/platform/integrations/chat#file-attachments).
+
 There is a total limit of 20MB for all attachments included in an email. Attachments are excluded from the 512KB trigger payload limit — see [Payload Limits](/api-reference/payload-limits).
 
 Common MIME types you may need:

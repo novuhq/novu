@@ -30,7 +30,7 @@ const schemaDefinition = {
   environment_id: { type: CHString() },
   auth_type: { type: CHString() },
   duration_ms: { type: CHUInt32() },
-  source: { type: CHLowCardinality(CHString('http')) },
+  source: { type: CHLowCardinality(CHString(), 'http') },
   expires_at: { type: CHDateTime64(3, 'UTC') },
 };
 
@@ -46,7 +46,7 @@ export const TTL: keyof typeof schemaDefinition = 'expires_at';
 const clickhouseSchemaOptions = {
   table_name: TABLE_NAME,
   engine: 'MergeTree',
-  order_by: `(${ORDER_BY.join(', ')})` as any,
+  order_by: `(${ORDER_BY.join(', ')})` as keyof typeof schemaDefinition,
   additional_options: ['PARTITION BY toYYYYMM(created_at)', `TTL toDateTime(${TTL})`],
 };
 

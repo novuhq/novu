@@ -156,17 +156,20 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
   });
 
   it('should return paginated results with default limit', async () => {
-    // will generate 6 workflow runs with 2 subscribers, total of 12 workflow runs
-    await createMultipleWorkflowRuns({
-      count: 6,
-      workflowId: template.triggers[0].identifier,
-      subscriberId: [subscriber.subscriberId, '123'],
-    });
+    /*
+     * will generate 6 workflow runs with 2 subscribers, total of 12 workflow runs.
+     * A run's created_at is stamped when the worker processes it, so each run finishes before
+     * the next trigger to keep created_at in runNumber order.
+     */
+    for (let runNumber = 1; runNumber <= 6; runNumber += 1) {
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [subscriber.subscriberId, '123'],
+        payload: { runNumber },
+      });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    await session.waitForWorkflowQueueCompletion();
-    await session.waitForStandardQueueCompletion();
-    await session.waitForSubscriberQueueCompletion();
+      await session.waitForJobCompletion(template._id);
+    }
 
     // Force ClickHouse merge to deduplicate workflow runs
     const databaseName = process.env.CLICK_HOUSE_DATABASE || 'test_logs';

@@ -1,9 +1,0 @@
-{
-  "compilerOptions": {
-    "strict": false,
-    "target": "ESNext",
-    "module": "commonjs",
-    "moduleResolution": "bundler",
-    "sourceMap": true
-  }
-}

@@ -58,7 +58,11 @@ export interface ListenMessage {
   conversationId: string;
   /** As the inbox shows it: telegram, slack, email… */
   channel: string;
-  from: { id: string; name?: string; isOperator: boolean };
+  /**
+   * Who wrote it. `fullAccess` marks a contact the operator gave full access, on agentinbox.md, as the switch was when
+   * the message was read: their runs get everything the operator's get, and the host asks them, not the operator.
+   */
+  from: { id: string; name?: string; isOperator: boolean; fullAccess?: boolean };
   text: string;
   at: string;
   /** Set when it answers a question the agent sent: that question's id. */

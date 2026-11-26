@@ -1,7 +1,6 @@
 import {
   AiAgentTypeEnum,
   AiResourceTypeEnum,
-  AiWorkflowSuggestion,
   ContentIssueEnum,
   EnvironmentTypeEnum,
   PermissionsEnum,
@@ -10,18 +9,8 @@ import {
   StepTypeEnum,
   WorkflowResponseDto,
 } from '@novu/shared';
-import { ComponentProps, FC, SVGProps, useMemo, useState } from 'react';
-import { IconType } from 'react-icons';
-import {
-  RiCodeBlock,
-  RiEdit2Line,
-  RiEyeLine,
-  RiGitCommitFill,
-  RiLinkUnlinkM,
-  RiListCheck3,
-  RiPlayCircleLine,
-  RiQuillPenLine,
-} from 'react-icons/ri';
+import { ComponentProps, useMemo, useState } from 'react';
+import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiGitCommitFill, RiLinkUnlinkM, RiPlayCircleLine } from 'react-icons/ri';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AiChatProvider } from '@/components/ai-sidekick';
 import { NovuCopilotPanel } from '@/components/ai-sidekick/novu-copilot-panel';
@@ -31,13 +20,13 @@ import {
   useCopilotWebChatSidebar,
   useWorkflowEditorCopilot,
 } from '@/components/copilot-web-chat';
-import { Code2 } from '@/components/icons/code-2';
 import { IssuesPanel } from '@/components/issues-panel';
 import { Badge, BadgeIcon } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
 import { FormRoot } from '@/components/primitives/form/form';
 import { LocaleSelect } from '@/components/primitives/locale-select';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { getStepNewChatSuggestions, isContentStepType } from '@/components/workflow-editor/new-chat-suggestions';
 import { PreviewContextContainer } from '@/components/workflow-editor/steps/context/preview-context-container';
 import { StepEditorProvider, useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { StepEditorFactory } from '@/components/workflow-editor/steps/editor/step-editor-factory';
@@ -159,11 +148,19 @@ function StepEditorContent() {
   const { isPending: isWorkflowPending, refetch: refetchWorkflow } = useWorkflow();
   const { onBlur } = useSaveForm();
   const isExternalWorkflow = !workflow || workflow.origin === ResourceOriginEnum.EXTERNAL;
+  const isContentStep = isContentStepType(step.type);
+  const hasBody = !!step.controlValues?.body;
+  const hasStepIssues = Object.keys(step.issues?.controls ?? {}).length > 0;
+  const newChatSuggestions = useMemo(
+    () => getStepNewChatSuggestions({ isContentStep, hasBody, hasIssues: hasStepIssues }),
+    [isContentStep, hasBody, hasStepIssues]
+  );
   const copilotMode = useWorkflowEditorCopilot({
     workflowId: workflow?._id,
     workflowLabel: workflow?.workflowId,
     stepId: step.stepId,
     stepLabel: step.stepId,
+    suggestions: newChatSuggestions,
     onRefetch: () => refetchWorkflow({ cancelRefetch: true }),
   });
 
@@ -215,34 +212,7 @@ function StepEditorContent() {
     };
   }, [step.issues, controlValues]);
 
-  const newChatSuggestions = useMemo(() => {
-    const suggestions: { label: AiWorkflowSuggestion; icon: IconType | FC<SVGProps<SVGSVGElement>> }[] = [
-      { label: AiWorkflowSuggestion.AUTOCOMPLETE, icon: RiListCheck3 },
-      { label: AiWorkflowSuggestion.APPLY_CONDITIONS, icon: Code2 },
-    ];
-
-    const isContentStep = [
-      StepTypeEnum.EMAIL,
-      StepTypeEnum.SMS,
-      StepTypeEnum.PUSH,
-      StepTypeEnum.IN_APP,
-      StepTypeEnum.CHAT,
-      StepTypeEnum.TOOL,
-    ].includes(step.type);
-    const emptyBody = !step.controlValues?.body;
-    if (isContentStep && !emptyBody) {
-      suggestions.push({ label: AiWorkflowSuggestion.IMPROVE_MESSAGING, icon: RiQuillPenLine });
-    } else if (isContentStep && emptyBody) {
-      suggestions.push({ label: AiWorkflowSuggestion.GENERATE_STEP_CONTENT, icon: RiQuillPenLine });
-    }
-
-    if (Object.keys(step.issues?.controls ?? {}).length > 0) {
-      suggestions.push({ label: AiWorkflowSuggestion.FIX_STEP_ISSUES, icon: RiListCheck3 });
-    }
-
-    return suggestions;
-  }, [step]);
-  const webChatSidebar = useCopilotWebChatSidebar({ copilotMode, suggestions: newChatSuggestions });
+  const webChatSidebar = useCopilotWebChatSidebar({ copilotMode });
 
   const aiChatConfig = useMemo(
     () => ({

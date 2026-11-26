@@ -15,8 +15,8 @@ function generateInboundWebhookUrl(environmentId: string, integrationId?: string
 
 interface InboundWebhookUrlProps {
   integrationId?: string;
-  /** The integration's environment. The URL is built from it, whichever environment the dashboard shows. */
-  environmentId?: string;
+  /** The integration's own environment, which the open environment isn't when it was opened from another one. */
+  integrationEnvironmentId?: string;
   autoConfigureState: 'idle' | 'loading' | 'success' | 'error';
   provider?: IProviderConfig;
   group: ConfigConfigurationGroup;
@@ -24,14 +24,16 @@ interface InboundWebhookUrlProps {
 
 export function InboundWebhookUrl({
   integrationId,
-  environmentId,
+  integrationEnvironmentId,
   autoConfigureState,
   provider,
   group,
 }: InboundWebhookUrlProps) {
   const { currentEnvironment } = useEnvironment();
-  // biome-ignore lint/style/noNonNullAssertion: currentEnvironment is guaranteed to exist in this context
-  const inboundWebhookUrl = generateInboundWebhookUrl(environmentId || currentEnvironment?._id!, integrationId);
+  const inboundWebhookUrl = generateInboundWebhookUrl(
+    integrationEnvironmentId || currentEnvironment?._id || '',
+    integrationId
+  );
 
   return (
     <div className="mb-4">

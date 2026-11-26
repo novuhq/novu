@@ -33,6 +33,40 @@ describe('ssrf-url-validation', () => {
       expect(isPrivateIp('100.128.0.1')).toBe(false);
     });
 
+    it('should detect IPv4 special-purpose and reserved ranges', () => {
+      // 0.0.0.0/8 "this network"
+      expect(isPrivateIp('0.0.0.1')).toBe(true);
+      expect(isPrivateIp('0.1.2.3')).toBe(true);
+      expect(isPrivateIp('0.255.255.255')).toBe(true);
+      expect(isPrivateIp('1.0.0.0')).toBe(false);
+      // 192.0.0.0/24 IETF protocol assignments
+      expect(isPrivateIp('192.0.0.1')).toBe(true);
+      expect(isPrivateIp('192.0.0.255')).toBe(true);
+      expect(isPrivateIp('192.0.1.0')).toBe(false);
+      // 198.18.0.0/15 benchmarking
+      expect(isPrivateIp('198.18.0.1')).toBe(true);
+      expect(isPrivateIp('198.19.255.255')).toBe(true);
+      expect(isPrivateIp('198.17.255.255')).toBe(false);
+      expect(isPrivateIp('198.20.0.0')).toBe(false);
+      // 224.0.0.0/4 multicast
+      expect(isPrivateIp('224.0.0.1')).toBe(true);
+      expect(isPrivateIp('239.255.255.255')).toBe(true);
+      expect(isPrivateIp('223.255.255.255')).toBe(false);
+      // 240.0.0.0/4 reserved, including limited broadcast
+      expect(isPrivateIp('240.0.0.1')).toBe(true);
+      expect(isPrivateIp('255.255.255.255')).toBe(true);
+    });
+
+    it('should detect IPv6 multicast and encodings of IPv4 special-purpose ranges', () => {
+      expect(isPrivateIp('ff02::1')).toBe(true);
+      expect(isPrivateIp('ff0e::1')).toBe(true);
+      expect(isPrivateIp('::ffff:0.0.0.1')).toBe(true);
+      expect(isPrivateIp('::ffff:0:1')).toBe(true);
+      expect(isPrivateIp('::ffff:198.18.0.1')).toBe(true);
+      expect(isPrivateIp('64:ff9b::e000:1')).toBe(true);
+      expect(isPrivateIp('2002:c612:1::')).toBe(true);
+    });
+
     it('should detect IPv6 private, loopback, and link-local addresses', () => {
       expect(isPrivateIp('::1')).toBe(true);
       expect(isPrivateIp('fc00::1')).toBe(true);
@@ -126,6 +160,12 @@ describe('ssrf-url-validation', () => {
         } catch (err) {
           expect(err).toMatchObject({ reason: 'PRIVATE_IP' });
         }
+      }
+    });
+
+    it('should block 0.0.0.0/8 literals, including shorthand forms the URL parser expands', () => {
+      for (const url of ['http://0.0.0.1/', 'http://1/', 'http://0.1.2.3:8080/', 'http://[::ffff:0.0.0.1]/']) {
+        expect(() => assertSafeOutboundUrl(url)).toThrow(SsrfBlockedError);
       }
     });
 

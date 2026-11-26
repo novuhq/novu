@@ -20,6 +20,10 @@ export type TopicResponseDtoData = {
    */
   name?: string | undefined;
   /**
+   * Additional custom data associated with the topic
+   */
+  data?: { [k: string]: any } | undefined;
+  /**
    * The date the topic was created
    */
   createdAt?: string | undefined;
@@ -38,6 +42,10 @@ export class TopicResponseDto extends NovuError {
    * The unique key of the topic
    */
   key: string;
+  /**
+   * Additional custom data associated with the topic
+   */
+  data?: { [k: string]: any } | undefined;
   /**
    * The date the topic was created
    */
@@ -61,6 +69,7 @@ export class TopicResponseDto extends NovuError {
     this.data$ = err;
     this.id = err.id;
     this.key = err.key;
+    if (err.data != null) this.data = err.data;
     if (err.createdAt != null) this.createdAt = err.createdAt;
     if (err.updatedAt != null) this.updatedAt = err.updatedAt;
 
@@ -77,6 +86,7 @@ export const TopicResponseDto$inboundSchema: z.ZodType<
   _id: z.string(),
   key: z.string(),
   name: z.string().optional(),
+  data: z.record(z.any()).optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
   request$: z.instanceof(Request),

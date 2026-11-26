@@ -31,7 +31,7 @@ export type CustomStepUpsertDto = {
    */
   name: string;
   /**
-   * Type of the step
+   * Channels of the notification
    */
   type: "custom";
   /**

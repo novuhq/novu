@@ -11,12 +11,14 @@ export type {
 	WorkflowStep,
 } from "../utils/workflow-schemas";
 
+/** The channels to change; the API leaves the others as they are. */
 export interface ChannelPreferences {
-	email: boolean;
-	sms: boolean;
-	in_app: boolean;
-	push: boolean;
-	chat: boolean;
+	email?: boolean;
+	sms?: boolean;
+	in_app?: boolean;
+	push?: boolean;
+	chat?: boolean;
+	tool?: boolean;
 }
 
 export interface UpdatePreferencesRequest {

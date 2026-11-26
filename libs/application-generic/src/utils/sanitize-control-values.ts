@@ -192,14 +192,14 @@ function sanitizeDigest(controlValues: DigestControlSchemaType) {
     const mappedValues: DigestRegularControlType = {
       type: controlValues.type,
       // Cast to trigger Ajv validation errors - possible undefined
-      ...(parseAmount(controlValues.amount) as { amount?: number }),
+      ...(parseAmount(controlValues.amount) as { amount: number }),
       unit: controlValues.unit,
       digestKey: controlValues.digestKey,
       skip: controlValues.skip,
       lookBackWindow: controlValues.lookBackWindow
         ? {
             // Cast to trigger Ajv validation errors - possible undefined
-            ...(parseAmount(lookBackAmount) as { amount?: number }),
+            ...(parseAmount(lookBackAmount) as { amount: number }),
             unit: (controlValues.lookBackWindow as LookBackWindowType).unit,
           }
         : undefined,
@@ -258,7 +258,7 @@ function sanitizeDelay(controlValues: DelayControlType) {
     const mappedValues: DelayRegularControlType = {
       type: controlValues.type,
       // Cast to trigger Ajv validation errors - possible undefined
-      ...(parseAmount(controlValues.amount) as { amount?: number }),
+      ...(parseAmount(controlValues.amount) as { amount: number }),
       unit: controlValues.unit,
       skip: controlValues.skip,
       extendToSchedule: controlValues.extendToSchedule,
@@ -376,13 +376,13 @@ export function dashboardSanitizeControlValues(
         normalizedValues = sanitizeSms(controlValues as SmsControlType);
         break;
       case StepTypeEnum.PUSH:
-        normalizedValues = sanitizePush(controlValues as PushControlType & StitchedContentOverrides);
+        normalizedValues = sanitizePush(controlValues as PushControlType);
         break;
       case StepTypeEnum.CHAT:
-        normalizedValues = sanitizeChat(controlValues as ChatControlType & StitchedContentOverrides);
+        normalizedValues = sanitizeChat(controlValues as ChatControlType);
         break;
       case StepTypeEnum.TOOL:
-        normalizedValues = sanitizeTool(controlValues as ToolControlType & StitchedContentOverrides);
+        normalizedValues = sanitizeTool(controlValues as ToolControlType);
         break;
       case StepTypeEnum.DIGEST:
         normalizedValues = sanitizeDigest(controlValues as DigestControlSchemaType);

@@ -1,0 +1,29 @@
+.glowLeft {
+  background: radial-gradient(ellipse at 12% 95%, rgb(255 92 48 / 0.19), transparent 65%);
+}
+
+.glowCenter {
+  background: radial-gradient(ellipse at 45% 46%, rgb(255 92 48 / 0.21), transparent 76%);
+}
+
+.glowRight {
+  background: radial-gradient(ellipse at 100% 0%, rgb(255 92 48 / 0.2), transparent 72%);
+}
+
+.heroDither {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  mask-image: linear-gradient(60.347deg, black 35.545%, transparent);
+}
+
+.heroDither::before {
+  content: "";
+  position: absolute;
+  top: -223px;
+  left: 0;
+  width: 595px;
+  height: 595px;
+  background: url("/images/use-cases/hero-dither.svg") 0 0 repeat-y;
+  transform: rotate(-90deg);
+}

@@ -31,7 +31,7 @@ import { Result } from "../types/fp.js";
  * Publish resources to target environment
  *
  * @remarks
- * Publishes all workflows and resources from the source environment to the target environment. Optionally specify specific resources to publish or use dryRun mode to preview changes.
+ * Publishes all workflows and resources from the development environment to the target environment. Optionally specify specific resources to publish or use dryRun mode to preview changes.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */

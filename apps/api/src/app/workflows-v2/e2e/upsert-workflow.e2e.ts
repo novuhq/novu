@@ -1412,13 +1412,13 @@ describe('Upsert Workflow #novu-v2', () => {
 
         const updatedEmailStep = updatedWorkflow.steps[0] as EmailStepResponseDto;
 
-        expect(updatedEmailStep.controls.values.editorType).to.equal('html');
-        expect(updatedEmailStep.controls.values.layoutId).to.equal(layout.layoutId);
+        expect(updatedEmailStep.controls.values?.editorType).to.equal('html');
+        expect(updatedEmailStep.controls.values?.layoutId).to.equal(layout.layoutId);
 
         // The body should contain the converted HTML from Maily JSON
-        expect(updatedEmailStep.controls.values.body).to.not.contain('<!DOCTYPE');
-        expect(updatedEmailStep.controls.values.body).to.not.contain('<html');
-        expect(updatedEmailStep.controls.values.body).to.contain(
+        expect(updatedEmailStep.controls.values?.body).to.not.contain('<!DOCTYPE');
+        expect(updatedEmailStep.controls.values?.body).to.not.contain('<html');
+        expect(updatedEmailStep.controls.values?.body).to.contain(
           'This is email content that should not include layout HTML'
         );
       });
@@ -1451,7 +1451,7 @@ describe('Upsert Workflow #novu-v2', () => {
         const emailStep = workflow.steps[0] as EmailStepResponseDto;
         expect(emailStep.type).to.equal(StepTypeEnum.EMAIL);
 
-        expect(emailStep.controls.values.layoutId).to.equal(null);
+        expect(emailStep.controls.values?.layoutId).to.equal(null);
       });
 
       it('should keep layoutId as undefined when not specified and there is no default layout', async () => {
@@ -1474,7 +1474,7 @@ describe('Upsert Workflow #novu-v2', () => {
 
         const emailStep = workflow.steps[0] as EmailStepResponseDto;
         expect(emailStep.type).to.equal(StepTypeEnum.EMAIL);
-        expect(emailStep.controls.values.layoutId).to.be.undefined;
+        expect(emailStep.controls.values?.layoutId).to.be.undefined;
       });
 
       it('should keep layoutId as undefined when not specified and there is a default layout', async () => {
@@ -1503,7 +1503,7 @@ describe('Upsert Workflow #novu-v2', () => {
 
         const emailStep = workflow.steps[0] as EmailStepResponseDto;
         expect(emailStep.type).to.equal(StepTypeEnum.EMAIL);
-        expect(emailStep.controls.values.layoutId).to.be.undefined;
+        expect(emailStep.controls.values?.layoutId).to.be.undefined;
       });
 
       it('should throw error when creating email step with invalid layoutId', async () => {
@@ -1616,7 +1616,7 @@ describe('Upsert Workflow #novu-v2', () => {
 
         const emailStep = updatedWorkflow.steps[0] as EmailStepResponseDto;
         expect(emailStep.type).to.equal(StepTypeEnum.EMAIL);
-        expect(emailStep.controls.values.layoutId).to.equal(layout.layoutId);
+        expect(emailStep.controls.values?.layoutId).to.equal(layout.layoutId);
       });
 
       it('should allow updating layoutId to undefined to remove layout', async () => {
@@ -1662,7 +1662,7 @@ describe('Upsert Workflow #novu-v2', () => {
 
         const emailStep = updatedWorkflow.steps[0] as EmailStepResponseDto;
         expect(emailStep.type).to.equal(StepTypeEnum.EMAIL);
-        expect(emailStep.controls.values.layoutId).to.be.undefined;
+        expect(emailStep.controls.values?.layoutId).to.be.undefined;
       });
     });
 
@@ -1701,14 +1701,14 @@ describe('Upsert Workflow #novu-v2', () => {
 
       const updatedEmailStep = updatedWorkflow.steps[0] as EmailStepResponseDto;
 
-      expect(updatedEmailStep.controls.values.editorType).to.equal('html');
-      expect(updatedEmailStep.controls.values.body).to.contain('<html');
-      expect(updatedEmailStep.controls.values.body).to.contain('<body');
-      expect(updatedEmailStep.controls.values.body).to.contain(`>
+      expect(updatedEmailStep.controls.values?.editorType).to.equal('html');
+      expect(updatedEmailStep.controls.values?.body).to.contain('<html');
+      expect(updatedEmailStep.controls.values?.body).to.contain('<body');
+      expect(updatedEmailStep.controls.values?.body).to.contain(`>
                       test
                     </p>`);
-      expect(updatedEmailStep.controls.values.body).to.contain('</body>');
-      expect(updatedEmailStep.controls.values.body).to.contain('</html>');
+      expect(updatedEmailStep.controls.values?.body).to.contain('</body>');
+      expect(updatedEmailStep.controls.values?.body).to.contain('</html>');
 
       const updatedWorkflow2 = await updateWorkflow(workflow.slug, {
         ...workflow,
@@ -1724,8 +1724,8 @@ describe('Upsert Workflow #novu-v2', () => {
       } as UpdateWorkflowDto);
 
       const updatedEmailStep2 = updatedWorkflow2.steps[0] as EmailStepResponseDto;
-      expect(updatedEmailStep2.controls.values.editorType).to.equal('block');
-      expect(updatedEmailStep2.controls.values.body).to.equal('');
+      expect(updatedEmailStep2.controls.values?.editorType).to.equal('block');
+      expect(updatedEmailStep2.controls.values?.body).to.equal('');
     });
   });
 

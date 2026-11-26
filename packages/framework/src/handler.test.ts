@@ -149,13 +149,15 @@ describe('NovuRequestHandler', () => {
       signatureHeader,
       action = PostActionEnum.EXECUTE,
       method = 'POST',
+      secretKeys,
     }: {
       payload: unknown;
       signatureHeader: string | null;
       action?: PostActionEnum | GetActionEnum;
       method?: 'POST' | 'GET';
+      secretKeys?: string[];
     }) {
-      const strictClient = new Client({ secretKey: SECRET_KEY, strictAuthentication: true });
+      const strictClient = new Client({ secretKey: SECRET_KEY, secretKeys, strictAuthentication: true });
 
       // Stub the protected execute path so a successful HMAC reaches a known
       // 200 OK response without needing to register a real workflow.
@@ -291,6 +293,41 @@ describe('NovuRequestHandler', () => {
 
       expect(response.status).toBe(HttpStatusEnum.UNAUTHORIZED);
       expect(response.body.code).toBe(ErrorCodeEnum.SIGNATURE_INVALID_ERROR);
+    });
+
+    it('accepts the new key when the header also carries a signature for the original key', async () => {
+      const payload = { workflowId: 'test-workflow' };
+      const now = 1_700_000_000_000;
+      vi.useFakeTimers().setSystemTime(now);
+
+      const original = buildSignatureHeader('original-secret-key', payload, now);
+      const rotated = buildSignatureHeader(SECRET_KEY, payload, now);
+      const rotatedSignature = rotated.split(',')[1];
+      const handler = buildHandler({
+        payload,
+        signatureHeader: `${original},${rotatedSignature}`,
+      });
+
+      const response = parseResponse(await handler());
+
+      expect(response.status).toBe(HttpStatusEnum.OK);
+    });
+
+    it('accepts a signature made with another active secret key', async () => {
+      const payload = { workflowId: 'test-workflow' };
+      const now = 1_700_000_000_000;
+      vi.useFakeTimers().setSystemTime(now);
+
+      const header = buildSignatureHeader('rotated-secret-key', payload, now);
+      const handler = buildHandler({
+        payload,
+        signatureHeader: header,
+        secretKeys: ['rotated-secret-key'],
+      });
+
+      const response = parseResponse(await handler());
+
+      expect(response.status).toBe(HttpStatusEnum.OK);
     });
 
     it('rejects a request whose signature value does not match', async () => {

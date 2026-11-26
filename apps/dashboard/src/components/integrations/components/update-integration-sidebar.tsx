@@ -1,5 +1,7 @@
 import {
   ChannelTypeEnum,
+  CopilotPageEnum,
+  CopilotViewingResourceEnum,
   FeatureFlagsKeysEnum,
   type IEnvironment,
   type IIntegration,
@@ -9,6 +11,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useRegisterCopilotPageView } from '@/components/copilot-web-chat';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -45,6 +48,23 @@ import { MakePrimaryModal } from './modals/make-primary-modal';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { handleIntegrationError } from './utils/handle-integration-error';
 import { cleanCredentials, hasRoutingConditions, isDemoIntegration } from './utils/helpers';
+
+/** Tells the Copilot which integration's sheet is open. */
+function useCopilotIntegrationView(openIntegration: IIntegration | undefined, hasProvider: boolean) {
+  useRegisterCopilotPageView(CopilotPageEnum.INTEGRATIONS, {
+    viewing: openIntegration
+      ? {
+          resource: {
+            type: CopilotViewingResourceEnum.INTEGRATION,
+            id: openIntegration._id,
+            label: openIntegration.name,
+          },
+        }
+      : undefined,
+    // Only once the sheet renders: it's null until the integration loads.
+    overSheet: !!openIntegration && hasProvider,
+  });
+}
 
 type UpdateIntegrationSidebarProps = {
   isOpened: boolean;
@@ -117,6 +137,8 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
     provider,
     sourceEnvironment: environment,
   });
+
+  useCopilotIntegrationView(isOpened ? integration : undefined, !!provider);
 
   async function onSubmit(data: IntegrationFormData, skipPrimaryCheck?: boolean) {
     if (!integration) return;

@@ -1,0 +1,58 @@
+# Services for CI test jobs, started by the actions in .github/actions.
+# Each healthcheck is what `docker compose up --wait` waits for.
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 1s
+      retries: 60
+
+  mongodb:
+    image: mongo:8
+    ports:
+      - '27017:27017'
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', 'db.runCommand({ ping: 1 })']
+      interval: 1s
+      retries: 60
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.3-alpine
+    environment:
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    ports:
+      - '9000:9000'
+      - '8123:8123'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:8123/ping']
+      interval: 1s
+      retries: 60
+
+  # No healthcheck: the cluster takes about 12 s to form, and jobs reach it only after a build of several minutes.
+  redis-cluster:
+    image: vishnunair/docker-redis-cluster:latest
+    ports:
+      - '7000:6379'
+      - '7001:6380'
+      - '7002:6381'
+      - '7003:6382'
+      - '7004:6383'
+      - '7005:6384'
+
+  localstack:
+    image: localstack/localstack:0.14.5
+    environment:
+      - SERVICES=s3
+    ports:
+      - '4566:4566'
+    volumes:
+      - '${TMPDIR:-/tmp/localstack}:/tmp/localstack'
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    # S3 starts on its first request, so the check makes a real S3 call.
+    healthcheck:
+      test: ['CMD', 'awslocal', 's3', 'ls']
+      interval: 1s
+      retries: 60

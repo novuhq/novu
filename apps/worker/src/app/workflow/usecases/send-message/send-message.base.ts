@@ -15,7 +15,6 @@ import {
   SelectIntegrationCommand,
   SelectVariant,
   SelectVariantCommand,
-  SendWebhookMessage,
 } from '@novu/application-generic';
 import {
   IntegrationEntity,
@@ -232,27 +231,64 @@ export function mergeTriggerProviderOverrides(
   };
 }
 
-type WebhookMessageCommand = Parameters<SendWebhookMessage['execute']>[0];
+/**
+ * Returns the first candidate that is a non-blank string. Used by phone-addressed channels (SMS and
+ * phone-based chat providers such as WhatsApp) to pick the recipient: an override `to` first, then
+ * the payload or subscriber phone.
+ */
+export function resolvePhoneDestination(...candidates: unknown[]): string | undefined {
+  for (const candidate of candidates) {
+    if (isNonBlankString(candidate)) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
 
 /**
- * Outbound webhooks report a delivery outcome that is already final, so the job does not
- * wait on the Svix round trip (~300ms+). Commands are sent in order, so e.g. `message.sent`
- * is still dispatched before `message.delivered`. Pass `environment` on each command so
- * SendWebhookMessage does not read it from the database again.
+ * Provider SDKs merge provider data over the resolved recipient. A blank `to` would replace the
+ * phone that `resolvePhoneDestination` already chose, so drop it (top level and `_passthrough.body`).
  */
-export function dispatchWebhooksInBackground(
-  sendWebhookMessage: SendWebhookMessage,
-  commands: WebhookMessageCommand[]
-): void {
-  const dispatch = async () => {
-    for (const command of commands) {
-      await sendWebhookMessage.execute(command);
-    }
-  };
+export function omitBlankPhoneDestination(providerData: Record<string, unknown>): Record<string, unknown> {
+  const withoutTopLevelTo = isBlankString(providerData.to) ? withoutKey(providerData, 'to') : providerData;
+  const passthrough = withoutTopLevelTo._passthrough;
 
-  dispatch().catch((error) => {
-    Logger.error(error, 'Failed to dispatch outbound webhook', SendMessageBase.name);
-  });
+  if (!isRecord(passthrough)) {
+    return withoutTopLevelTo;
+  }
+
+  const body = passthrough.body;
+
+  if (!isRecord(body) || !isBlankString(body.to)) {
+    return withoutTopLevelTo;
+  }
+
+  return {
+    ...withoutTopLevelTo,
+    _passthrough: {
+      ...passthrough,
+      body: withoutKey(body, 'to'),
+    },
+  };
+}
+
+function isNonBlankString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isBlankString(value: unknown): boolean {
+  return typeof value === 'string' && value.trim().length === 0;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function withoutKey(record: Record<string, unknown>, key: string): Record<string, unknown> {
+  const { [key]: _removed, ...rest } = record;
+
+  return rest;
 }
 
 export abstract class SendMessageBase extends SendMessageType {

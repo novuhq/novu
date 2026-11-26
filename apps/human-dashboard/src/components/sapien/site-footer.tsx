@@ -1,16 +1,28 @@
-import Link from 'next/link';
-
 import { footerAssets } from '@/data/sapien-assets';
+import { FOOTER_LINKS, SOURCE_LINK } from '@/data/site-navigation';
 
 import { SiteBrand } from './site-brand';
-import { SiteNavigation } from './site-navigation';
+import { SiteButtonLink, SiteSourceLink } from './site-navigation-items';
 
-/** Stacked below md (Figma mobile 895:1979), one 50px row from md. */
+/**
+ * The website's footer (Figma `1632:32405`): the logo with the package, the page for agents and the source
+ * beside it, and the copyright at the far end. One row wherever it fits, which is from about 610px: 50px tall
+ * and 9px from its rails from md, as drawn. Narrower, the copyright moves under the row, and under about 415px
+ * the buttons move under the logo. The row starts under the line that closes the section above.
+ */
 export function SiteFooter() {
   return (
-    <footer className="section-rails flex flex-col items-start p-2.5 md:min-h-12.5 md:flex-row md:flex-wrap md:items-center md:gap-4 md:p-2">
-      <SiteBrand icon={footerAssets.imgLogomarkConcept} />
-      <p className="mt-3.5 flex gap-2 font-sapien-mono text-xs leading-none tracking-tight text-sapien-foreground/50 md:mt-0 md:ml-[7.5px] md:gap-4 md:text-sm md:leading-5">
+    <footer className="section-rails mt-px flex flex-wrap items-center justify-between gap-x-4 gap-y-3.5 p-2.5 md:min-h-12.5 md:px-[9px] md:py-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <SiteBrand icon={footerAssets.imgLogomarkConcept} />
+        <nav aria-label="Footer navigation" className="flex items-center gap-2">
+          {FOOTER_LINKS.map((link) => (
+            <SiteButtonLink key={link.href} link={link} />
+          ))}
+          <SiteSourceLink link={SOURCE_LINK} />
+        </nav>
+      </div>
+      <p className="flex flex-wrap gap-2 font-sapien-mono text-xs leading-none tracking-tight text-sapien-foreground/50 md:gap-4 md:text-sm md:leading-5">
         <span className="w-[42px] md:w-[49px]">© 2026</span>
         <span aria-hidden="true" className="w-2 opacity-50 md:w-[9px]">
           |
@@ -19,14 +31,7 @@ export function SiteFooter() {
           <NovuMark className="size-3.5" />
           built by novu
         </a>
-        <Link href="/pricing" className="text-sapien-foreground/70 hover:text-accent">
-          pricing
-        </Link>
       </p>
-      <SiteNavigation
-        label="Footer navigation"
-        className="mt-[38px] grid w-full grid-cols-3 gap-1 md:mt-0 md:ml-auto md:flex md:w-auto md:gap-2 max-md:[&>a]:px-0"
-      />
     </footer>
   );
 }

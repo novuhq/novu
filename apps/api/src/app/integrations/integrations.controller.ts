@@ -23,6 +23,7 @@ import {
   FeatureFlagsService,
   GetActiveIntegrations,
   GetActiveIntegrationsCommand,
+  GetDecryptedIntegrations,
   IntegrationResponseDto,
   OtelSpan,
   PinoLogger,
@@ -61,6 +62,7 @@ import { CONNECTION_RESULT_CSP } from '../shared/html/connection-result-page';
 import {
   assertEnvironmentScopedAccess,
   isEnvironmentScopedAuthScheme,
+  isEnvironmentScopedListScheme,
   isInternalAuthScheme,
 } from '../shared/utils/auth.utils';
 import { ConfigureTelegramWebhookCommand } from '../telegram-linking/configure-telegram-webhook/configure-telegram-webhook.command';
@@ -210,11 +212,11 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
-        scopeToEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
+        scopeToEnvironment: isEnvironmentScopedListScheme(user.scheme),
       })
     );
 
-    return integrations.map(canAccessCredentials ? withDecryptedSecretsMasked : withMaskedConfigurations);
+    return integrations.map(canAccessCredentials ? withDecryptedSecretsMasked : withoutConfigurationSecrets);
   }
 
   @Get('/active')
@@ -241,11 +243,11 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
-        scopeToEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
+        scopeToEnvironment: isEnvironmentScopedListScheme(user.scheme),
       })
     );
 
-    return integrations.map(canAccessCredentials ? withDecryptedSecretsMasked : withMaskedConfigurations);
+    return integrations.map(canAccessCredentials ? withDecryptedSecretsMasked : withoutConfigurationSecrets);
   }
 
   @Get('/webhook/provider/:providerOrIntegrationId/status')
@@ -323,7 +325,7 @@ export class IntegrationsController {
 
       const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
-      return withMaskedConfigurations(integrationWithoutCredentials as IntegrationResponseDto);
+      return withoutConfigurationSecrets(integrationWithoutCredentials as IntegrationResponseDto);
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -380,7 +382,7 @@ export class IntegrationsController {
 
       const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
-      return withMaskedConfigurations(integrationWithoutCredentials as IntegrationResponseDto);
+      return withoutConfigurationSecrets(integrationWithoutCredentials as IntegrationResponseDto);
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -425,7 +427,7 @@ export class IntegrationsController {
     const canAccessCredentials = await this.canUserAccessCredentials(user);
     const integration = canAccessCredentials
       ? withDecryptedSecretsMasked(result.integration)
-      : withMaskedConfigurations({ ...result.integration, credentials: {} });
+      : withoutConfigurationSecrets({ ...result.integration, credentials: {} });
 
     return { ...result, integration };
   }
@@ -469,7 +471,7 @@ export class IntegrationsController {
 
     const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
-    return withMaskedConfigurations(integrationWithoutCredentials as IntegrationResponseDto);
+    return withoutConfigurationSecrets(integrationWithoutCredentials as IntegrationResponseDto);
   }
 
   @Delete('/:integrationId')
@@ -488,7 +490,7 @@ export class IntegrationsController {
     @UserSession() user: UserSessionData,
     @Param('integrationId') integrationId: string
   ): Promise<IntegrationResponseDto[]> {
-    const integrations = await this.removeIntegrationUsecase.execute(
+    await this.removeIntegrationUsecase.execute(
       RemoveIntegrationCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
@@ -498,7 +500,16 @@ export class IntegrationsController {
       })
     );
 
-    return integrations.map(withMaskedConfigurations);
+    // The environment's remaining integrations as the route documents them: no credentials or signing keys, for any caller.
+    return await this.getIntegrationsUsecase.execute(
+      GetIntegrationsCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        returnCredentials: false,
+        scopeToEnvironment: true,
+      })
+    );
   }
 
   @Get('/:channelType/limit')
@@ -1310,7 +1321,12 @@ export class IntegrationsController {
   }
 }
 
-/** Settings as any caller gets them back: the inbound webhook signing key as a mask. */
+/** What a caller that may not see credentials gets back: settings without the inbound webhook signing key. */
+function withoutConfigurationSecrets<T extends { configurations?: object }>(integration: T): T {
+  return GetDecryptedIntegrations.withoutConfigurationSecrets(integration);
+}
+
+/** Settings as a dashboard member with access to credentials gets them back: the signing key as a mask. */
 function withMaskedConfigurations<T extends { configurations?: object }>(integration: T): T {
   if (!integration.configurations) {
     return integration;

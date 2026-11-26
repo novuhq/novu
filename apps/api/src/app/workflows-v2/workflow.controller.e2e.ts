@@ -334,19 +334,19 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
       const emailStep = workflow.steps[0] as EmailStepResponseDto;
       expect(emailStep.type).to.equal('email');
-      expect(emailStep.controls.values.skip).to.deep.equal(skipCondition);
-      expect(emailStep.controls.values.subject).to.equal('Test Email Subject');
+      expect(emailStep.controls.values?.skip).to.deep.equal(skipCondition);
+      expect(emailStep.controls.values?.subject).to.equal('Test Email Subject');
 
       const inAppStep = workflow.steps[1] as InAppStepResponseDto;
       expect(inAppStep.type).to.equal('in_app');
-      expect(inAppStep.controls.values.skip).to.be.undefined;
+      expect(inAppStep.controls.values?.skip).to.be.undefined;
 
       const retrievedWorkflow = await getWorkflow(workflow.id);
       const retrievedEmailStep = retrievedWorkflow.steps[0] as EmailStepResponseDto;
-      expect(retrievedEmailStep.controls.values.skip).to.deep.equal(skipCondition);
+      expect(retrievedEmailStep.controls.values?.skip).to.deep.equal(skipCondition);
 
       const retrievedInAppStep = retrievedWorkflow.steps[1] as InAppStepResponseDto;
-      expect(retrievedInAppStep.controls.values.skip).to.be.undefined;
+      expect(retrievedInAppStep.controls.values?.skip).to.be.undefined;
 
       expect(retrievedWorkflow.payloadSchema).to.deep.equal(payloadSchema);
     });
@@ -393,8 +393,12 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         updateRequest as UpdateWorkflowDto
       );
       // TODO: Control values must be typed and accept only valid control values
-      expect((updatedWorkflow.steps[0] as InAppStepResponseDto).controls.values.subject).to.be.equal(inAppControlValue);
-      expect((updatedWorkflow.steps[1] as EmailStepResponseDto).controls.values.subject).to.be.equal(emailControlValue);
+      expect((updatedWorkflow.steps[0] as InAppStepResponseDto).controls.values?.subject).to.be.equal(
+        inAppControlValue
+      );
+      expect((updatedWorkflow.steps[1] as EmailStepResponseDto).controls.values?.subject).to.be.equal(
+        emailControlValue
+      );
       expect(updatedWorkflow.origin).to.equal(ResourceOriginEnum.NovuCloud);
     });
 
@@ -869,7 +873,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       const prodPushStep = prodWorkflow.steps[1] as PushStepResponseDto;
 
       expect(prodWorkflow.status).to.equal(WorkflowStatusEnum.Active);
-      expect(prodPushStep.controls.values.skip).to.deep.equal(skipCondition);
+      expect(prodPushStep.controls.values?.skip).to.deep.equal(skipCondition);
       expect(prodPushStep.issues?.controls?.skip).to.be.undefined;
     });
 

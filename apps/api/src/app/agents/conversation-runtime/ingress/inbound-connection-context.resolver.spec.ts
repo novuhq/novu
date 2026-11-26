@@ -252,5 +252,25 @@ describe('InboundConnectionContextResolver', () => {
       expect((await resolver.resolve(config, {}, 'sub-1')).context).to.equal(null);
       expect((await resolver.resolve(config, undefined, 'sub-1')).context).to.equal(null);
     });
+
+    it('sets lookupFailed when session context resolution throws', async () => {
+      const channelConnectionRepository = { findOne: sinon.stub().resolves(null) };
+      const channelEndpointRepository = { findByPlatformIdentity: sinon.stub().resolves(null) };
+      const contextRepository = {
+        findByKeys: sinon.stub().rejects(new Error('mongo down')),
+      };
+      const logger = makeLogger();
+      const resolver = new InboundConnectionContextResolver(
+        channelConnectionRepository as any,
+        channelEndpointRepository as any,
+        contextRepository as any,
+        makeIntegrationRepository([true]) as any,
+        logger as any
+      );
+
+      const result = await resolver.resolve(makeConfig(AgentPlatformEnum.WEB_CHAT), { contextKeys: ['tenant:acme'] });
+
+      expect(result).to.deep.equal({ context: null, lookupFailed: true });
+    });
   });
 });

@@ -10,13 +10,20 @@
  *   agent can reply; on custom-code / self-hosted agents, the turn is forwarded
  *   to the bridge with a null subscriber. Managed agent create defaults to open.
  *   Abuse mitigation is the customer's responsibility in this mode.
+ * - `rule`: a known subscriber AND `accessRule` must evaluate truthy, for every
+ *   message, edit, delete, click and reaction. Unknown senders, invalid rules and
+ *   evaluation errors are refused.
  *
  * Always persisted on agents (create sets it; legacy rows were backfilled).
  */
 export enum AgentSubscriberAccessEnum {
   OPEN = 'open',
   RESTRICTED = 'restricted',
+  RULE = 'rule',
 }
+
+/** JSON Logic object evaluated over `subscriber.*` and `context.*`. */
+export type AgentAccessRule = Record<string, unknown>;
 
 /**
  * How the agent decides whether to reply in shared rooms (Slack/Teams threads).

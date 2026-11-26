@@ -325,3 +325,17 @@ curl -L -X POST 'https://api.novu.co/v1/activity/track' \
 </Note>
 
 Once these steps are completed, your application will send push notification engagement data to Novu. This gives you a complete, unified view of your notification performance in the Activity Feed.
+
+## Webhooks
+
+Novu sends each accepted `eventType` to your [webhook endpoint](/platform/developer/webhooks/webhooks) as a `message.*` event:
+
+| `eventType` | Webhook event |
+| --- | --- |
+| `delivered` | `message.delivered` |
+| `opened` | `message.seen` |
+| `clicked` | `message.read` |
+| `dismissed` | `message.read` |
+| `failed` | `message.failed` |
+
+`clicked` and `dismissed` both send `message.read`. Payload details are in [Activity tracking](/platform/developer/webhooks/event-types#activity-tracking).

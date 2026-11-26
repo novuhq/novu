@@ -149,14 +149,18 @@ export class InboxService {
     defaultSchedule?: DefaultSchedule;
     context?: Context;
   }): Promise<Session> {
-    const response = (await this.#httpClient.post(`${INBOX_ROUTE}/session`, {
-      applicationIdentifier,
-      subscriberHash,
-      contextHash,
-      subscriber,
-      defaultSchedule,
-      context,
-    })) as Session;
+    const response = (await this.#httpClient.post(
+      `${INBOX_ROUTE}/session`,
+      {
+        applicationIdentifier,
+        subscriberHash,
+        contextHash,
+        subscriber,
+        defaultSchedule,
+        context,
+      },
+      { skipSessionRefresh: true }
+    )) as Session;
     this.#httpClient.setAuthorizationToken(response.token);
     this.#httpClient.setKeylessHeader(response.applicationIdentifier);
     this.isSessionInitialized = true;

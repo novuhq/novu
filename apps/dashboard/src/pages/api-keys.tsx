@@ -7,6 +7,7 @@ import { PageMeta } from '@/components/page-meta';
 import { Card, CardContent, CardHeader } from '@/components/primitives/card';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { Form } from '@/components/primitives/form/form';
+import { InlineToast } from '@/components/primitives/inline-toast';
 import { Input } from '@/components/primitives/input';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { ExternalLink } from '@/components/shared/external-link';
@@ -68,8 +69,8 @@ export function ApiKeysPage() {
       await regenerateApiKeysMutation.mutateAsync();
       showSuccessToast('API keys regenerated successfully');
       setIsRegenerateDialogOpen(false);
-    } catch (e: any) {
-      const message = e?.message || 'Failed to regenerate API keys';
+    } catch (error) {
+      const message = (error instanceof Error && error.message) || 'Failed to regenerate API keys';
       showErrorToast(message);
     }
   };
@@ -78,8 +79,8 @@ export function ApiKeysPage() {
     try {
       await createApiKeyMutation.mutateAsync();
       showSuccessToast('New secret key generated');
-    } catch (e: any) {
-      const message = e?.message || 'Failed to generate a new secret key';
+    } catch (error) {
+      const message = (error instanceof Error && error.message) || 'Failed to generate a new secret key';
       showErrorToast(message);
     }
   };
@@ -91,8 +92,8 @@ export function ApiKeysPage() {
       await deleteApiKeyMutation.mutateAsync({ hash: keyPendingDeletion.hash });
       showSuccessToast('Secret key deleted');
       setKeyPendingDeletion(null);
-    } catch (e: any) {
-      const message = e?.message || 'Failed to delete the secret key';
+    } catch (error) {
+      const message = (error instanceof Error && error.message) || 'Failed to delete the secret key';
       showErrorToast(message);
     }
   };
@@ -143,6 +144,7 @@ export function ApiKeysPage() {
               </CardHeader>
 
               <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
+                <RotationNotice apiKeys={apiKeys} canHoldTwoKeys={isMultipleSecretKeysAllowed} />
                 {isMultipleSecretKeysAllowed ? (
                   <div className="space-y-4">
                     {isLoading && <SettingField label="Secret Key" secret isLoading />}
@@ -150,7 +152,7 @@ export function ApiKeysPage() {
                       apiKeys?.map((apiKey, index) => (
                         <SettingField
                           key={apiKey.hash ?? apiKey.key}
-                          label={index === 0 ? 'Secret Key' : 'Secret Key (new)'}
+                          label={getSecretKeyLabel(apiKey, index)}
                           tooltip="Keep it secure and never share it publicly"
                           value={apiKey.key}
                           secret
@@ -195,7 +197,7 @@ export function ApiKeysPage() {
                 ) : (
                   <div className="space-y-4">
                     <SettingField
-                      label="Secret Key"
+                      label={getSecretKeyLabel(apiKeys?.[0], 0)}
                       tooltip="Keep it secure and never share it publicly"
                       value={form.getValues('apiKey')}
                       secret
@@ -271,6 +273,34 @@ export function ApiKeysPage() {
         isLoading={deleteApiKeyMutation.isPending}
       />
     </>
+  );
+}
+
+function getSecretKeyLabel(apiKey: IApiKey | undefined, index: number): string {
+  if (apiKey?.requiresRotation) {
+    return 'Secret Key (rotate now)';
+  }
+
+  return index === 0 ? 'Secret Key' : 'Secret Key (new)';
+}
+
+/** Shown while a key of this environment was created before the revocation cutoff. */
+function RotationNotice({ apiKeys, canHoldTwoKeys }: { apiKeys?: IApiKey[]; canHoldTwoKeys: boolean }) {
+  if (!apiKeys?.some((apiKey) => apiKey.requiresRotation)) {
+    return null;
+  }
+
+  return (
+    <InlineToast
+      variant="error"
+      className="mb-4"
+      title="Rotate now."
+      description={
+        canHoldTwoKeys
+          ? 'As a security precaution, the key marked "rotate now" is being revoked. Generate a new key, switch your applications to it, then delete the old key.'
+          : 'As a security precaution, this key is being revoked. Regenerate it, then update your applications with the new key. The current key stops working once you regenerate it.'
+      }
+    />
   );
 }
 

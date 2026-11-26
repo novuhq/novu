@@ -1,6 +1,5 @@
 import { Logger } from '@nestjs/common';
 import { IOrganizationEntity } from '@novu/shared';
-import { Analytics } from '@segment/analytics-node';
 import Mixpanel from 'mixpanel';
 
 interface IUser {
@@ -12,182 +11,220 @@ interface IUser {
   createdAt?: string | null;
 }
 
+type Traits = Record<string, string | string[]>;
+
 const LOG_CONTEXT = 'AnalyticsService';
 
+/**
+ * Mixpanel group key used for organization-level group analytics.
+ * Matches the `_organization` trait previously sent through Segment.
+ */
+export const ORGANIZATION_GROUP_KEY = '_organization';
+
 export class AnalyticsService {
-  private segment: Analytics;
-  private mixpanel: Mixpanel.Mixpanel;
-  constructor(
-    private segmentToken?: string | null,
-    private batchSize = 100
-  ) {}
+  private mixpanel: Mixpanel.Mixpanel | undefined;
+
+  constructor(private mixpanelToken: string | null | undefined = process.env.MIXPANEL_TOKEN) {}
 
   async initialize() {
-    if (this.segmentToken) {
-      this.segment = new Analytics({
-        writeKey: this.segmentToken,
-        maxEventsInBatch: this.batchSize,
-      });
-    }
-
-    if (process.env.MIXPANEL_TOKEN) {
-      const options: Mixpanel.InitConfig = {};
-
-      if (process.env.MIXPANEL_HOST) {
-        options.host = process.env.MIXPANEL_HOST;
-      }
-
-      this.mixpanel = Mixpanel.init(process.env.MIXPANEL_TOKEN, options);
-    }
-  }
-
-  upsertGroup(organizationId: string, organization: IOrganizationEntity, user?: Pick<IUser, '_id'>) {
-    if (!this.segmentEnabled) {
+    if (!this.mixpanelToken) {
       return;
     }
 
-    const traits: Record<string, string | string[]> = {
-      _organization: organizationId,
-      id: organizationId,
+    const options: Mixpanel.InitConfig = {};
+
+    if (process.env.MIXPANEL_HOST) {
+      options.host = process.env.MIXPANEL_HOST;
+    }
+
+    this.mixpanel = Mixpanel.init(this.mixpanelToken, options);
+  }
+
+  upsertGroup(organizationId: string, organization: IOrganizationEntity, user?: Pick<IUser, '_id'>) {
+    const mixpanel = this.client;
+    if (!mixpanel) {
+      return;
+    }
+
+    const properties: Traits = {
+      $name: organization.name,
       name: organization.name,
       createdAt: this.convertToIsoDate(organization.createdAt),
     };
 
     if (organization.productUseCases) {
-      const productUseCases: string[] = [];
-
-      for (const key in organization.productUseCases) {
-        if (organization.productUseCases[key]) {
-          productUseCases.push(key);
-        }
-      }
-      traits.productUseCases = productUseCases;
+      properties.productUseCases = Object.keys(organization.productUseCases).filter(
+        (key) => organization.productUseCases?.[key]
+      );
     }
 
-    this.segment.group({
-      userId: user?._id as any,
-      groupId: organizationId,
-      traits,
+    this.safely('upsertGroup', () => {
+      mixpanel.groups.set(ORGANIZATION_GROUP_KEY, organizationId, properties, this.onError('upsertGroup'));
     });
+
+    if (user?._id) {
+      this.addUserToOrganization(user._id, organizationId);
+    }
   }
 
-  updateGroup(userId: string, groupId: string, traits: Record<string, string | string[]>) {
-    if (!this.segmentEnabled) {
+  updateGroup(userId: string, groupId: string, traits: Traits) {
+    const mixpanel = this.client;
+    if (!mixpanel) {
       return;
     }
 
-    this.segment.group({
-      userId,
-      groupId,
-      traits,
+    this.safely('updateGroup', () => {
+      mixpanel.groups.set(ORGANIZATION_GROUP_KEY, groupId, traits, this.onError('updateGroup'));
     });
+
+    if (userId) {
+      this.addUserToOrganization(userId, groupId);
+    }
   }
 
   alias(distinctId: string, userId: string) {
-    if (!this.segmentEnabled) {
+    const mixpanel = this.client;
+    if (!mixpanel) {
       return;
     }
 
-    this.segment.alias({
-      previousId: distinctId,
-      userId,
+    this.safely('alias', () => {
+      mixpanel.alias(distinctId, userId, this.onError('alias'));
     });
   }
 
-  upsertUser(user: IUser, distinctId: string, traits: Record<string, string | string[]> = {}) {
-    if (!this.segmentEnabled) {
+  upsertUser(user: IUser, distinctId: string, traits: Traits = {}) {
+    const mixpanel = this.client;
+    if (!mixpanel) {
       return;
     }
 
-    const githubToken = (user as any).tokens?.find((token) => token.provider === 'github');
+    const { tokens } = user as IUser & { tokens?: Array<{ provider?: string; username?: string }> };
+    const githubToken = tokens?.find((token) => token.provider === 'github');
 
-    this.segment.identify({
-      userId: distinctId,
-      traits: {
-        firstName: user.firstName,
-        lastName: user.lastName,
-        name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-        email: user.email,
-        avatar: user.profilePicture,
-        createdAt: this.convertToIsoDate(user.createdAt),
-        // For segment auto mapping
-        created: this.convertToIsoDate(user.createdAt),
-        githubProfile: githubToken?.username,
-        ...traits,
-      },
+    this.safely('upsertUser', () => {
+      mixpanel.people.set(
+        distinctId,
+        {
+          $first_name: user.firstName,
+          $last_name: user.lastName,
+          $name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+          $email: user.email,
+          $avatar: user.profilePicture,
+          $created: this.convertToIsoDate(user.createdAt),
+          githubProfile: githubToken?.username,
+          ...traits,
+        },
+        this.onError('upsertUser')
+      );
     });
   }
 
   setValue(userId: string, propertyName: string, value: string | number) {
-    if (!this.segmentEnabled) {
+    const mixpanel = this.client;
+    if (!mixpanel) {
       return;
     }
 
-    this.segment.identify({
-      userId,
-      traits: {
-        [propertyName]: value,
-      },
+    this.safely('setValue', () => {
+      mixpanel.people.set(userId, { [this.toReservedPeopleProperty(propertyName)]: value }, this.onError('setValue'));
     });
   }
 
   track(name: string, userId: string, data: Record<string, unknown> = {}) {
-    if (!this.segmentEnabled) {
+    const mixpanel = this.client;
+    if (!mixpanel) {
       return;
     }
 
-    try {
-      this.segment.track({
-        anonymousId: userId,
-        userId,
-        event: name,
-        properties: data,
-      });
-    } catch (error: any) {
-      Logger.error(
-        {
-          eventName: name,
-          usedId: userId,
-          message: error.message,
-        },
-        'There has been an error when tracking',
-        LOG_CONTEXT
-      );
-    }
+    this.safely(
+      'track',
+      () => {
+        mixpanel.track(
+          name,
+          {
+            ...data,
+            distinct_id: userId,
+          },
+          this.onError('track', { eventName: name, userId })
+        );
+      },
+      { eventName: name, userId }
+    );
   }
 
+  /**
+   * @deprecated All events are sent to Mixpanel now, use `track` instead.
+   */
   mixpanelTrack(name: string, userId: string, data: Record<string, unknown> = {}) {
-    if (!this.mixpanelEnabled) {
+    this.track(name, userId, data);
+  }
+
+  private addUserToOrganization(userId: string, organizationId: string) {
+    const mixpanel = this.client;
+    if (!mixpanel) {
       return;
     }
 
-    try {
-      this.mixpanel.track(name, {
-        distinct_id: userId,
-        ...data,
-      });
-    } catch (error: any) {
-      Logger.error(
-        {
-          eventName: name,
-          usedId: userId,
-          message: error?.message,
-        },
-        'There has been an error when tracking mixpanel',
-        LOG_CONTEXT
+    this.safely('addUserToOrganization', () => {
+      mixpanel.people.union(
+        userId,
+        { [ORGANIZATION_GROUP_KEY]: [organizationId] },
+        this.onError('addUserToOrganization')
       );
+    });
+  }
+
+  private get client(): Mixpanel.Mixpanel | undefined {
+    if (process.env.NODE_ENV === 'test') {
+      return undefined;
+    }
+
+    return this.mixpanel;
+  }
+
+  private toReservedPeopleProperty(propertyName: string): string {
+    const reserved: Record<string, string> = {
+      email: '$email',
+      firstName: '$first_name',
+      lastName: '$last_name',
+      name: '$name',
+      avatar: '$avatar',
+      phone: '$phone',
+    };
+
+    return reserved[propertyName] ?? propertyName;
+  }
+
+  private safely(operation: string, fn: () => void, context: Record<string, unknown> = {}) {
+    try {
+      fn();
+    } catch (error: unknown) {
+      this.logError(operation, error instanceof Error ? error : new Error(String(error)), context);
     }
   }
 
-  private get segmentEnabled() {
-    return process.env.NODE_ENV !== 'test' && this.segment;
+  private onError(operation: string, context: Record<string, unknown> = {}): Mixpanel.Callback {
+    return (error) => {
+      if (error) {
+        this.logError(operation, error, context);
+      }
+    };
   }
 
-  private get mixpanelEnabled() {
-    return process.env.NODE_ENV !== 'test' && this.mixpanel;
+  private logError(operation: string, error: Error | undefined, context: Record<string, unknown>) {
+    Logger.error(
+      {
+        operation,
+        ...context,
+        message: error?.message,
+      },
+      'There has been an error when sending analytics to Mixpanel',
+      LOG_CONTEXT
+    );
   }
 
-  private convertToIsoDate(createdAt: string | number | null): string {
+  private convertToIsoDate(createdAt: string | number | null | undefined): string {
     const createdAtNumber = Number(createdAt);
     const isEpochValidNumber = !Number.isNaN(createdAtNumber);
 

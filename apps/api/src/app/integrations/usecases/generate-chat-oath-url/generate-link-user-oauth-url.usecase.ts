@@ -70,6 +70,7 @@ export class GenerateLinkUserOauthUrl {
             subscriberId: command.subscriberId,
             integration,
             context: command.context,
+            contextKeys: command.contextKeys,
             userScope: command.userScope,
             mode: 'link_user',
           })

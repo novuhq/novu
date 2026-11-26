@@ -1,15 +1,14 @@
-import { ClickHouseClient, ClickHouseService, createClickHouseClient } from '@novu/application-generic';
+import { ClickHouseClient, createClickHouseClient } from '@novu/application-generic';
 import { type Connection, DalService } from '@novu/dal';
 import { testServer } from '@novu/testing';
 import axios from 'axios';
 import chai from 'chai';
 import sinon from 'sinon';
-import { ZodError } from 'zod';
+// The generated API SDK validates responses with `zod/v3`, so its validation errors are v3 `ZodError`s.
+import { ZodError } from 'zod/v3';
 import { bootstrap } from '../src/bootstrap';
 
 let databaseConnection: Connection;
-let analyticsConnection: ClickHouseClient | undefined;
-let clickHouseService: ClickHouseService | undefined;
 const dalService = new DalService();
 const isCI = !!process.env.CI;
 
@@ -39,7 +38,7 @@ async function getDatabaseConnection(): Promise<Connection> {
 }
 
 /**
- * The root hooks drop the whole Mongo database and truncate every ClickHouse table. Without NODE_ENV=test the API
+ * The root hooks drop the whole Mongo and ClickHouse databases. Without NODE_ENV=test the API
  * loads apps/api/src/.env, which points at the developer's own databases, so only a test database may be wiped.
  */
 function assertTestDatabase(kind: string, databaseName: string): void {
@@ -87,23 +86,11 @@ async function closeDatabaseConnection(): Promise<void> {
   }
 }
 
-async function getClickHouseConnection(): Promise<ClickHouseClient | undefined> {
-  if (!analyticsConnection) {
-    if (!clickHouseService) {
-      clickHouseService = new ClickHouseService();
-      await clickHouseService.init();
-    }
-    analyticsConnection = clickHouseService?.client;
-  }
-
-  return analyticsConnection;
-}
-
 function createClickHouseTestClient(database?: string): ClickHouseClient {
   return createClickHouseClient({
-    url: 'http://localhost:8123',
-    username: 'default',
-    password: '',
+    url: process.env.CLICK_HOUSE_URL || 'http://localhost:8123',
+    username: process.env.CLICK_HOUSE_USER || 'default',
+    password: process.env.CLICK_HOUSE_PASSWORD || '',
     database: database || 'default',
   });
 }
@@ -120,69 +107,25 @@ async function ensureClickHouseDatabase(databaseName: string): Promise<void> {
   }
 }
 
-async function getClickHouseTables(databaseName: string): Promise<string[]> {
-  try {
-    const conn = await getClickHouseConnection();
-    if (!conn) return [];
-
-    const result = await conn.query({
-      query: `SHOW TABLES FROM ${databaseName}`,
-      format: 'JSONEachRow',
-    });
-
-    const tables = (await result.json()) as Array<{ name: string }>;
-
-    return tables.map((t) => t.name);
-  } catch (error) {
-    logInfo(`Could not query tables in ${databaseName}: ${error.message}`);
-
-    return [];
-  }
-}
-
-async function truncateClickHouseTable(databaseName: string, tableName: string): Promise<void> {
-  try {
-    const conn = await getClickHouseConnection();
-    if (!conn) return;
-
-    await conn.command({ query: `TRUNCATE TABLE IF EXISTS ${databaseName}.${tableName}` });
-    logInfo(`Successfully cleaned table ${tableName}`);
-  } catch (error) {
-    logInfo(`Failed to clean table ${tableName}:`, error.message);
-  }
-}
-
+/**
+ * Drops the test database instead of emptying its tables. The API creates its tables at boot with `CREATE TABLE IF NOT
+ * EXISTS`, so tables kept from an older run would never get the columns added since, unlike CI's fresh ClickHouse.
+ */
 async function cleanupClickHouseDatabase(): Promise<void> {
   const databaseName = process.env.CLICK_HOUSE_DATABASE || 'test_logs';
   assertTestDatabase('ClickHouse', databaseName);
 
+  const client = createClickHouseTestClient('default');
   try {
-    logInfo(`Cleaning up ClickHouse database: ${databaseName}`);
+    logInfo(`Recreating ClickHouse database: ${databaseName}`);
 
+    await client.command({ query: `DROP DATABASE IF EXISTS ${databaseName}` });
     await ensureClickHouseDatabase(databaseName);
-
-    const tables = await getClickHouseTables(databaseName);
-    if (tables.length > 0) {
-      logInfo(`Found ${tables.length} tables: ${tables.join(', ')}`);
-      await Promise.all(tables.map((table) => truncateClickHouseTable(databaseName, table)));
-      logInfo(`Cleaned up ${tables.length} tables in ${databaseName}`);
-    } else {
-      logInfo(`No tables to clean up in ${databaseName}`);
-    }
-
-    logInfo(`ClickHouse database ${databaseName} cleanup completed`);
   } catch (error) {
     logInfo('Analytics database cleanup encountered an issue:', error.message);
     logInfo('This is acceptable for test environment - continuing with test setup');
-  }
-}
-
-async function closeClickHouseConnection(): Promise<void> {
-  if (analyticsConnection) {
-    await analyticsConnection.close();
-  }
-  if (clickHouseService) {
-    await clickHouseService.beforeApplicationShutdown();
+  } finally {
+    await client.close();
   }
 }
 
@@ -397,7 +340,6 @@ after(async () => {
   await dropDatabase();
   await cleanupClickHouseDatabase();
   await closeDatabaseConnection();
-  await closeClickHouseConnection();
 });
 
 // biome-ignore lint/plugin: a failed hook can throw any value; logE2EFailure narrows it

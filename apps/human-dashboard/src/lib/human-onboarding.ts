@@ -41,6 +41,7 @@ import type { AgentLook } from './look';
 import {
   AGENT_DOMAIN,
   cardLinkOf,
+  type HostVia,
   ONBOARDING_PATH,
   type OnboardingStep,
   onboardingConnectPath,
@@ -394,7 +395,7 @@ export type OnboardingView = {
   /** Missing on step 1, where the agent is still being named. */
   agent: AgentIdentity | null;
   test: { sentAt?: string; replyAt?: string; from?: string; subject?: string };
-  host: { via: 'cli' | 'mcp'; connectedAt: string } | null;
+  host: { via: HostVia; connectedAt: string } | null;
   /** True when an agent may already be connected but its host status could not be checked. */
   hostStatusUnavailable: boolean;
   waitingMessage: HostStatus['waitingMessage'];
@@ -515,7 +516,7 @@ export type SayHiView = {
   /** The host picked on A.2, which A.3 opens on. `null` before one was picked. */
   pickedHost: HostId | null;
   /** The host that came in first, and the way it came: what A.4a asks to say hi. `null` before one did. */
-  connected: { via: 'cli' | 'mcp'; host: HostId | null } | null;
+  connected: { via: HostVia; host: HostId | null } | null;
   /** The first time a host showed the card, and which: what A.4 shows happening. `null` before. */
   cardShown: CardShown | null;
   /** Messages already in the inbox, waiting for a host to read them. `null` when they couldn't be counted. */

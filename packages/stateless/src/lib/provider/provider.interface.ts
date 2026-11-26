@@ -45,13 +45,12 @@ export interface IEmailOptions {
   replyTo?: string;
   cc?: string[];
   bcc?: string[];
-  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
+  // biome-ignore lint/suspicious/noExplicitAny: Existing untyped payload details are outside this change.
   payloadDetails?: any;
-  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
+  // biome-ignore lint/suspicious/noExplicitAny: Existing untyped notification details are outside this change.
   notificationDetails?: any;
   ipPoolName?: string;
-  // biome-ignore lint/plugin: pre-existing public provider contract; customData is caller-defined
-  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
+  // biome-ignore lint/plugin: Existing customData dictionary type is outside this change.
   customData?: Record<string, any>;
   headers?: Record<string, string>;
   senderName?: string;
@@ -64,8 +63,7 @@ export interface ISmsOptions {
   from?: string;
   attachments?: IAttachmentOptions[];
   id?: string;
-  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
-  // biome-ignore lint/plugin: pre-existing public provider contract; customData is caller-defined
+  // biome-ignore lint/plugin: Existing customData dictionary type is outside this change.
   customData?: Record<string, any>;
   bridgeProviderData?: Record<string, unknown>;
 }
@@ -130,8 +128,7 @@ export interface IChatOptions {
    * The provider spreads it into its outgoing body; `content` carries the markdown fallback text.
    */
   nativePayload?: Record<string, unknown>;
-  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
-  // biome-ignore lint/plugin: pre-existing public provider contract; customData is caller-defined
+  // biome-ignore lint/plugin: Existing customData dictionary type is outside this change.
   customData?: Record<string, any>;
   bridgeProviderData?: Record<string, unknown>;
 }
@@ -303,6 +300,38 @@ export interface ISendMessageSuccessResponse {
   channel?: string;
 }
 
+/**
+ * A file sent with a chat message. Comes from the trigger's `payload.attachments` entries
+ * whose `channels` include `chat`.
+ */
+export interface IChatFile {
+  /** File name including its extension, e.g. `report.pdf`. */
+  name: string;
+  /** MIME type, e.g. `application/pdf`. */
+  mime: string;
+  file: Buffer;
+}
+
+export type ChatFileDeliveryStatus = 'sent' | 'skipped' | 'failed';
+
+export interface IChatFileDeliveryResult {
+  name: string;
+  status: ChatFileDeliveryStatus;
+  /** Why the file was skipped or failed, written for the person reading the activity log. */
+  reason?: string;
+}
+
+export interface IChatSendFilesOptions {
+  /** Where the message was delivered. The files go to the same place. */
+  channelData: ChannelData;
+  files: IChatFile[];
+  /** The `sendMessage` result of the message the files follow (e.g. Slack `channel` + `id`). */
+  sentMessage: ISendMessageSuccessResponse;
+  /** The provider data the message was sent with (e.g. a Slack `thread_ts`), so files land in the same thread. */
+  bridgeProviderData?: Record<string, unknown>;
+  customData?: Record<string, unknown>;
+}
+
 export enum EmailEventStatusEnum {
   OPENED = 'opened',
   REJECTED = 'rejected',
@@ -369,10 +398,10 @@ export interface IEmailProvider extends IProvider {
     bridgeProviderData: Record<string, unknown>
   ): Promise<ISendMessageSuccessResponse>;
 
-  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
+  // biome-ignore lint/suspicious/noExplicitAny: Existing untyped webhook bodies are outside this change.
   getMessageId?: (body: any | any[]) => string[];
 
-  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
+  // biome-ignore lint/suspicious/noExplicitAny: Existing untyped webhook bodies are outside this change.
   parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => IEmailEventBody | undefined;
 
   checkIntegration?: (options: IEmailOptions) => Promise<ICheckIntegrationResponse>;
@@ -383,10 +412,10 @@ export interface ISmsProvider extends IProvider {
 
   channelType: ChannelTypeEnum.SMS;
 
-  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
+  // biome-ignore lint/suspicious/noExplicitAny: Existing untyped webhook bodies are outside this change.
   getMessageId?: (body: any) => string[];
 
-  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
+  // biome-ignore lint/suspicious/noExplicitAny: Existing untyped webhook bodies are outside this change.
   parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => ISMSEventBody | undefined;
 }
 
@@ -404,10 +433,17 @@ export interface IChatProvider extends IProvider {
    */
   render?: (card: CardElement) => Promise<IChatRenderResult>;
 
-  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
+  /**
+   * Upload files natively right after `sendMessage` delivered the message to the same place.
+   * The message is already out, so per-file problems are reported in the returned results
+   * rather than thrown. Providers without native file uploads omit this method.
+   */
+  sendFiles?: (options: IChatSendFilesOptions) => Promise<IChatFileDeliveryResult[]>;
+
+  // biome-ignore lint/suspicious/noExplicitAny: Existing untyped webhook bodies are outside this change.
   getMessageId?: (body: any | any[]) => string[];
 
-  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
+  // biome-ignore lint/suspicious/noExplicitAny: Existing untyped webhook bodies are outside this change.
   parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => unknown | undefined;
 }
 
@@ -418,10 +454,10 @@ export interface IPushProvider extends IProvider {
 
   channelType: ChannelTypeEnum.PUSH;
 
-  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
+  // biome-ignore lint/suspicious/noExplicitAny: Existing untyped webhook bodies are outside this change.
   getMessageId?: (body: any | any[]) => string[];
 
-  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
+  // biome-ignore lint/suspicious/noExplicitAny: Existing untyped webhook bodies are outside this change.
   parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => unknown | undefined;
 }
 
@@ -450,10 +486,10 @@ export interface IToolProvider extends IProvider {
 
   channelType: ChannelTypeEnum.TOOL;
 
-  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
+  // biome-ignore lint/suspicious/noExplicitAny: Existing untyped webhook bodies are outside this change.
   getMessageId?: (body: any | any[]) => string[];
 
-  // biome-ignore lint/suspicious/noExplicitAny: pre-existing public provider contract; tightening it would break provider implementations
+  // biome-ignore lint/suspicious/noExplicitAny: Existing untyped webhook bodies are outside this change.
   parseEventBody?: (body: any | any[], identifier: string, eventIndex?: number) => unknown | undefined;
 }
 

@@ -1,4 +1,5 @@
 import type {
+  AgentAccessRule,
   AgentAnalyticsSource,
   AgentReplyPolicyEnum,
   AgentRuntime,
@@ -16,10 +17,12 @@ export interface AgentBehavior {
   /**
    * Whether the agent accepts inbound messages from senders not yet linked to a
    * subscriber, across all channels. `open` auto-provisions unknown senders;
-   * `restricted` rejects them. Managed create defaults to open; self-hosted
-   * create defaults to restricted. Always persisted (backfilled for legacy rows).
+   * `restricted` rejects them; `rule` requires a known subscriber and a matching
+   * `accessRule`. Managed create defaults to open; self-hosted create defaults
+   * to restricted. Always persisted (backfilled for legacy rows).
    */
   subscriberAccess: AgentSubscriberAccessEnum;
+  accessRule?: AgentAccessRule;
   /**
    * Shared-room reply policy. Absent on legacy rows is treated as `auto_reply`.
    */
@@ -45,10 +48,13 @@ export interface AgentPicture {
   version: string;
 }
 
-/** How a host reaches an Agent Inbox agent: the `agentinbox` CLI, or the hosted MCP server. */
-export type AgentHostVia = 'cli' | 'mcp';
+/**
+ * How a host reaches an Agent Inbox agent: the `agentinbox` CLI, the hosted MCP server, or the host's own plugin
+ * for Agent Inbox (Hermes's and OpenClaw's gateways), which holds the key as the CLI does.
+ */
+export type AgentHostVia = 'cli' | 'mcp' | 'plugin';
 
-export const AGENT_HOST_VIAS: readonly AgentHostVia[] = ['cli', 'mcp'];
+export const AGENT_HOST_VIAS: readonly AgentHostVia[] = ['cli', 'mcp', 'plugin'];
 
 /**
  * The hosts Agent Inbox tells apart, by the id the CLI, the MCP server and the dashboard share. `general` is

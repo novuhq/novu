@@ -1,8 +1,9 @@
-import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, CopilotPageEnum, EmailProviderIdEnum } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { autoConfigureIntegration, slackQuickSetup, updateIntegration } from '@/api/integrations';
+import { useRegisterCopilotPageView } from '@/components/copilot-web-chat';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -38,6 +39,14 @@ function isTrackingOn(data: IntegrationFormData) {
   return Boolean(value) && value !== 'false';
 }
 
+/** Tells the Copilot which provider's connect form is open: a filter, since no integration exists yet. */
+function useCopilotProviderView(isOpened: boolean, providerId: string | undefined) {
+  useRegisterCopilotPageView(CopilotPageEnum.INTEGRATIONS, {
+    viewing: isOpened && providerId ? { filters: { provider: providerId } } : undefined,
+    overSheet: isOpened,
+  });
+}
+
 export type CreateIntegrationSidebarProps = {
   isOpened: boolean;
 };
@@ -45,7 +54,10 @@ export type CreateIntegrationSidebarProps = {
 export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarProps) {
   const navigate = useNavigate();
   const { providerId } = useParams();
+  // A Copilot setup link's environment stays while the user goes back and picks another provider.
   const [searchParams] = useSearchParams();
+  const linkedEnvironmentId = searchParams.get('environmentId');
+  const search = linkedEnvironmentId ? `?${new URLSearchParams({ environmentId: linkedEnvironmentId })}` : '';
 
   const { mutateAsync: createIntegration, isPending } = useCreateIntegration();
   const { mutateAsync: setPrimaryIntegration, isPending: isSettingPrimary } = useSetPrimaryIntegration();
@@ -55,11 +67,13 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
   const [isAddingWebhook, setIsAddingWebhook] = useState(false);
 
   const handleIntegrationSelect = (integrationId: string) => {
-    navigate(buildRoute(ROUTES.INTEGRATIONS_CONNECT_PROVIDER, { providerId: integrationId }), { replace: true });
+    navigate(buildRoute(ROUTES.INTEGRATIONS_CONNECT_PROVIDER, { providerId: integrationId }) + search, {
+      replace: true,
+    });
   };
 
   const handleBack = () => {
-    navigate(ROUTES.INTEGRATIONS_CONNECT, { replace: true });
+    navigate(ROUTES.INTEGRATIONS_CONNECT + search, { replace: true });
   };
 
   const { selectedIntegration, step, searchQuery, setSearchQuery, onIntegrationSelect, onBack } =
@@ -72,6 +86,8 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
 
   const { catalogProviders } = useIntegrationList();
   const provider = catalogProviders.find((providerItem) => providerItem.id === (selectedIntegration || providerId));
+
+  useCopilotProviderView(isOpened, provider?.id);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();

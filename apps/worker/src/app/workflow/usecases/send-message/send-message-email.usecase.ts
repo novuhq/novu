@@ -53,12 +53,8 @@ import {
 import inlineCss from 'inline-css';
 
 import { PlatformException } from '../../../shared/utils';
-import {
-  combineProviderOverrides,
-  dispatchWebhooksInBackground,
-  mergeTriggerProviderOverrides,
-  SendMessageBase,
-} from './send-message.base';
+import { isEmailAttachment } from './attachment-channels';
+import { combineProviderOverrides, mergeTriggerProviderOverrides, SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
@@ -332,7 +328,7 @@ export class SendMessageEmail extends SendMessageBase {
       })
     );
 
-    const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
+    const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.filter(isEmailAttachment).map(
       (attachment) =>
         <IAttachmentOptions>{
           file: attachment.file,
@@ -642,20 +638,18 @@ export class SendMessageEmail extends SendMessageBase {
         ),
       });
 
-      dispatchWebhooksInBackground(this.sendWebhookMessage, [
-        {
-          eventType: WebhookEventEnum.MESSAGE_SENT,
-          objectType: WebhookObjectTypeEnum.MESSAGE,
-          payload: {
-            object: messageWebhookMapper(message, command.subscriberId, {
-              providerResponseId: result.id,
-            }),
-          },
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          environment: command.environment,
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_SENT,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, command.subscriberId, {
+            providerResponseId: result.id,
+          }),
         },
-      ]);
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        environment: command.environment,
+      });
 
       Logger.verbose({ command }, 'Email message has been sent', LOG_CONTEXT);
 
@@ -713,21 +707,19 @@ export class SendMessageEmail extends SendMessageBase {
        */
       const providerError = error?.isAxiosError && error.response ? error.response : error;
 
-      dispatchWebhooksInBackground(this.sendWebhookMessage, [
-        {
-          eventType: WebhookEventEnum.MESSAGE_FAILED,
-          objectType: WebhookObjectTypeEnum.MESSAGE,
-          payload: {
-            object: messageWebhookMapper(message, command.subscriberId),
-            error: {
-              message: providerError.message || providerError.name || 'Error while sending email with provider',
-            },
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_FAILED,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, command.subscriberId),
+          error: {
+            message: providerError.message || providerError.name || 'Error while sending email with provider',
           },
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          environment: command.environment,
         },
-      ]);
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        environment: command.environment,
+      });
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({

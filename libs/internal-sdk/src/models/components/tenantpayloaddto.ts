@@ -4,37 +4,17 @@
 
 import * as z from "zod/v3";
 
-export type TenantPayloadDtoData = {};
-
 export type TenantPayloadDto = {
   identifier?: string | undefined;
   name?: string | undefined;
-  data?: TenantPayloadDtoData | undefined;
+  data?: { [k: string]: any } | undefined;
 };
-
-/** @internal */
-export type TenantPayloadDtoData$Outbound = {};
-
-/** @internal */
-export const TenantPayloadDtoData$outboundSchema: z.ZodType<
-  TenantPayloadDtoData$Outbound,
-  z.ZodTypeDef,
-  TenantPayloadDtoData
-> = z.object({});
-
-export function tenantPayloadDtoDataToJSON(
-  tenantPayloadDtoData: TenantPayloadDtoData,
-): string {
-  return JSON.stringify(
-    TenantPayloadDtoData$outboundSchema.parse(tenantPayloadDtoData),
-  );
-}
 
 /** @internal */
 export type TenantPayloadDto$Outbound = {
   identifier?: string | undefined;
   name?: string | undefined;
-  data?: TenantPayloadDtoData$Outbound | undefined;
+  data?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -45,7 +25,7 @@ export const TenantPayloadDto$outboundSchema: z.ZodType<
 > = z.object({
   identifier: z.string().optional(),
   name: z.string().optional(),
-  data: z.lazy(() => TenantPayloadDtoData$outboundSchema).optional(),
+  data: z.record(z.any()).optional(),
 });
 
 export function tenantPayloadDtoToJSON(

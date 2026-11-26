@@ -113,6 +113,10 @@ export const envValidators = {
   NOVU_TLS_KEY_PASSPHRASE: str({ default: undefined }),
   NOVU_TLS_CA_BASE64: str({ default: undefined }),
   NOVU_TLS_CA_FILE: str({ default: undefined }),
+  // Single-IP header the edge proxy overwrites. Novu Cloud defaults to `cf-connecting-ip`, empty opts out. See getClientIp.
+  CLIENT_IP_HEADER: str({ default: undefined }),
+  // One log line per API request, on unless set to `false`. See accessLogMiddleware.
+  IS_API_ACCESS_LOG_ENABLED: bool({ default: true }),
   JWT_SECRET: str(),
   // Signs `Authorization: Internal <jwt>` loopback tokens (EE only). Empty disables the scheme.
   NOVU_INTERNAL_AUTH_SECRET: str({ default: '' }),
@@ -223,6 +227,11 @@ export const envValidators = {
       AI_LLM_API_KEY: str({ default: '' }),
       AI_LLM_MODEL: str({ default: '' }),
       AI_LLM_SIDE_CALL_MODEL: str({ default: 'gpt-4o' }),
+      // Copilot on AWS Bedrock (IS_COPILOT_BEDROCK_ENABLED); used only when all four are set
+      AI_BEDROCK_REGION: str({ default: '' }),
+      AI_BEDROCK_MODEL: str({ default: '' }),
+      AI_BEDROCK_GUARDRAIL_ID: str({ default: '' }),
+      AI_BEDROCK_GUARDRAIL_VERSION: str({ default: '' }),
       AI_LLM_MAX_OUTPUT_TOKENS: num({ default: 8192 }),
       AI_LLM_TEMPERATURE: num({ default: 0.7 }),
       AI_LLM_MAX_RETRIES: num({ default: 3 }),

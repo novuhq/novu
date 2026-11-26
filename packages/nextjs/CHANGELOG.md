@@ -1,3 +1,7 @@
+## v3.21.0 (2026-11-23)
+
+This was a version bump only for @novu/nextjs to align it with other projects, there were no code changes.
+
 ## v3.20.0 (2026-11-16)
 
 ### 🚀 Features

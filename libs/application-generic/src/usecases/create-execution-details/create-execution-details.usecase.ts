@@ -123,6 +123,8 @@ const mapDetailToEventType = {
   [DetailEnum.CHAT_AGENT_NO_ELIGIBLE_CHANNELS]: 'chat_agent_no_eligible_channels',
   [DetailEnum.CHAT_AGENT_CHANNELS_FALLBACK]: 'chat_agent_channels_fallback',
   [DetailEnum.CHAT_AGENT_PLATFORM_THREAD_PERSIST_FAILED]: 'chat_agent_platform_thread_persist_failed',
+  [DetailEnum.CHAT_FILES_SENT]: 'chat_files_sent',
+  [DetailEnum.CHAT_FILES_NOT_SENT]: 'chat_files_not_sent',
 
   // MS Teams events
   [DetailEnum.MSTEAMS_BOT_NOT_INSTALLED]: 'msteams_bot_not_installed',

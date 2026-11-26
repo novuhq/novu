@@ -12,7 +12,7 @@ import {
   slackConfig,
   ToolProviderIdEnum,
 } from '@novu/shared';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { RiInputField } from 'react-icons/ri';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -62,6 +62,7 @@ import {
   isSecureCredential,
   usesProviderSetupLayout,
 } from './utils/helpers';
+import { mergeSavedValues } from './utils/merge-saved-values';
 import { WhatsAppCredentialsPaste } from './whatsapp-credentials-paste';
 import { WhatsAppCredentialsValidator } from './whatsapp-credentials-validator';
 import { WhatsAppManualSetup } from './whatsapp-manual-setup';
@@ -239,6 +240,19 @@ function describeChangedFields(dirtyFields: DirtyFields, provider: IProviderConf
   return labels;
 }
 
+function toFormValues(integration: IIntegration): Omit<IntegrationFormData, 'check'> {
+  return {
+    name: integration.name,
+    identifier: integration.identifier,
+    active: integration.active,
+    primary: integration.primary ?? false,
+    credentials: integration.credentials as Record<string, string>,
+    configurations: integration.configurations as Record<string, string>,
+    environmentId: integration._environmentId,
+    rules: integration.rules ?? null,
+  };
+}
+
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: long-standing per-provider settings form; splitting it is out of scope here
 export function IntegrationSettings({
   provider,
@@ -263,6 +277,11 @@ export function IntegrationSettings({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { currentEnvironment, environments } = useEnvironment();
+  // A Copilot setup link can name the environment to connect the provider in.
+  const linkedEnvironmentId = searchParams.get('environmentId');
+  const defaultEnvironmentId = environments?.some((env) => env._id === linkedEnvironmentId)
+    ? linkedEnvironmentId
+    : currentEnvironment?._id;
 
   const isFailing = !!integration && isIntegrationFailing(integration);
   const isTrackingAvailable = useIsActivityTrackingAvailable();
@@ -270,16 +289,7 @@ export function IntegrationSettings({
     mode: 'all',
     reValidateMode: 'onChange',
     defaultValues: integration
-      ? {
-          name: integration.name,
-          identifier: integration.identifier,
-          active: integration.active,
-          primary: integration.primary ?? false,
-          credentials: integration.credentials as Record<string, string>,
-          configurations: integration.configurations as Record<string, string>,
-          environmentId: integration._environmentId,
-          rules: integration.rules ?? null,
-        }
+      ? toFormValues(integration)
       : {
           name: provider?.displayName ?? '',
           identifier: generateSlug(provider?.displayName ?? ''),
@@ -295,32 +305,37 @@ export function IntegrationSettings({
             setupLayout && hasGuidedActivityTracking(provider?.id) && isTrackingAvailable
               ? { [ACTIVITY_TRACKING_ENABLER]: 'true' }
               : {},
-          environmentId: currentEnvironment?._id ?? '',
+          environmentId: defaultEnvironmentId ?? '',
           rules: null,
         },
   });
 
   const { handleSubmit, control, setValue, formState } = form;
 
-  // Opening the sheet from a link can render the form before the environment has loaded; start in it once it has.
-  const currentEnvironmentId = currentEnvironment?._id;
-  // biome-ignore lint/correctness/useExhaustiveDependencies: runs only when the current environment loads
+  // The Copilot can change the integration while its sheet is open: take the new values, keeping what the user changed,
+  // so saving doesn't send the old ones back.
+  const savedValuesKey = integration ? JSON.stringify(toFormValues(integration)) : undefined;
+  const savedValuesRef = useRef(integration ? toFormValues(integration) : undefined);
   useEffect(() => {
-    if (integration || !currentEnvironmentId || form.getValues('environmentId')) return;
-    // setValue, not resetField: no input registers environmentId, and resetField skips unregistered fields.
-    form.setValue('environmentId', currentEnvironmentId);
-  }, [currentEnvironmentId]);
+    const saved = savedValuesRef.current;
+    if (!integration || savedValuesKey === JSON.stringify(saved)) return;
 
-  // Primary can change outside the form (the drawer's "Make primary"), so the toggle follows it unless it was edited.
-  // Making it primary also clears its rules on the server; keeping the old ones would send them back on the next
-  // save, and the server would take primary away again.
-  const savedPrimary = integration?.primary ?? false;
-  // biome-ignore lint/correctness/useExhaustiveDependencies: runs only when the saved value changes
+    const next = toFormValues(integration);
+    savedValuesRef.current = next;
+    if (!saved) return;
+
+    const values = mergeSavedValues(saved, form.getValues(), next) as IntegrationFormData;
+    // The new saved values become the defaults, so the form stays dirty only with the user's own changes.
+    form.reset(next);
+    form.reset(values, { keepDefaultValues: true });
+  }, [integration, savedValuesKey, form]);
+
+  // A setup link opened cold mounts the form before the environments load, with no environment to connect in yet.
   useEffect(() => {
-    if (!integration) return;
-    if (!form.getFieldState('primary').isDirty) form.resetField('primary', { defaultValue: savedPrimary });
-    if (!form.getFieldState('rules').isDirty) form.resetField('rules', { defaultValue: integration.rules ?? null });
-  }, [savedPrimary]);
+    if (mode === 'create' && defaultEnvironmentId && !form.getValues('environmentId')) {
+      setValue('environmentId', defaultEnvironmentId);
+    }
+  }, [mode, defaultEnvironmentId, form, setValue]);
 
   const usesSetupLayout =
     mode === 'create' &&

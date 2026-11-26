@@ -1,3 +1,9 @@
+export enum SubscriberSessionAuthMethodEnum {
+  HMAC = 'hmac',
+  NONE = 'none',
+  TOKEN = 'token',
+}
+
 export interface ISubscriberJwtDto {
   _id: string;
   firstName: string;
@@ -8,6 +14,7 @@ export interface ISubscriberJwtDto {
   environmentId: string;
   contextKeys: string[];
   aud: 'widget_user';
+  authMethod?: SubscriberSessionAuthMethodEnum.TOKEN;
 }
 
 export interface ISessionDto {

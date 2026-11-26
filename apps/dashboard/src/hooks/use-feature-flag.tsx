@@ -1,6 +1,6 @@
-import { FeatureFlagsKeysEnum, prepareBooleanStringFeatureFlag } from '@novu/shared';
+import { FeatureFlagsKeysEnum, parseFeatureFlagOverrides, prepareBooleanStringFeatureFlag } from '@novu/shared';
 import { useFlags, useLDClient } from 'launchdarkly-react-client-sdk';
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useAuth } from '@/context/auth/hooks';
 import { IS_SELF_HOSTED_EE, LAUNCH_DARKLY_CLIENT_SIDE_ID } from '../config';
 
@@ -95,26 +95,54 @@ export function useLaunchDarklyIdentified(): boolean {
   return !!currentOrganization && identifiedId === currentOrganization._id;
 }
 
+const runtimeEnv = (window as Window & { _env_?: Record<string, string> })._env_;
+
+// Flags forced to a value whatever LaunchDarkly serves; a Novu Box forces one on for itself only.
+const overrides = parseFeatureFlagOverrides(runtimeEnv?.VITE_FEATURE_FLAG_OVERRIDES);
+const isForced = (key: FeatureFlagsKeysEnum) => key in overrides;
+
+function getFeatureFlagEnvValue(key: FeatureFlagsKeysEnum): string | undefined {
+  return (
+    // Check runtime env first (for self-hosted flexibility)
+    runtimeEnv?.[`VITE_${key}`] ??
+    // Check if the feature flag is exported as an environment variable
+    import.meta.env[`VITE_${key}`] ??
+    // Then check process.env if process exists
+    (typeof process !== 'undefined' ? process?.env?.[key] : undefined)
+  );
+}
+
 export const useFeatureFlag = (key: FeatureFlagsKeysEnum, defaultValue = false): boolean => {
   const flags = useFlags();
 
-  if (!isLaunchDarklyEnabled()) {
-    const envValue =
-      // Check runtime env first (for self-hosted flexibility)
-      (window as Window & { _env_?: Record<string, string> })._env_?.[`VITE_${key}`] ??
-      // Check if the feature flag is exported as an environment variable
-      import.meta.env[`VITE_${key}`] ??
-      // Then check process.env if process exists
-      (typeof process !== 'undefined' ? process?.env?.[key] : undefined);
+  if (isForced(key)) {
+    return overrides[key] === true;
+  }
 
-    return prepareBooleanStringFeatureFlag(envValue, defaultValue);
+  if (!isLaunchDarklyEnabled()) {
+    return prepareBooleanStringFeatureFlag(getFeatureFlagEnvValue(key), defaultValue);
   }
 
   return flags[key] ?? defaultValue;
 };
 
+/**
+ * A JSON flag read through `parse`, which gets the value LaunchDarkly serves (e.g. an array) or, without LaunchDarkly,
+ * the raw `VITE_<KEY>` string. Pass a module-level `parse`, so the parsed value only changes with the flag.
+ */
+export const useParsedFeatureFlag = <T,>(key: FeatureFlagsKeysEnum, parse: (value: unknown) => T): T => {
+  const flags = useFlags();
+  const value = isForced(key) ? overrides[key] : isLaunchDarklyEnabled() ? flags[key] : getFeatureFlagEnvValue(key);
+
+  return useMemo(() => parse(value), [parse, value]);
+};
+
 export const useNumericFeatureFlag = (key: FeatureFlagsKeysEnum, defaultValue = 0): number => {
   const flags = useFlags();
+
+  if (isForced(key)) {
+    return typeof overrides[key] === 'number' ? overrides[key] : defaultValue;
+  }
 
   if (!isLaunchDarklyEnabled()) {
     const envValue =

@@ -1,16 +1,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { McpAgent } from "agents/mcp";
-// Import all tool registration functions
-import { registerAgentTools } from "../tools/agents";
-import { registerAuthTools } from "../tools/auth";
-import { registerConversationTools } from "../tools/conversations";
-import { registerEnvironmentTools } from "../tools/environments";
-import { registerIntegrationTools } from "../tools/integrations";
-import { registerNotificationTools } from "../tools/notifications";
-import { registerPreferenceTools } from "../tools/preferences";
-import { registerSubscriberTools } from "../tools/subscribers";
-import { registerWorkflowTools } from "../tools/workflows";
+import { REGION_DASHBOARD_URLS } from "../regions";
 import type { ToolAccessors } from "../utils/tool-accessors";
+import { FEEDBACK_SERVER_INFO } from "./feedback";
+import { registerHostedTools } from "./hosted-tools";
 
 /**
  * Per-session credentials handed off by the worker via `ctx.props` (the
@@ -26,10 +19,7 @@ export type NovuProps = {
 };
 
 export class NovuMCP extends McpAgent<Env, unknown, NovuProps> {
-	server = new McpServer({
-		name: "Novu MCP Server",
-		version: "1.0.0",
-	});
+	server = new McpServer(FEEDBACK_SERVER_INFO);
 
 	async init() {
 		console.log("Novu MCP Server initializing...");
@@ -45,6 +35,7 @@ export class NovuMCP extends McpAgent<Env, unknown, NovuProps> {
 
 	private getAccessors = (): ToolAccessors => ({
 		getApiUrl: () => this.props?.apiUrl ?? "https://api.novu.co",
+		getDashboardUrl: () => REGION_DASHBOARD_URLS[this.getRegion()] ?? REGION_DASHBOARD_URLS.us,
 		getToken: () => this.props?.token ?? null,
 	});
 
@@ -53,15 +44,10 @@ export class NovuMCP extends McpAgent<Env, unknown, NovuProps> {
 	};
 
 	private registerAllTools() {
-		const accessors = this.getAccessors();
-		registerAuthTools(this.server, accessors, this.getRegion);
-		registerAgentTools(this.server, accessors);
-		registerConversationTools(this.server, accessors);
-		registerWorkflowTools(this.server, accessors);
-		registerEnvironmentTools(this.server, accessors);
-		registerSubscriberTools(this.server, accessors);
-		registerNotificationTools(this.server, accessors);
-		registerPreferenceTools(this.server, accessors);
-		registerIntegrationTools(this.server, accessors);
+		registerHostedTools(this.server, {
+			accessors: this.getAccessors(),
+			feedbackSecretKey: this.env.CLERK_SECRET_KEY,
+			getRegion: this.getRegion,
+		});
 	}
 }

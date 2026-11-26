@@ -36,7 +36,18 @@ export class FcmPushProvider extends PushBaseProvider implements IPushProvider {
   id = PushProviderIdEnum.FCM;
   protected casing: CasingEnum = CasingEnum.NONE;
 
-  private readonly INVALID_TOKEN_ERRORS = ['Requested entity was not found'];
+  /**
+   * Matched against the thrown message, which carries the Firebase error code (see `sendMessage`).
+   * Only errors that mean the token itself is dead belong here: a match removes the token from the
+   * subscriber. `messaging/invalid-argument` stays out — FCM also returns it for APNs environment
+   * mismatches, where the token is fine and the integration is misconfigured.
+   */
+  private readonly INVALID_TOKEN_ERRORS = [
+    'messaging/registration-token-not-registered',
+    'messaging/invalid-registration-token',
+    'Requested entity was not found',
+    'Device unregistered',
+  ];
 
   private appName: string;
   private messaging: Messaging;
@@ -135,9 +146,7 @@ export class FcmPushProvider extends PushBaseProvider implements IPushProvider {
     await deleteApp(app);
 
     if (typeof res !== 'string' && res.successCount === 0) {
-      throw new Error(
-        `Sending message failed due to "${res.responses.find((i) => i.success === false).error.message}"`
-      );
+      throw this.buildSendFailedError(res.responses.find((i) => i.success === false)?.error);
     }
 
     return {
@@ -155,6 +164,23 @@ export class FcmPushProvider extends PushBaseProvider implements IPushProvider {
 
   isTokenInvalid(errorMessage: string): boolean {
     return this.INVALID_TOKEN_ERRORS.some((error) => errorMessage?.includes(error));
+  }
+
+  /**
+   * Keeps the Firebase error code (e.g. `messaging/registration-token-not-registered`) in the message
+   * and on `code`, so callers can classify the failure without depending on FCM's free-text wording.
+   */
+  private buildSendFailedError(cause?: { message?: string; code?: string }): Error & { code?: string } {
+    const codeSuffix = cause?.code ? ` (${cause.code})` : '';
+    const error: Error & { code?: string } = new Error(
+      `Sending message failed due to "${cause?.message ?? 'unknown error'}"${codeSuffix}`
+    );
+
+    if (cause?.code) {
+      error.code = cause.code;
+    }
+
+    return error;
   }
 
   /**

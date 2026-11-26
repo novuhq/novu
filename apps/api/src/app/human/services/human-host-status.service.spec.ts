@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { describeHosts, HumanHostStatusService, readHostId } from './human-host-status.service';
+import { describeHosts, HumanHostStatusService, readHostId, readHostVia } from './human-host-status.service';
 
 describe('HumanHostStatusService', () => {
   const scope = { environmentId: 'env1', organizationId: 'org1' };
@@ -142,6 +142,16 @@ describe('HumanHostStatusService', () => {
       expect(
         describeHosts({ byId: { windsurf: { connectedAt: '2026-10-23T10:00:00.000Z' } } as never }).hosts
       ).to.deep.equal([]);
+    });
+  });
+
+  describe('readHostVia', () => {
+    it('takes the CLI, the MCP server and a host’s own plugin, in any case, and nothing else', () => {
+      expect(readHostVia('cli')).to.equal('cli');
+      expect(readHostVia(' MCP ')).to.equal('mcp');
+      expect(readHostVia('plugin')).to.equal('plugin');
+      expect(readHostVia('extension')).to.equal(undefined);
+      expect(readHostVia(undefined)).to.equal(undefined);
     });
   });
 

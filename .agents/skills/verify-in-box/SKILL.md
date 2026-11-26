@@ -23,6 +23,7 @@ node docker/box/src/cli/main.ts user seed       # a one-time sign-in link for th
 node docker/box/src/cli/main.ts user create     # a dashboard account for this box only
 node docker/box/src/cli/main.ts mail            # what it sent: email, SMS, push, chat
 node docker/box/src/cli/main.ts logs --errors   # what went wrong
+node docker/box/src/cli/main.ts flag IS_X_ENABLED true   # force a feature flag on in this box only
 ```
 
 A step is done when its check passes; what it proves goes in your report.
@@ -82,6 +83,13 @@ Exercise the change the way a user reaches it (the dashboard, the public API), n
   path to `docker/box/image/config/Caddyfile`, which boxes serve only after `box deploy` and a rebake of `base`.
 - **Broad changes** (shared libraries, auth, queues): also drive the main flows the change could break (sign-in,
   trigger a workflow and check the message, an agent reply).
+- **Behind a feature flag:** the box reads flags from LaunchDarkly, where a new flag is usually off. Force it on in
+  the box only (API, worker and dashboard), never in LaunchDarkly, which every box and staging share:
+  - A PR box: put `Box flags: <KEY>` (several: comma-separated) on its own line in the PR description, before the PR
+    is ready for review. Every apply forces exactly those flags on before TesterArmy starts, and the box's comment
+    lists them. A description edit applies on the next push or re-run of the box job.
+  - Your own box: `flag <KEY> true`. It stays on through `sync`; `flag <KEY> --unset` turns it back over.
+  `doctor` lists the forced flags under `flags`.
 
 Done when the changed behaviour is observed working, and the behaviour beside it still works. One happy path is a
 _tracer_, not proof: drive at least one failure case the change handles.

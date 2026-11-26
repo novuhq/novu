@@ -31,7 +31,7 @@ export type ThrottleStepUpsertDto = {
    */
   name: string;
   /**
-   * Type of the step
+   * Channels of the notification
    */
   type: "throttle";
   /**

@@ -148,6 +148,7 @@ These permissions let your app list teams and channels and decide where to send 
     - `AppCatalog.Read.All` - resolve your Teams app in the org catalog
     - `TeamsAppInstallation.ReadWriteSelfForTeam.All` (optional) - programmatically install the app into a team
     - `TeamsAppInstallation.ReadWriteSelfForUser.All` (required only for [OAuth DM linking](/platform/integrations/chat/ms-teams-connect#link-a-subscriber-for-direct-messages)) - install the app for a user during the link-user flow
+    - `Files.ReadWrite.All` (required only for [file attachments](/platform/integrations/chat/ms-teams#file-attachments)) - store the files you send in the channel's SharePoint folder or the recipient's OneDrive
   </Step>
 
 <Step title="Confirm permissions">
@@ -269,7 +270,10 @@ Now you create the Teams “wrapper” around your app registration and bot.
 
 <Step title="Fill in Basic information">
     In the left sidebar, click **Basic information**.
-    Fill in the required fields (names, descriptions, developer info, URLs) and then click **Save**.
+    Fill in the required fields (names, descriptions, developer info, URLs).
+    Set **Application (client) ID** to the Application (client) ID from your app registration, and then click **Save**.
+
+    This adds `webApplicationInfo` to the app manifest. Novu needs it to install your bot for subscribers and teams: the `TeamsAppInstallation.ReadWriteSelfForUser.All` and `TeamsAppInstallation.ReadWriteSelfForTeam.All` permissions only work for a Teams app that names your app registration. Without it, [linking a subscriber for direct messages](/platform/integrations/chat/ms-teams-connect#link-a-subscriber-for-direct-messages) fails.
   </Step>
 
 <Step title="Open App features">

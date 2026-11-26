@@ -1,9 +1,9 @@
 import { LogRepository, RequestLog, RequestLogSourceEnum } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
-import { getClientIp } from 'request-ip';
 import { sanitizePayload } from '../../../utils/payload-sanitizer';
 import { generateTransactionId } from '../helpers/generate-transaction-id';
 import { RequestWithReqId } from '../middleware/request-id.middleware';
+import { getClientIp } from './client-ip';
 import { getRequestId } from './request-transaction.util';
 
 function extractTransactionIdFromBody(body: unknown): string | undefined {
@@ -24,7 +24,7 @@ function extractTransactionIdFromBody(body: unknown): string | undefined {
 export function buildLog(
   req: RequestWithReqId,
   statusCode: number,
-  data: any,
+  data: unknown,
   user: UserSessionData | null,
   duration: number = 0
 ): Omit<RequestLog, 'expires_at'> | null {
@@ -50,7 +50,7 @@ export function buildLog(
     ip: getClientIp(req) || '',
     user_agent: req.headers['user-agent'] || '',
     request_body: sanitizePayload(req.body),
-    response_body: sanitizePayload(data),
+    response_body: sanitizePayload(data as Record<string, unknown>),
     user_id: user._id,
     organization_id: user.organizationId,
     environment_id: user.environmentId,

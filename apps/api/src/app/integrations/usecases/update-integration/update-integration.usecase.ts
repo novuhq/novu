@@ -14,7 +14,12 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { CHANNELS_WITH_PRIMARY, ControlValuesLevelEnum, IntegrationHealthStatusEnum } from '@novu/shared';
+import {
+  CHANNELS_WITH_PRIMARY,
+  ControlValuesLevelEnum,
+  type IConfigurations,
+  IntegrationHealthStatusEnum,
+} from '@novu/shared';
 import { isEqual } from 'lodash';
 import { assertIntegrationEnvironmentScope } from '../../utils/assert-integration-environment-scope';
 import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
@@ -302,7 +307,7 @@ export class UpdateIntegration {
     }
 
     if (command.configurations) {
-      updatePayload.configurations = command.configurations;
+      updatePayload.configurations = keepStoredSigningKey(command.configurations, existingIntegration.configurations);
     }
 
     if (command.conditions) {
@@ -442,4 +447,19 @@ export class UpdateIntegration {
 
     return updatedIntegration;
   }
+}
+
+/**
+ * Callers that may not see credentials never get `inboundWebhookSigningKey` back (`GetDecryptedIntegrations`), so the
+ * configurations they send without it keep the stored key. Sending the key, even empty, still replaces it.
+ */
+function keepStoredSigningKey(
+  configurations: IConfigurations,
+  stored: IntegrationEntity['configurations']
+): IConfigurations {
+  if ('inboundWebhookSigningKey' in configurations || !stored?.inboundWebhookSigningKey) {
+    return configurations;
+  }
+
+  return { ...configurations, inboundWebhookSigningKey: stored.inboundWebhookSigningKey };
 }

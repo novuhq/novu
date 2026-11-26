@@ -26,7 +26,7 @@ export type ActivityNotificationTemplateResponseDto = {
    */
   name: string;
   /**
-   * Origin of the layout
+   * Origin of the workflow
    */
   origin?: ResourceOriginEnum | undefined;
   /**

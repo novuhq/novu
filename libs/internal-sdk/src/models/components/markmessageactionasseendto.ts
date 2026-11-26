@@ -19,11 +19,6 @@ export type MarkMessageActionAsSeenDtoStatus = ClosedEnum<
   typeof MarkMessageActionAsSeenDtoStatus
 >;
 
-/**
- * Message action payload
- */
-export type MarkMessageActionAsSeenDtoPayload = {};
-
 export type MarkMessageActionAsSeenDto = {
   /**
    * Message action status
@@ -32,7 +27,7 @@ export type MarkMessageActionAsSeenDto = {
   /**
    * Message action payload
    */
-  payload?: MarkMessageActionAsSeenDtoPayload | undefined;
+  payload?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -41,29 +36,9 @@ export const MarkMessageActionAsSeenDtoStatus$outboundSchema: z.ZodNativeEnum<
 > = z.nativeEnum(MarkMessageActionAsSeenDtoStatus);
 
 /** @internal */
-export type MarkMessageActionAsSeenDtoPayload$Outbound = {};
-
-/** @internal */
-export const MarkMessageActionAsSeenDtoPayload$outboundSchema: z.ZodType<
-  MarkMessageActionAsSeenDtoPayload$Outbound,
-  z.ZodTypeDef,
-  MarkMessageActionAsSeenDtoPayload
-> = z.object({});
-
-export function markMessageActionAsSeenDtoPayloadToJSON(
-  markMessageActionAsSeenDtoPayload: MarkMessageActionAsSeenDtoPayload,
-): string {
-  return JSON.stringify(
-    MarkMessageActionAsSeenDtoPayload$outboundSchema.parse(
-      markMessageActionAsSeenDtoPayload,
-    ),
-  );
-}
-
-/** @internal */
 export type MarkMessageActionAsSeenDto$Outbound = {
   status: string;
-  payload?: MarkMessageActionAsSeenDtoPayload$Outbound | undefined;
+  payload?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -73,8 +48,7 @@ export const MarkMessageActionAsSeenDto$outboundSchema: z.ZodType<
   MarkMessageActionAsSeenDto
 > = z.object({
   status: MarkMessageActionAsSeenDtoStatus$outboundSchema,
-  payload: z.lazy(() => MarkMessageActionAsSeenDtoPayload$outboundSchema)
-    .optional(),
+  payload: z.record(z.any()).optional(),
 });
 
 export function markMessageActionAsSeenDtoToJSON(

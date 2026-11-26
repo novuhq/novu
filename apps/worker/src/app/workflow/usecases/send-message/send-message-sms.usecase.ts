@@ -30,8 +30,9 @@ import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
 import {
   combineProviderOverrides,
-  dispatchWebhooksInBackground,
   mergeTriggerProviderOverrides,
+  omitBlankPhoneDestination,
+  resolvePhoneDestination,
   SendMessageBase,
 } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
@@ -169,7 +170,7 @@ export class SendMessageSms extends SendMessageBase {
       integration?.providerId,
       command.step.stepId
     ) as SmsMessageOverrides;
-    const phone = resolveSmsDestination(overrides.to, command.payload.phone, subscriber.phone);
+    const phone = resolvePhoneDestination(overrides.to, command.payload.phone, subscriber.phone);
 
     const messagePayload = { ...command.payload };
     delete messagePayload.attachments;
@@ -334,7 +335,7 @@ export class SendMessageSms extends SendMessageBase {
         content: bridgeBody || overrides.content || content,
         id: message._id,
         customData: overrides.customData || {},
-        bridgeProviderData: omitBlankSmsDestination(
+        bridgeProviderData: omitBlankPhoneDestination(
           combineProviderOverrides(command.bridgeData, command.overrides, command.step.stepId, integration.providerId)
         ),
       });
@@ -368,20 +369,18 @@ export class SendMessageSms extends SendMessageBase {
         }
       );
 
-      dispatchWebhooksInBackground(this.sendWebhookMessage, [
-        {
-          eventType: WebhookEventEnum.MESSAGE_SENT,
-          objectType: WebhookObjectTypeEnum.MESSAGE,
-          payload: {
-            object: messageWebhookMapper(message, command.subscriberId, {
-              providerResponseId: result.id,
-            }),
-          },
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          environment: command.environment,
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_SENT,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, command.subscriberId, {
+            providerResponseId: result.id,
+          }),
         },
-      ]);
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        environment: command.environment,
+      });
 
       await this.recordIntegrationSendSuccess(integration);
 
@@ -400,21 +399,19 @@ export class SendMessageSms extends SendMessageBase {
         e
       );
 
-      dispatchWebhooksInBackground(this.sendWebhookMessage, [
-        {
-          eventType: WebhookEventEnum.MESSAGE_FAILED,
-          objectType: WebhookObjectTypeEnum.MESSAGE,
-          payload: {
-            object: messageWebhookMapper(message, command.subscriberId),
-            error: {
-              message: e.message || e.name || 'Error while sending sms with provider',
-            },
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_FAILED,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, command.subscriberId),
+          error: {
+            message: e.message || e.name || 'Error while sending sms with provider',
           },
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          environment: command.environment,
         },
-      ]);
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        environment: command.environment,
+      });
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -442,59 +439,4 @@ export class SendMessageSms extends SendMessageBase {
       providerId: integration.providerId,
     };
   }
-}
-
-function resolveSmsDestination(...candidates: unknown[]): string | undefined {
-  for (const candidate of candidates) {
-    if (isSmsDestination(candidate)) {
-      return candidate;
-    }
-  }
-
-  return undefined;
-}
-
-/**
- * Provider SDKs merge this object over the resolved recipient. A blank `to` would replace the
- * subscriber or payload phone that `resolveSmsDestination` already chose.
- */
-function omitBlankSmsDestination(providerData: Record<string, unknown>): Record<string, unknown> {
-  const withoutTopLevelTo = isBlankString(providerData.to) ? withoutKey(providerData, 'to') : providerData;
-  const passthrough = withoutTopLevelTo._passthrough;
-
-  if (!isRecord(passthrough)) {
-    return withoutTopLevelTo;
-  }
-
-  const body = passthrough.body;
-
-  if (!isRecord(body) || !isBlankString(body.to)) {
-    return withoutTopLevelTo;
-  }
-
-  return {
-    ...withoutTopLevelTo,
-    _passthrough: {
-      ...passthrough,
-      body: withoutKey(body, 'to'),
-    },
-  };
-}
-
-function isSmsDestination(value: unknown): value is string {
-  return typeof value === 'string' && value.trim().length > 0;
-}
-
-function isBlankString(value: unknown): boolean {
-  return typeof value === 'string' && value.trim().length === 0;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function withoutKey(record: Record<string, unknown>, key: string): Record<string, unknown> {
-  const { [key]: _removed, ...rest } = record;
-
-  return rest;
 }

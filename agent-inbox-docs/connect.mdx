@@ -1,11 +1,11 @@
 ---
 title: "Connect a host"
-description: "Let another computer or a chat app act as an agent you already have, with a one-time code or MCP sign-in."
+description: "Let another computer or a chat app act as an agent you already have, with a one-time code, a plugin or MCP sign-in."
 ---
 
 A host is a program that acts as your agent. Connecting one does not create a second agent. The computer where you ran `setup` or `login` is already a host.
 
-The dashboard shows each host by name, such as Claude Code, Codex or ChatGPT, with its last check and whether it came in through the CLI or MCP. One host on two computers is one entry. A host Agent Inbox can't name shows as General.
+The dashboard shows each host by name, such as Claude Code, Codex or ChatGPT, with its last check and whether it came in through the CLI, a plugin or MCP. One host on two computers is one entry. A host Agent Inbox can't name shows as General.
 
 ## CLI: a one-time code
 
@@ -23,12 +23,32 @@ Keep `--api-url` when the prompt includes it. A code only works on the API that 
 
 For Claude Code, Codex and OpenCode, one optional last step listens for messages, so a message to the agent starts the host on that computer: `npx @agentinbox/cli listen claude-code`, `listen codex` or `listen opencode`. See [Listen for messages](/listen).
 
+The CLI connects Hermes and OpenClaw too, but their plugin is how the dashboard connects them: it also listens for messages.
+
 `login` and `connect` leave the same key on that computer. They face opposite directions:
 
 | | Who shows the code | Who types it |
 | --- | --- | --- |
 | `login` | The terminal | You, on agentinbox.md |
 | `connect` | agentinbox.md | The host, in its terminal |
+
+## Plugin: Hermes and OpenClaw
+
+Hermes and OpenClaw run a gateway that stays on. Agent Inbox's plugin for it connects with the same one-time code, and the gateway then listens for messages: a message to the agent reaches the host within seconds, and its answer goes back in the same conversation. On the computer the host runs on:
+
+```bash
+hermes plugins install agentinbox --enable
+hermes agentinbox setup atlas --code BCDF-GHJK --yes
+hermes gateway restart
+```
+
+```bash
+openclaw plugins install clawhub:@agentinbox/openclaw
+openclaw agentinbox setup atlas --code BCDF-GHJK --yes
+openclaw gateway restart
+```
+
+Hermes installs the plugin from its [plugin catalog](https://hermes-agent.nousresearch.com/marketplace/agentinbox), at the version its maintainers reviewed; OpenClaw installs it from [ClawHub](https://clawhub.ai/agentinbox/plugins/openclaw). The dashboard writes these with your agent and code, under Plugin. `--yes` asks nothing: the commands are pasted together, and a question would take the next one as its answer. At your own terminal it also turns listening on. When an agent runs `setup`, you get an Allow and Deny message on your channel when the gateway starts. See [Listen for messages](/listen#hermes-and-openclaw).
 
 ## MCP: sign in
 

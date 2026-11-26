@@ -77,10 +77,12 @@ export type AgentBehavior = {
    * Channel-agnostic. `open` on managed agents auto-creates a lightweight
    * subscriber from an anonymous sender; on custom-code agents the turn is
    * forwarded to the bridge with a null subscriber. `restricted` rejects
-   * anonymous senders. Managed creates default to `open`; self-hosted to
+   * anonymous senders. `rule` requires a known subscriber and a matching
+   * `accessRule`. Managed creates default to `open`; self-hosted to
    * `restricted`. Always present on persisted agents.
    */
   subscriberAccess: AgentSubscriberAccess;
+  accessRule?: Record<string, unknown>;
   /**
    * Shared-room reply policy. Absent on GET is treated as `auto_reply`.
    */

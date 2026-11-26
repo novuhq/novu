@@ -1,6 +1,7 @@
 import { NestInterceptor, RequestMethod } from '@nestjs/common';
 import { getLoggerToken, Logger, LoggerErrorInterceptor, LoggerModule, Params, PinoLogger } from 'nestjs-pino';
 import { Store, storage } from 'nestjs-pino/storage';
+import type { Options as PinoHttpOptions } from 'pino-http';
 import { sensitiveFields } from './masking';
 
 export * from './LogDecorator';
@@ -44,6 +45,8 @@ export function createNestLoggingModuleOptions(settings: {
   serviceName: string;
   version: string;
   silent?: boolean;
+  // Extra fields bound to every log line written while handling an HTTP request.
+  customProps?: PinoHttpOptions['customProps'];
 }): Params {
   let redactFields: string[] = sensitiveFields;
   redactFields.push('req.headers.authorization');
@@ -102,6 +105,7 @@ export function createNestLoggingModuleOptions(settings: {
       },
       transport: configSet.transport,
       autoLogging: false,
+      customProps: settings.customProps,
     },
   };
 }

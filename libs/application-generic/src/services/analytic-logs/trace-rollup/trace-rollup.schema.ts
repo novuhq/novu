@@ -7,9 +7,9 @@ const schemaDefinition = {
   organization_id: { type: CHString() },
   environment_id: { type: CHString() },
   workflow_id: { type: CHString() },
-  external_subscriber_id: { type: CHString() },
+  external_subscriber_id: { type: CHString('') },
   event_type: { type: CHLowCardinality(CHString()) },
-  provider_id: { type: CHString() },
+  provider_id: { type: CHString('') },
   count: { type: CHUInt64() },
 };
 
@@ -26,7 +26,7 @@ export const TRACE_ROLLUP_ORDER_BY: (keyof typeof schemaDefinition)[] = [
 const clickhouseSchemaOptions = {
   table_name: TRACE_ROLLUP_TABLE_NAME,
   engine: 'SummingMergeTree',
-  order_by: `(${TRACE_ROLLUP_ORDER_BY.join(', ')})` as any,
+  order_by: `(${TRACE_ROLLUP_ORDER_BY.join(', ')})` as keyof typeof schemaDefinition,
   additional_options: ['PARTITION BY toYYYYMM(date)'],
 };
 

@@ -13,6 +13,14 @@ export function isEnvironmentScopedAuthScheme(scheme: ApiAuthSchemeEnum): boolea
   return scheme === ApiAuthSchemeEnum.API_KEY || scheme === ApiAuthSchemeEnum.KEYLESS || isInternalAuthScheme(scheme);
 }
 
+/**
+ * Whether a list read stays in the caller's environment. An `Internal` token acts as a member, who sees every
+ * environment of the organization on the dashboard, so it reads across them; it still writes to its own only.
+ */
+export function isEnvironmentScopedListScheme(scheme: ApiAuthSchemeEnum): boolean {
+  return isEnvironmentScopedAuthScheme(scheme) && !isInternalAuthScheme(scheme);
+}
+
 export function assertEnvironmentScopedAccess(
   scheme: ApiAuthSchemeEnum,
   userEnvironmentId: string,

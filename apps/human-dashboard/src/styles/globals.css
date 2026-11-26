@@ -450,6 +450,16 @@
   .sapien-page {
     --color-border: var(--color-sapien-border);
   }
+
+  /*
+   * Its header stays at the top of the window, 50px and a line. Whatever the browser scrolls to, a section a
+   * link leads to or a control the keyboard moves to, stops under the header instead of behind it. Set on them
+   * and not as the page's `scroll-padding`: the header's own controls lie inside that padding, and focusing
+   * one would scroll the page. `SiteHeaderFocus` sees to a control that is in the window, but under the header.
+   */
+  .sapien-page :is(main, footer) :is([id], a, button, summary, input, select, textarea, [tabindex]) {
+    scroll-margin-top: 51px;
+  }
   button,
   a {
     @apply focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent;

@@ -52,7 +52,7 @@ import {
   type ResolvedPushRoute,
   resolvePushRoute,
 } from './fcm-routing-overrides';
-import { dispatchWebhooksInBackground, SendMessageBase } from './send-message.base';
+import { SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
@@ -61,6 +61,9 @@ const LOG_CONTEXT = 'SendMessagePush';
 export const SUBSCRIBER_ERROR_PATTERNS: string[] = [
   'NotRegistered',
   'InvalidRegistration',
+  'registration-token-not-registered',
+  'invalid-registration-token',
+  'Device unregistered',
   'MismatchSenderId',
   'Unregistered',
   'BadDeviceToken',
@@ -82,12 +85,17 @@ export function isSubscriberError(errorMessage: string): boolean {
 export function serializePushProviderError(error: unknown): string {
   const serialized = safeJsonStringify(error);
 
-  if (serialized !== '{}') {
-    return serialized;
+  if (error instanceof Error) {
+    // `message` and `name` are non-enumerable, so JSON drops them whenever the error has other own fields (e.g. `code`).
+    const parsed = JSON.parse(serialized);
+
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return JSON.stringify({ name: error.name, message: error.message, ...parsed });
+    }
   }
 
-  if (error instanceof Error) {
-    return JSON.stringify({ message: error.message, name: error.name });
+  if (serialized !== '{}') {
+    return serialized;
   }
 
   return JSON.stringify({ message: String(error ?? '') });
@@ -583,13 +591,15 @@ export class SendMessagePush extends SendMessageBase {
     step: IPushOptions['step'],
     bridgeProviderData: Record<string, unknown>
   ): Promise<{ success: false; error: Error } | { success: true; error: undefined }> {
+    let pushHandler: IPushHandler | undefined;
+
     try {
       Logger.log(
         { jobId: command.jobId, deviceToken, overrides, step },
         `Sending push notification for jobId ${command.jobId}`,
         LOG_CONTEXT
       );
-      const pushHandler = this.getIntegrationHandler(integration);
+      pushHandler = this.getIntegrationHandler(integration);
       const bridgeOutputs = command.bridgeData?.outputs;
 
       Logger.debug(
@@ -623,21 +633,19 @@ export class SendMessagePush extends SendMessageBase {
         })
       );
 
-      dispatchWebhooksInBackground(this.sendWebhookMessage, [
-        {
-          eventType: WebhookEventEnum.MESSAGE_SENT,
-          objectType: WebhookObjectTypeEnum.MESSAGE,
-          payload: {
-            object: messageWebhookMapper(message, command.subscriberId, {
-              providerResponseId: result.id,
-              deviceToken,
-            }),
-          },
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          environment: command.environment,
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_SENT,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, command.subscriberId, {
+            providerResponseId: result.id,
+            deviceToken,
+          }),
         },
-      ]);
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        environment: command.environment,
+      });
 
       await this.recordIntegrationSendSuccess(integration);
 
@@ -682,8 +690,9 @@ export class SendMessagePush extends SendMessageBase {
       }
 
       try {
-        const pushHandler = this.getIntegrationHandler(integration);
-        const isTokenInvalid = pushHandler?.isTokenInvalid?.(e.message || e.toString());
+        // Reuse the send's handler: building another one re-creates the provider client (a Firebase app for FCM).
+        const handler = pushHandler ?? this.getIntegrationHandler(integration);
+        const isTokenInvalid = handler?.isTokenInvalid?.(e.message || e.toString());
 
         if (isTokenInvalid) {
           Logger.log(
@@ -692,45 +701,33 @@ export class SendMessagePush extends SendMessageBase {
             LOG_CONTEXT
           );
 
-          const isExpiredTokensRemovalEnabled = await this.featureFlagsService.getFlag({
-            key: FeatureFlagsKeysEnum.IS_EXPIRED_TOKENS_REMOVAL_ENABLED,
-            defaultValue: false,
-            organization: { _id: command.organizationId },
-            user: { _id: command.userId },
-            environment: { _id: command.environmentId },
-          });
-
-          if (isExpiredTokensRemovalEnabled) {
-            await this.removeInvalidDeviceToken(
-              command._subscriberId,
-              deviceToken,
-              integration._id,
-              command,
-              e.message || e.toString(),
-              message._id
-            );
-          }
+          await this.removeInvalidDeviceToken(
+            command._subscriberId,
+            deviceToken,
+            integration._id,
+            command,
+            e.message || e.toString(),
+            message._id
+          );
         }
 
-        dispatchWebhooksInBackground(this.sendWebhookMessage, [
-          {
-            eventType: WebhookEventEnum.MESSAGE_FAILED,
-            objectType: WebhookObjectTypeEnum.MESSAGE,
-            payload: {
-              object: messageWebhookMapper(message, command.subscriberId),
-              error: {
-                push: {
-                  reason: isTokenInvalid ? 'token_invalid' : 'generic_error',
-                  deviceToken: deviceToken,
-                },
-                message: e.message || e.name || 'Error while sending push with provider',
+        await this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.MESSAGE_FAILED,
+          objectType: WebhookObjectTypeEnum.MESSAGE,
+          payload: {
+            object: messageWebhookMapper(message, command.subscriberId),
+            error: {
+              push: {
+                reason: isTokenInvalid ? 'token_invalid' : 'generic_error',
+                deviceToken: deviceToken,
               },
+              message: e.message || e.name || 'Error while sending push with provider',
             },
-            organizationId: command.organizationId,
-            environmentId: command.environmentId,
-            environment: command.environment,
           },
-        ]);
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          environment: command.environment,
+        });
       } catch (err) {
         Logger.error(
           { jobId: command.jobId },
