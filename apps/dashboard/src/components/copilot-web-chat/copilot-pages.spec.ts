@@ -47,6 +47,20 @@ describe('matchCopilotPage', () => {
   });
 
   it.each([
+    '/env/dev-env/agents',
+    '/env/dev-env/agents/support-bot',
+    '/env/dev-env/agents/support-bot/overview',
+    '/env/dev-env/agents/support-bot/integrations',
+    '/env/dev-env/agents/support-bot/integrations/slack-1',
+  ])('matches %s to Agents', (pathname) => {
+    expect(matchCopilotPage(pathname)).toBe(CopilotPageEnum.AGENTS);
+  });
+
+  it.each(['/onboarding/agents/setup', '/agents/slack/connect/token-1'])('matches no page at %s', (pathname) => {
+    expect(matchCopilotPage(pathname)).toBeUndefined();
+  });
+
+  it.each([
     '/env/dev-env/workflows',
     '/env/dev-env/topics',
     '/env/dev-env/activity/unknown-tab',

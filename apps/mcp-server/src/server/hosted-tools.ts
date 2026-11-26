@@ -1,5 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerActivityTools } from "../tools/activity";
+import { registerAgentReadinessTool } from "../tools/agent-readiness";
 import { registerAgentTools } from "../tools/agents";
 import { registerAuthTools } from "../tools/auth";
 import { registerConversationTools } from "../tools/conversations";
@@ -31,6 +32,7 @@ export function registerHostedTools(server: McpServer, context: HostedToolsConte
 	registerAuthTools(server, accessors, context.getRegion);
 	registerAgentTools(server, accessors);
 	registerConversationTools(server, accessors);
+	registerAgentReadinessTool(server, accessors);
 	registerWorkflowTools(server, accessors);
 	registerEnvironmentTools(server, accessors);
 	registerSubscriberTools(server, accessors);

@@ -10,6 +10,9 @@ import {
 } from "../utils/conversation-schemas";
 import type { ToolAccessors } from "../utils/tool-accessors";
 import { ToolFactory } from "../utils/tool-factory";
+import { CONVERSATION_TOOL_NAMES } from "./tool-names";
+
+const [GET_CONVERSATIONS, GET_CONVERSATION_ACTIVITIES] = CONVERSATION_TOOL_NAMES;
 
 const LIST_CONVERSATIONS_DESCRIPTION = [
 	"List agent conversations in the current environment (Cloud / self-hosted Enterprise; not Community Edition).",
@@ -52,7 +55,7 @@ export function registerConversationTools(server: McpServer, accessors: ToolAcce
 	ToolFactory.createQueryGetTool(
 		server,
 		accessors,
-		"get_conversations",
+		GET_CONVERSATIONS,
 		LIST_CONVERSATIONS_DESCRIPTION,
 		"fetched conversations",
 		listConversationsInputSchema,
@@ -81,7 +84,7 @@ export function registerConversationTools(server: McpServer, accessors: ToolAcce
 	ToolFactory.createQueryGetTool(
 		server,
 		accessors,
-		"get_conversation_activities",
+		GET_CONVERSATION_ACTIVITIES,
 		GET_ACTIVITIES_DESCRIPTION,
 		"fetched conversation activities",
 		getConversationActivitiesInputSchema,

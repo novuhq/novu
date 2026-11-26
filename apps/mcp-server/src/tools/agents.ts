@@ -23,6 +23,7 @@ import { NovuApiUtils } from "../utils/api";
 import { buildConnectAgentOverlay } from "../utils/connect-cli";
 import type { ToolAccessors } from "../utils/tool-accessors";
 import { type ToolContext, ToolFactory } from "../utils/tool-factory";
+import { AGENT_TOOL_NAMES } from "./tool-names";
 
 const ANALYTICS_SOURCE_HEADER = { "Novu-Analytics-Source": "mcp" };
 
@@ -106,14 +107,14 @@ export function registerAgentTools(server: McpServer, accessors: ToolAccessors) 
 				context.idempotencyKey,
 			);
 		},
-		name: "create_agent",
+		name: AGENT_TOOL_NAMES.CREATE_AGENT,
 		schema: createAgentInputSchema,
 	});
 
 	ToolFactory.createQueryGetTool(
 		server,
 		accessors,
-		"get_agents",
+		AGENT_TOOL_NAMES.GET_AGENTS,
 		"List agents in the current environment with cursor pagination. Filter by partial identifier when needed.",
 		"fetched agents",
 		listAgentsInputSchema,
@@ -140,7 +141,7 @@ export function registerAgentTools(server: McpServer, accessors: ToolAccessors) 
 	ToolFactory.createQueryGetTool(
 		server,
 		accessors,
-		"get_agent",
+		AGENT_TOOL_NAMES.GET_AGENT,
 		"Retrieve a single agent by its identifier (slug): settings, bridge and, when managed, its provider, tools and MCP servers.",
 		"fetched agent",
 		getAgentInputSchema,
@@ -208,7 +209,7 @@ export function registerAgentTools(server: McpServer, accessors: ToolAccessors) 
 				],
 			};
 		},
-		name: "connect_agent",
+		name: AGENT_TOOL_NAMES.CONNECT_AGENT,
 		schema: connectAgentInputSchema,
 	});
 
@@ -256,7 +257,7 @@ export function registerAgentTools(server: McpServer, accessors: ToolAccessors) 
 				context.idempotencyKey,
 			);
 		},
-		name: "update_agent",
+		name: AGENT_TOOL_NAMES.UPDATE_AGENT,
 		schema: updateAgentInputSchema,
 	});
 }

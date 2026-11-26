@@ -6,6 +6,7 @@ export enum CopilotPageEnum {
   ACTIVITY = 'activity',
   SUBSCRIBERS = 'subscribers',
   INTEGRATIONS = 'integrations',
+  AGENTS = 'agents',
   USAGE = 'usage',
 }
 
@@ -48,6 +49,8 @@ export enum CopilotViewingResourceEnum {
   REQUEST = 'request',
   SUBSCRIBER = 'subscriber',
   INTEGRATION = 'integration',
+  AGENT = 'agent',
+  CONVERSATION = 'conversation',
 }
 
 /** Web-chat message metadata keys the dashboard sends on top of `environmentId`, `workflowId` and `stepId`. */

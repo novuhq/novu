@@ -50,6 +50,7 @@ describe("the Novu MCP server tools", () => {
 			  "find_subscribers",
 			  "get_active_integrations",
 			  "get_agent",
+			  "get_agent_readiness",
 			  "get_agents",
 			  "get_conversation_activities",
 			  "get_conversations",

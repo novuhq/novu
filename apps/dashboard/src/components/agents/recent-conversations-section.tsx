@@ -3,6 +3,7 @@ import { RiArrowRightLine, RiCheckboxCircleFill, RiRobot2Line } from 'react-icon
 import { Link } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import type { ConversationDto } from '@/api/conversations';
+import { useReportAgentConversation } from '@/components/agents/agents-copilot-overlays';
 import { ConversationDetailSheet } from '@/components/conversations/conversation-detail-sheet';
 import { ConversationLastActivity } from '@/components/conversations/conversation-last-activity';
 import { ConversationStatusBadge } from '@/components/conversations/conversation-status-badge';
@@ -25,6 +26,7 @@ type RecentConversationsSectionProps = {
 export function RecentConversationsSection({ agent }: RecentConversationsSectionProps) {
   const { currentEnvironment } = useEnvironment();
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  useReportAgentConversation(activeConversationId);
 
   const conversationsPath = currentEnvironment?.slug
     ? buildRoute(ROUTES.ACTIVITY_CONVERSATIONS, { environmentSlug: currentEnvironment.slug })

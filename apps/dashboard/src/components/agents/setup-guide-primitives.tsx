@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import { RiArrowRightUpLine, RiFlashlightLine, RiListCheck2 } from 'react-icons/ri';
 import { useSearchParams } from 'react-router-dom';
 import { getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
+import { useReportAgentSheetOpen } from '@/components/agents/agents-copilot-overlays';
 import { IntegrationSettings } from '@/components/integrations/components/integration-settings';
 import { IntegrationSheet } from '@/components/integrations/components/integration-sheet';
 import { handleIntegrationError } from '@/components/integrations/components/utils/handle-integration-error';
@@ -403,6 +404,7 @@ export function ListeningStatus({
     let confettiFired = false;
     let intervalId: ReturnType<typeof setInterval> | null = null;
 
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: long-standing connection poller already over the limit; splitting it is out of scope here
     async function tick() {
       if (cancelled) {
         return;
@@ -530,6 +532,7 @@ export function IntegrationCredentialsSidebar({
   testSubscriberId?: string | null;
   submitLabel?: string;
 }) {
+  useReportAgentSheetOpen(isOpen);
   const { integrations } = useFetchIntegrations();
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
   const [searchParams, setSearchParams] = useSearchParams();

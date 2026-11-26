@@ -25,7 +25,7 @@ import {
   UserSessionData,
 } from '@novu/shared';
 import { RequireAuthentication } from '../../../auth/framework/auth.decorator';
-import { ExternalApiAccessible } from '../../../auth/framework/external-api.decorator';
+import { ExternalApiAccessible, OAuthAccessible } from '../../../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../../../rate-limiting/guards';
 import {
   ApiCommonResponses,
@@ -189,6 +189,7 @@ export class AgentIntegrationsController {
   }
 
   @Get('/:identifier/integrations')
+  @OAuthAccessible()
   @ExternalApiAccessible()
   @KeylessAccessible()
   @SdkGroupName('Agents.Integrations')
