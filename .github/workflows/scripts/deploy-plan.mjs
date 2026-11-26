@@ -107,6 +107,75 @@ function hasWork(wave) {
   );
 }
 
+const CLOUDFLARE_WAVE_KEYS = [
+  ['thalamus-observer', 'thalamus'],
+  ['socket-worker', 'socket_workers'],
+  ['mcp-server', 'mcp_servers'],
+];
+
+// Adds the ECS targets of one service in one environment to the wave.
+// Returns true when the service has at least one target there.
+function planEcsService(wave, env, service, context) {
+  const definitions = ecsDefinitions(service, context);
+  const targets = definitions.filter((definition) => runsIn(definition, env));
+
+  for (const definition of definitions) {
+    if (!targets.includes(definition)) {
+      context.skipped.push({ env, name: definition.service_name });
+    }
+  }
+
+  for (const { environments: _environments, ...target } of targets) {
+    wave.deploy_matrix.push({ env, ...target });
+  }
+
+  if (targets.length > 0 && NEW_RELIC_SERVICES.includes(service)) {
+    wave.nr_matrix.push({ env, nr: service });
+  }
+
+  return targets.length > 0;
+}
+
+// Adds the Cloudflare Worker target of one environment to the wave.
+// Returns true when the Worker has a Wrangler env for that environment.
+function planCloudflareWorker(wave, env, worker, key, context) {
+  const wranglerEnv = CLOUDFLARE_WORKERS[worker][env];
+  if (!wranglerEnv) {
+    context.skipped.push({ env, name: worker });
+
+    return false;
+  }
+
+  wave[key].push({ wrangler_env: wranglerEnv, gh_environment: env });
+
+  return true;
+}
+
+function planEnvironment(wave, env, context) {
+  for (const service of context.selected.filter((name) => ECS_SERVICES.includes(name))) {
+    if (planEcsService(wave, env, service, context)) {
+      context.deployedSomewhere.add(service);
+    }
+  }
+
+  const hasEcsTargets = wave.deploy_matrix.some((target) => target.env === env);
+  if (hasEcsTargets) {
+    wave.migration_envs.push(env);
+  }
+
+  let hasWorkerTargets = false;
+  for (const [worker, key] of CLOUDFLARE_WAVE_KEYS) {
+    if (context.selected.includes(worker) && planCloudflareWorker(wave, env, worker, key, context)) {
+      context.deployedSomewhere.add(worker);
+      hasWorkerTargets = true;
+    }
+  }
+
+  if (hasEcsTargets || hasWorkerTargets) {
+    wave.environments.push(env);
+  }
+}
+
 /**
  * @param {object} options
  * @param {string} options.environment Dispatch option, a key of WAVES_BY_ENVIRONMENT.
@@ -126,65 +195,13 @@ export function buildDeployPlan({ environment, services, apiServices = [], worke
   }
 
   const allEnvironments = waveEnvironments.flat();
-  const deployedSomewhere = new Set();
-  const skipped = [];
+  const context = { selected, apiServices, workerServices, deployedSomewhere: new Set(), skipped: [] };
 
   const waves = waveEnvironments.map((environments) => {
     const wave = emptyWave();
-
     for (const env of environments) {
-      for (const service of selected.filter((name) => ECS_SERVICES.includes(name))) {
-        const definitions = ecsDefinitions(service, { apiServices, workerServices });
-        const targets = definitions.filter((definition) => runsIn(definition, env));
-
-        for (const definition of definitions) {
-          if (!targets.includes(definition)) {
-            skipped.push({ env, name: definition.service_name });
-          }
-        }
-
-        for (const { environments: _environments, ...target } of targets) {
-          wave.deploy_matrix.push({ env, ...target });
-        }
-
-        if (targets.length > 0) {
-          deployedSomewhere.add(service);
-          if (NEW_RELIC_SERVICES.includes(service)) {
-            wave.nr_matrix.push({ env, nr: service });
-          }
-        }
-      }
-
-      if (wave.deploy_matrix.some((target) => target.env === env)) {
-        wave.migration_envs.push(env);
-      }
-
-      for (const [worker, key] of [
-        ['thalamus-observer', 'thalamus'],
-        ['socket-worker', 'socket_workers'],
-        ['mcp-server', 'mcp_servers'],
-      ]) {
-        if (!selected.includes(worker)) {
-          continue;
-        }
-
-        const wranglerEnv = CLOUDFLARE_WORKERS[worker][env];
-        if (wranglerEnv) {
-          wave[key].push({ wrangler_env: wranglerEnv, gh_environment: env });
-          deployedSomewhere.add(worker);
-        } else {
-          skipped.push({ env, name: worker });
-        }
-      }
+      planEnvironment(wave, env, context);
     }
-
-    wave.environments = environments.filter(
-      (env) =>
-        wave.deploy_matrix.some((target) => target.env === env) ||
-        [...wave.thalamus, ...wave.socket_workers, ...wave.mcp_servers].some(
-          (target) => target.gh_environment === env
-        )
-    );
 
     return wave;
   });
@@ -192,7 +209,7 @@ export function buildDeployPlan({ environment, services, apiServices = [], worke
   // A selected service with nowhere to go is a mistake in the selection, e.g.
   // webhook on production-sg. Fail before anything is built or deployed.
   for (const service of selected) {
-    if (!deployedSomewhere.has(service)) {
+    if (!context.deployedSomewhere.has(service)) {
       throw new DeployPlanError(
         `${service} cannot be deployed with environment "${environment}": it does not run in ${allEnvironments.join(', ')}.`
       );
@@ -210,7 +227,7 @@ export function buildDeployPlan({ environment, services, apiServices = [], worke
     build_services: buildServices,
     has_ecs_services: buildServices.length > 0,
     first_environment: allEnvironments[0],
-    skipped,
+    skipped: context.skipped,
   };
 }
 
