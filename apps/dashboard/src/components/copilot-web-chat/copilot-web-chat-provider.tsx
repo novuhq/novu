@@ -11,7 +11,11 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { getConversationOrigin, writeStoredConversationOrigin } from './copilot-conversation-history';
+import {
+  type CopilotConversationOrigin,
+  getConversationOrigin,
+  writeStoredConversationOrigin,
+} from './copilot-conversation-history';
 import { registerCopilotEntry } from './copilot-entry-store';
 import {
   CopilotRegisterContext,
@@ -402,12 +406,15 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     if (chat.conversationId) writeStoredConversationId(conversationScope, chat.conversationId);
   }, [conversationScope, chat.conversationId]);
 
-  // A chat gets its id from its first send, on the page it was sent from; a resumed chat keeps the page it started on.
+  // Taken at a new chat's first send: the id only comes back with the response, and the user may have moved page by then.
+  const newChatOriginRef = useRef<CopilotConversationOrigin | undefined>(undefined);
+
   useEffect(() => {
-    const origin = getConversationOrigin(pageContextRef.current);
-    if (chat.conversationId && !resumeConversationIdRef.current && origin) {
-      writeStoredConversationOrigin(chat.conversationId, origin);
-    }
+    const origin = newChatOriginRef.current;
+    if (!chat.conversationId || resumeConversationIdRef.current || !origin) return;
+
+    newChatOriginRef.current = undefined;
+    writeStoredConversationOrigin(chat.conversationId, origin);
   }, [chat.conversationId]);
 
   const listConversations = useCallback(
@@ -446,6 +453,9 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
         page,
       });
       if (isNewChat) track(TelemetryEvent.COPILOT_CHAT_CREATED, { agentId: NOVU_COPILOT_AGENT_ID, surface, page });
+      if (isNewChat && !chatRef.current.conversationId) {
+        newChatOriginRef.current = getConversationOrigin(pageContextRef.current);
+      }
 
       setRunError(false);
       const metadata = buildCopilotMetadata(pageContextRef.current, environmentIdRef.current);
@@ -558,9 +568,11 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     showErrorToast("Couldn't reach the Copilot. Try again.");
   }, []);
 
-  // Nothing is owed to the next chat: the last send, a queued Try again resend, the locked review card or a run error.
+  // Nothing is owed to the next chat: the last send and its origin, a queued Try again resend, the locked review card or
+  // a run error.
   const resetConversationState = useCallback(() => {
     lastSentRef.current = null;
+    newChatOriginRef.current = undefined;
     tryAgainCardRef.current = undefined;
     readyPromptLookupRef.current++;
     setReadyPrompt(undefined);
