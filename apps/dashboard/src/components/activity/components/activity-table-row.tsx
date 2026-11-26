@@ -1,4 +1,5 @@
-import type { ISubscriber } from '@novu/shared';
+import type { IActivity, ISubscriber } from '@novu/shared';
+import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { TableCell, TableRow } from '@/components/primitives/table';
 import { formatDateSimple } from '@/utils/format-date';
 import { cn } from '@/utils/ui';
@@ -6,9 +7,11 @@ import { ActivityStatusBadge } from './status-badge';
 import { StepIndicators } from './step-indicators';
 
 type ActivityTableRowProps = {
-  activity: any;
+  activity: IActivity;
   isSelected?: boolean;
   onClick?: (activityId: string) => void;
+  /** Opens the run and asks the Copilot about it; absent where the Activity Copilot doesn't show. */
+  onAskCopilot?: (run: Pick<IActivity, '_id' | 'jobs'>) => void;
   className?: string;
 };
 
@@ -38,7 +41,7 @@ function getSubscriberDisplay(
   return '';
 }
 
-export function ActivityTableRow({ activity, isSelected, onClick, className }: ActivityTableRowProps) {
+export function ActivityTableRow({ activity, isSelected, onClick, onAskCopilot, className }: ActivityTableRowProps) {
   const handleClick = () => {
     onClick?.(activity._id);
   };
@@ -51,26 +54,42 @@ export function ActivityTableRow({ activity, isSelected, onClick, className }: A
 
   return (
     <TableRow
-      className={cn('relative cursor-pointer hover:bg-neutral-50', isSelected && 'bg-neutral-50', className)}
+      className={cn('group relative cursor-pointer hover:bg-neutral-50', isSelected && 'bg-neutral-50', className)}
       onClick={handleClick}
     >
       <TableCell className="p-1.5">
-        <div className="flex flex-col">
-          <span className="text-foreground-950 text-label-xs flex items-center gap-1">
-            <div className="relative flex items-center justify-center gap-0.5">
-              <ActivityStatusBadge jobs={activity.jobs} />
-            </div>
-            {activity.template?.name || 'Deleted workflow'}
-          </span>
-          <span className="text-foreground-400 text-[10px] leading-[14px]">
-            <div
-              className="bg-bg-weak font-code inline-block rounded-sm px-1.5"
-              title={`${activity.transactionId}${subscriberDisplay ? ` • ${subscriberDisplay}` : ''}`}
+        <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-col">
+            <span className="text-foreground-950 text-label-xs flex items-center gap-1">
+              <div className="relative flex items-center justify-center gap-0.5">
+                <ActivityStatusBadge jobs={activity.jobs} />
+              </div>
+              {activity.template?.name || 'Deleted workflow'}
+            </span>
+            <span className="text-foreground-400 text-[10px] leading-[14px]">
+              <div
+                className="bg-bg-weak font-code inline-block rounded-sm px-1.5"
+                title={`${activity.transactionId}${subscriberDisplay ? ` • ${subscriberDisplay}` : ''}`}
+              >
+                {truncatedTransactionId}
+                {truncatedSubscriberDisplay ? ` • ${truncatedSubscriberDisplay}` : ''}
+              </div>
+            </span>
+          </div>
+          {onAskCopilot && (
+            <button
+              type="button"
+              aria-label="Ask Copilot about this run"
+              title="Ask Copilot about this run"
+              onClick={(event) => {
+                event.stopPropagation();
+                onAskCopilot(activity);
+              }}
+              className="ml-auto flex size-6 shrink-0 items-center justify-center rounded-md opacity-0 transition-opacity hover:bg-bg-soft focus-visible:opacity-100 group-hover:opacity-100"
             >
-              {truncatedTransactionId}
-              {truncatedSubscriberDisplay ? ` • ${truncatedSubscriberDisplay}` : ''}
-            </div>
-          </span>
+              <BroomSparkle className="size-3.5" />
+            </button>
+          )}
         </div>
       </TableCell>
 

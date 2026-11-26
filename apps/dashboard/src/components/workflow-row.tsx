@@ -24,6 +24,8 @@ import {
 
 import { Link } from 'react-router-dom';
 import { type ExternalToast } from 'sonner';
+import { useCopilotWebChatActive, writeCopilotHandoff } from '@/components/copilot-web-chat';
+import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { PAUSE_MODAL_TITLE, PauseModalDescription } from '@/components/pause-workflow-dialog';
 import {
   DropdownMenu,
@@ -134,6 +136,11 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   const has = useHasPermission();
   const { safeSync, PromoteConfirmModal } = useSyncWorkflow(workflow);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
+  const isAiWorkflowGenerationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED);
+  const isCopilotWebChatActive = useCopilotWebChatActive();
+  // The editor's Copilot runs on web chat in Development, for workflows made in the dashboard.
+  const canAskCopilot =
+    isCopilotWebChatActive && isAiWorkflowGenerationEnabled && workflow.origin === ResourceOriginEnum.NOVU_CLOUD;
   const isV0Workflow = workflow.origin === ResourceOriginEnum.NOVU_CLOUD_V1;
   const isDuplicable =
     workflow.origin === ResourceOriginEnum.NOVU_CLOUD && currentEnvironment?.type === EnvironmentTypeEnum.DEV;
@@ -422,6 +429,22 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                 }
               >
                 <DropdownMenuGroup>
+                  {canAskCopilot && (
+                    <Protect permission={PermissionsEnum.WORKFLOW_WRITE}>
+                      <Link
+                        to={workflowLink}
+                        onClick={() => {
+                          // The editor's Copilot opens on arrival, with the workflow attached.
+                          writeCopilotHandoff({});
+                        }}
+                      >
+                        <DropdownMenuItem className="cursor-pointer">
+                          <BroomSparkle />
+                          Ask Copilot
+                        </DropdownMenuItem>
+                      </Link>
+                    </Protect>
+                  )}
                   <Protect permission={PermissionsEnum.EVENT_WRITE}>
                     <Link to={triggerWorkflowLink} reloadDocument={isV0Workflow}>
                       <DropdownMenuItem className="cursor-pointer">

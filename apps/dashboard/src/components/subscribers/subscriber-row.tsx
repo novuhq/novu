@@ -1,10 +1,12 @@
-import { ISubscriberResponseDto, PermissionsEnum } from '@novu/shared';
+import { CopilotPageEnum, ISubscriberResponseDto, PermissionsEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill, RiPulseFill } from 'react-icons/ri';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import { useActiveCopilotPage, useCopilotEntry } from '@/components/copilot-web-chat';
+import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import { Badge } from '@/components/primitives/badge';
 import { CompactButton } from '@/components/primitives/button-compact';
@@ -33,6 +35,7 @@ import { QueryKeys } from '@/utils/query-keys';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { useSubscribersUrlState } from './hooks/use-subscribers-url-state';
+import { SUBSCRIBER_REACHABILITY_QUESTION } from './subscribers-copilot';
 
 const toastOptions: ExternalToast = {
   position: 'bottom-right',
@@ -75,6 +78,10 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
   const location = useLocation();
   const { navigateToSubscribersFirstPage } = useSubscribersNavigate();
   const { handleNavigationAfterDelete } = useSubscribersUrlState();
+  const navigate = useNavigate();
+  const isSubscribersCopilotShown = useActiveCopilotPage() === CopilotPageEnum.SUBSCRIBERS;
+  const copilotEntry = useCopilotEntry();
+  const openCopilot = isSubscribersCopilotShown ? copilotEntry : undefined;
 
   const subscriberLink = `${buildRoute(ROUTES.EDIT_SUBSCRIBER, {
     environmentSlug: currentEnvironment?.slug ?? '',
@@ -206,6 +213,19 @@ export const SubscriberRow = ({ subscriber, subscribersCount, firstTwoSubscriber
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" onClick={stopPropagation}>
               <DropdownMenuGroup>
+                {openCopilot && (
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => {
+                      // The drawer attaches the subscriber to the Copilot, as it registers them with it.
+                      void navigate(subscriberLink);
+                      openCopilot({ prefill: SUBSCRIBER_REACHABILITY_QUESTION });
+                    }}
+                  >
+                    <BroomSparkle />
+                    Ask Copilot
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   className="cursor-pointer"
                   onClick={() => {

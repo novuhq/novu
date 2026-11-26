@@ -1,6 +1,6 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect } from 'react';
+import { type ComponentProps, useEffect } from 'react';
 import { createSearchParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import type { ActivityFilters } from '@/api/activity';
 import { Skeleton } from '@/components/primitives/skeleton';
@@ -33,6 +33,8 @@ export interface ActivityTableProps {
   isLoading?: boolean;
   onTriggerWorkflow?: () => void;
   onListStateChange?: (hasActivities: boolean) => void;
+  /** Each run's "Ask Copilot" action; absent where the Activity Copilot doesn't show. */
+  onAskCopilot?: ComponentProps<typeof ActivityTableRow>['onAskCopilot'];
 }
 
 export function ActivityTable({
@@ -43,6 +45,7 @@ export function ActivityTable({
   onClearFilters,
   onTriggerWorkflow,
   onListStateChange,
+  onAskCopilot,
 }: ActivityTableProps) {
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -178,6 +181,7 @@ export function ActivityTable({
                   activity={activity}
                   isSelected={selectedActivityId === activity._id}
                   onClick={onActivitySelect}
+                  onAskCopilot={onAskCopilot}
                 />
               ))}
             </TableBody>

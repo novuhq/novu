@@ -1,5 +1,5 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
-import { CopilotPageEnum, JobStatusEnum } from '@novu/shared';
+import { CopilotPageEnum, type IActivity, JobStatusEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -162,6 +162,14 @@ export function ActivityFeedContent({
   const isActivityCopilotShown = useActiveCopilotPage() === CopilotPageEnum.ACTIVITY;
   const handleAskCopilot =
     isActivityCopilotShown && openCopilot && runQuestion ? () => openCopilot({ prefill: runQuestion }) : undefined;
+  // Opening the run attaches it, as the side panel registers it with the Copilot.
+  const handleAskCopilotAboutRun =
+    isActivityCopilotShown && openCopilot
+      ? (run: Pick<IActivity, '_id' | 'jobs'>) => {
+          handleActivitySelect(run._id);
+          openCopilot({ prefill: getWorkflowRunQuestion(getActivityStatus(run.jobs) === JobStatusEnum.FAILED) });
+        }
+      : undefined;
 
   return (
     <div className={cn('p-2.5', className)}>
@@ -192,6 +200,7 @@ export function ActivityFeedContent({
               onClearFilters={handleClearFilters}
               onTriggerWorkflow={onTriggerWorkflow}
               onListStateChange={onListStateChange}
+              onAskCopilot={handleAskCopilotAboutRun}
             />
           </ResizablePanel>
 
