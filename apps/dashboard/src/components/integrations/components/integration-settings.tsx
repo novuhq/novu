@@ -284,9 +284,10 @@ export function IntegrationSettings({
           identifier: generateSlug(provider?.displayName ?? ''),
           active: true,
           primary: true,
-          // APNs' setup starts on Production, as most device tokens come from TestFlight and App Store builds.
+          // APNs' setup starts on Production, as most device tokens come from TestFlight and App Store builds. A
+          // string, as the form types it; the API turns it into the boolean the integration stores.
           credentials:
-            setupLayout && provider?.id === PushProviderIdEnum.APNS ? { [CredentialsKeyEnum.Secure]: true } : {},
+            setupLayout && provider?.id === PushProviderIdEnum.APNS ? { [CredentialsKeyEnum.Secure]: 'true' } : {},
           // The email setup guides turn on activity tracking where it is available.
           // A string, as the form types it; the integration schema stores it as a boolean.
           configurations:

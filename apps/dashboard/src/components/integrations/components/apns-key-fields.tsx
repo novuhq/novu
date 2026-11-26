@@ -243,8 +243,9 @@ const ENVIRONMENT_OPTIONS = [
 
 /**
  * Which APNs server Novu sends to. Apple keeps device tokens apart: Xcode debug builds get Sandbox tokens, while
- * TestFlight and App Store builds get Production ones. Stored as the `secure` switch: on sends to Production.
- * It starts on Production (the form's default), as most tokens come from TestFlight and App Store builds.
+ * TestFlight and App Store builds get Production ones. Stored in `secure` as "true" or "false"; the API turns it
+ * into a boolean, and true sends to Production. It starts on Production (the form's default), as most tokens come
+ * from TestFlight and App Store builds.
  */
 export function ApnsEnvironmentField({
   control,
@@ -273,7 +274,7 @@ export function ApnsEnvironmentField({
               <SegmentedControl
                 aria-labelledby={labelId}
                 value={isProduction ? 'production' : 'sandbox'}
-                onValueChange={(next) => field.onChange(next === 'production')}
+                onValueChange={(next) => field.onChange(next === 'production' ? 'true' : 'false')}
                 options={[...ENVIRONMENT_OPTIONS]}
                 disabled={isReadOnly}
               />
