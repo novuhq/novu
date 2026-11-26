@@ -245,6 +245,34 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(rejected, 'expected the 6th workflow create to be rejected').to.equal(true);
     });
 
+    it('should report the free-tier workflow limit before a create is rejected', async () => {
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.FREE);
+
+      for (let i = 0; i < FREE_TIER_MAX_WORKFLOWS - 1; i += 1) {
+        await createWorkflow(apiClient, buildWorkflow({ name: `free-tier-usage-${Date.now()}-${i}` }));
+      }
+
+      const { body: belowLimit } = await session.testAgent.get('/v2/workflows/usage/limit').expect(200);
+      expect(belowLimit.data).to.deep.equal({
+        used: FREE_TIER_MAX_WORKFLOWS - 1,
+        limit: FREE_TIER_MAX_WORKFLOWS,
+        limitSource: 'plan',
+        isLimitReached: false,
+      });
+
+      const lastWorkflow = await createWorkflow(apiClient, buildWorkflow({ name: `free-tier-usage-last-${Date.now()}` }));
+
+      const { body: atLimit } = await session.testAgent.get('/v2/workflows/usage/limit').expect(200);
+      expect(atLimit.data).to.include({ used: FREE_TIER_MAX_WORKFLOWS, isLimitReached: true });
+
+      // The dashboard maps a duplicate rejected this way to its limit dialog: a 402 that carries the `limit`.
+      const { body: duplicateRejection } = await session.testAgent
+        .post(`/v2/workflows/${lastWorkflow.workflowId}/duplicate`)
+        .send({ name: 'Over the limit' })
+        .expect(402);
+      expect(duplicateRejection.limit).to.equal(FREE_TIER_MAX_WORKFLOWS);
+    });
+
     it('should create workflow with payloadSchema and validatePayload fields', async () => {
       const payloadSchema = {
         type: 'object',
