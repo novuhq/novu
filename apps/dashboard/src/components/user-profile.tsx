@@ -2,6 +2,7 @@ import { UserButton, useOrganization } from '@clerk/react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useMemo } from 'react';
 import { RiSignpostFill } from 'react-icons/ri';
+import { LEGACY_DASHBOARD_URL } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useNewDashboardOptIn } from '@/hooks/use-new-dashboard-opt-in';
 import { ROUTES } from '../utils/routes';
@@ -11,7 +12,10 @@ export function UserProfile() {
   const isLegacySelectorButtonVisible = useFeatureFlag(FeatureFlagsKeysEnum.IS_LEGACY_SELECTOR_BUTTON_VISIBLE);
 
   const shouldShowLegacyButton = useMemo(
-    () => organization && (organization.createdAt < new Date('2024-12-24') || isLegacySelectorButtonVisible),
+    () =>
+      Boolean(LEGACY_DASHBOARD_URL) &&
+      organization &&
+      (organization.createdAt < new Date('2024-12-24') || isLegacySelectorButtonVisible),
     [organization, isLegacySelectorButtonVisible]
   );
 
