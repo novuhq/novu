@@ -12,6 +12,7 @@ import {
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
 import {
+  assertCanManageSharedConnections,
   assertCanReconnectChannelConnection,
   resolveCallerContextKeys,
 } from '../../../../channel-connections/usecases/channel-connection.utils';
@@ -353,6 +354,9 @@ export class WebexOauthCallback {
     const isSharedMode = stateData.connectionMode === 'shared';
     const subscriberId = isSharedMode ? undefined : stateData.subscriberId;
     const existingConnection = await this.findExistingConnection(stateData, integration, subscriberId);
+    if (isSharedMode || (existingConnection && !existingConnection.subscriberId)) {
+      assertCanManageSharedConnections(!stateData.sharedConnectionsDenied);
+    }
     const auth = buildConnectionAuthFromOAuth(tokenData);
     const workspace = this.buildWorkspace(person);
 

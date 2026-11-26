@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { FeatureFlagsService, getCachedEnvironment, InMemoryLRUCacheService } from '@novu/application-generic';
 import { EnvironmentRepository } from '@novu/dal';
-import { isSubscriberTokensRequired } from '@novu/shared';
+import { isSubscriberTokensRequired, SubscriberSessionAuthMethodEnum } from '@novu/shared';
+import type { SubscriberSession } from '../framework/user.decorator';
 import { isSubscriberTokensEnabled } from '../utils/assert-subscriber-tokens-enabled';
+import { SubscriberTokenScopeEnum } from './novu-tokens.service';
 
 /**
  * Whether an environment refuses subscriber sessions without a signed subscriber token.
@@ -33,5 +35,23 @@ export class SubscriberTokensRequirement {
     });
 
     return isSubscriberTokensRequired(environment);
+  }
+
+  /**
+   * Whether a browser session may create, replace or delete a shared (subscriber-less) connection:
+   * its login token carried `channels:shared`, or the environment does not require tokens.
+   */
+  async canManageSharedConnections(session: SubscriberSession): Promise<boolean> {
+    if (
+      session.authMethod === SubscriberSessionAuthMethodEnum.TOKEN &&
+      session.scope?.includes(SubscriberTokenScopeEnum.CHANNELS_SHARED)
+    ) {
+      return true;
+    }
+
+    return !(await this.isRequired({
+      organizationId: session._organizationId,
+      environmentId: session._environmentId,
+    }));
   }
 }

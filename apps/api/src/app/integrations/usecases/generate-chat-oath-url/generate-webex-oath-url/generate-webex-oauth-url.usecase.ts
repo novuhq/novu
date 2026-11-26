@@ -24,6 +24,8 @@ export interface StateData {
   mode?: OAuthMode;
   connectionMode?: ConnectionMode;
   autoLinkUser?: boolean;
+  /** The caller may not create or replace a shared connection. Absent means allowed: server callers and states minted before this field. */
+  sharedConnectionsDenied?: boolean;
 }
 
 export const WEBEX_DEFAULT_OAUTH_SCOPES = [
@@ -65,7 +67,8 @@ export class GenerateWebexOauthUrl {
       command.mode,
       command.connectionMode,
       command.autoLinkUser,
-      command.contextKeys
+      command.contextKeys,
+      command.sharedConnectionsDenied
     );
 
     return this.getOAuthUrl(clientId, secureState, this.resolveScopes(command));
@@ -136,7 +139,8 @@ export class GenerateWebexOauthUrl {
     mode?: OAuthMode,
     connectionMode?: ConnectionMode,
     autoLinkUser?: boolean,
-    contextKeys?: string[]
+    contextKeys?: string[],
+    sharedConnectionsDenied?: boolean
   ): Promise<string> {
     const { _environmentId, _organizationId, identifier, providerId } = integration;
 
@@ -157,6 +161,7 @@ export class GenerateWebexOauthUrl {
       mode,
       connectionMode,
       autoLinkUser,
+      sharedConnectionsDenied,
     };
 
     const payload = JSON.stringify(stateData);

@@ -48,4 +48,8 @@ export class GenerateWebexOauthUrlCommand extends EnvironmentCommand {
   @IsOptional()
   @IsBoolean()
   readonly autoLinkUser?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  readonly sharedConnectionsDenied?: boolean;
 }

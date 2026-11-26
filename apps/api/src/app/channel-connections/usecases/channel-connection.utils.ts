@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import {
   type ChannelConnectionAuth,
   decryptCredentials,
@@ -88,6 +88,17 @@ export function assertCanReconnectChannelConnection(
     throw new ConflictException(
       `Channel connection "${connection.identifier}" already exists for a different subscriber or context`
     );
+  }
+}
+
+export function assertCanManageSharedConnections(canManage: boolean): void {
+  if (!canManage) {
+    throw new ForbiddenException({
+      statusCode: 403,
+      error: 'channels_shared_scope_required',
+      message:
+        'Creating, replacing or deleting a shared connection requires a subscriber token with the channels:shared scope.',
+    });
   }
 }
 

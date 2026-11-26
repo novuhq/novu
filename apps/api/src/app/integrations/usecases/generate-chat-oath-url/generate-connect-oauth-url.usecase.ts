@@ -45,6 +45,7 @@ export class GenerateConnectOauthUrl {
             scope: command.scope,
             connectionMode: command.connectionMode,
             autoLinkUser: command.autoLinkUser,
+            sharedConnectionsDenied: command.sharedConnectionsDenied,
             mode: 'connect',
           })
         );
@@ -77,6 +78,7 @@ export class GenerateConnectOauthUrl {
             scope: command.scope,
             connectionMode: command.connectionMode,
             autoLinkUser: command.autoLinkUser,
+            sharedConnectionsDenied: command.sharedConnectionsDenied,
             mode: 'connect',
           })
         );

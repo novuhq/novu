@@ -20,6 +20,7 @@ import {
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
 import {
+  assertCanManageSharedConnections,
   assertCanReconnectChannelConnection,
   resolveCallerContextKeys,
 } from '../../../../channel-connections/usecases/channel-connection.utils';
@@ -203,6 +204,9 @@ export class SlackOauthCallback {
     const isSharedMode = stateData.connectionMode === 'shared';
     const subscriberId = isSharedMode ? undefined : stateData.subscriberId;
     const existingConnection = await this.findExistingConnection(stateData, integration, subscriberId);
+    if (isSharedMode || (existingConnection && !existingConnection.subscriberId)) {
+      assertCanManageSharedConnections(!stateData.sharedConnectionsDenied);
+    }
     const auth = buildConnectionAuthFromOAuth(authData);
     // `bot_user_id` (the bot's Slack `U…` identity in this workspace) is required for channel-mention
     // detection in multi-workspace mode — persist it so the inbound adapter can bind it per request.
