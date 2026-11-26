@@ -26,6 +26,8 @@ import {
 } from './subscriber-tokens-readiness';
 
 const SWITCH_ID = 'require-subscriber-tokens';
+/** Keeps the dialog's buttons on screen however many old clients there are. */
+const DIALOG_CLIENT_LIMIT = 5;
 
 export function SubscriberTokensCard({ environment }: { environment: IEnvironment }) {
   const isProduction = environment.type === EnvironmentTypeEnum.PROD;
@@ -174,14 +176,12 @@ function ProductionLine({
   isExpanded: boolean;
   onToggle: () => void;
 }): ReactNode {
-  if (required) {
-    return `Only signed subscriber tokens are accepted in ${environmentName}. You can turn this off at any time.`;
-  }
+  const onLine = `Only signed subscriber tokens are accepted in ${environmentName}. You can turn this off at any time.`;
   if (isLoading) {
-    return 'Counting recent Inbox logins…';
+    return required ? onLine : 'Counting recent Inbox logins…';
   }
   if (!readiness) {
-    return 'Inbox login counts are unavailable right now.';
+    return required ? onLine : 'Inbox login counts are unavailable right now.';
   }
 
   const hasLogins = readiness.tokenLogins + readiness.withoutTokenLogins > 0;
@@ -225,7 +225,7 @@ function TurnOnSummary({ readiness, isLoading }: { readiness: Readiness | undefi
       <span>{describeTurnOn(readiness)}</span>
       {readiness.clientsWithoutToken.length > 0 && (
         <span className="flex flex-col gap-0.5">
-          {readiness.clientsWithoutToken.map((row) => (
+          {readiness.clientsWithoutToken.slice(0, DIALOG_CLIENT_LIMIT).map((row) => (
             <span key={row.client} className="text-xs">
               <code className="bg-neutral-alpha-50 rounded px-1 font-mono text-[11px]">{row.client}</code>
               <span className="text-foreground-400">
@@ -235,6 +235,11 @@ function TurnOnSummary({ readiness, isLoading }: { readiness: Readiness | undefi
               </span>
             </span>
           ))}
+          {readiness.clientsWithoutToken.length > DIALOG_CLIENT_LIMIT && (
+            <span className="text-foreground-400 text-xs">
+              and {readiness.clientsWithoutToken.length - DIALOG_CLIENT_LIMIT} more (see the table on the card)
+            </span>
+          )}
         </span>
       )}
     </>

@@ -106,7 +106,7 @@ export function describeTurnOn(readiness: Readiness): string {
 export function viewClientsLabel(readiness: Readiness): string {
   const count = readiness.clientsWithoutToken.length;
 
-  return count ? `View ${clientCount(count)}` : 'View logins';
+  return count && readiness.status !== 'on' ? `View ${clientCount(count)}` : 'View logins';
 }
 
 export function isRarelyUsed(row: SubscriberSessionClientStats): boolean {

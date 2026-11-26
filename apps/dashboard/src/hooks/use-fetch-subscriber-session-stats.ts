@@ -1,5 +1,5 @@
 import type { IEnvironment } from '@novu/shared';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getSubscriberSessionStats } from '@/api/environments';
 import { QueryKeys } from '@/utils/query-keys';
 
@@ -7,7 +7,9 @@ export function useFetchSubscriberSessionStats(environment: IEnvironment, days: 
   return useQuery({
     queryKey: [QueryKeys.subscriberSessionStats, environment._id, days],
     queryFn: ({ signal }) => getSubscriberSessionStats({ environment, days, signal }),
-    placeholderData: keepPreviousData,
+    // Keep the table steady while 7/30 switches, but never show another environment's counts.
+    placeholderData: (previous, previousQuery) =>
+      previousQuery?.queryKey[1] === environment._id ? previous : undefined,
     enabled,
   });
 }
