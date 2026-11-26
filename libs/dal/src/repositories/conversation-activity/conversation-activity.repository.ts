@@ -176,7 +176,10 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
         _environmentId: environmentId,
         _conversationId: conversationId,
         platformMessageId: { $in: ids },
-        type: { $in: [ConversationActivityTypeEnum.EDIT, ConversationActivityTypeEnum.DELETE] },
+        $or: [
+          { type: ConversationActivityTypeEnum.DELETE },
+          { type: ConversationActivityTypeEnum.EDIT, accessRefused: { $ne: true } },
+        ],
       },
       '*'
     );
@@ -778,6 +781,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     senderName?: string;
     sequence?: number;
     type?: ConversationActivityTypeEnum;
+    accessRefused?: boolean;
     environmentId: string;
     organizationId: string;
   }): Promise<ConversationActivityEntity> {
@@ -795,6 +799,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       platformMessageId: params.platformMessageId,
       senderName: params.senderName,
       ...(params.sequence !== undefined ? { sequence: params.sequence } : {}),
+      ...(params.accessRefused ? { accessRefused: true } : {}),
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
     });
@@ -813,6 +818,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
         content: string;
         platformMessageId: string;
         sequence: number;
+        accessRefused: boolean;
       }>;
       environmentId: string;
       organizationId: string;
@@ -844,6 +850,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
             content: message.content,
             platformMessageId: message.platformMessageId,
             sequence: message.sequence,
+            ...(message.accessRefused ? { accessRefused: true } : {}),
             _environmentId: environmentId,
             _organizationId: organizationId,
             createdAt: new Date(firstCreatedAt + index),
@@ -858,7 +865,9 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       ...(session ? { session } : {}),
     });
 
-    return result.upsertedCount;
+    // How many new rows the agent reads: refused ones are stored but not counted.
+    return Object.keys(result.upsertedIds ?? {}).filter((index) => !params.messages[Number(index)]?.accessRefused)
+      .length;
   }
 
   async createAgentActivity(params: {

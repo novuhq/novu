@@ -36,6 +36,7 @@ import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
+import { NovuTokens } from '../../../shared/services/novu-tokens.service';
 import {
   SubscriberSessionAuthStatsService,
   SubscriberSessionSourceEnum,
@@ -152,7 +153,8 @@ describe('Session', () => {
       updatePreferencesUsecase as any,
       keylessAbuseGuard as any,
       subscriberSessionAuthStatsService as any,
-      apiKeyRevocationService as any
+      apiKeyRevocationService as any,
+      sinon.createStubInstance(NovuTokens) as any
     );
 
     messageRepository.getCountBySeverity.resolves(mockSeverityCounts);

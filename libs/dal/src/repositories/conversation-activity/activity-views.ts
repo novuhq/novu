@@ -187,9 +187,14 @@ function matchForKind(kind: ActivityKind): FilterQuery<ConversationActivityDBMod
   }
 }
 
+function viewHidesAccessRefused(view: ActivityView): boolean {
+  return view === 'llm_transcript' || view === 'agent_handoff' || view === 'approval_activities';
+}
+
 /** Mongo match for rows visible in a named activity view. */
 export function compileActivityViewMatch(view: ActivityView): FilterQuery<ConversationActivityDBModel> {
   return {
     $or: getKindsForView(view).map((kind) => matchForKind(kind)),
+    ...(viewHidesAccessRefused(view) ? { accessRefused: { $ne: true } } : {}),
   };
 }

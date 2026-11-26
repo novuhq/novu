@@ -15,7 +15,6 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AnalyticsService } from '@novu/application-generic';
 import { BaseRepository, MessageEntity } from '@novu/dal';
@@ -53,6 +52,7 @@ import { SessionInitializeResponseDto } from './dtos/session-initialize-response
 import { UnseenCountResponse } from './dtos/unseen-count-response.dto';
 import { UpdateSubscriberPreferenceRequestDto } from './dtos/update-subscriber-preference-request.dto';
 import { UpdateSubscriberPreferenceResponseDto } from './dtos/update-subscriber-preference-response.dto';
+import { LegacyWidgetSessionGuard } from './legacy-widget-session.guard';
 import { LimitPipe } from './pipes/limit-pipe/limit-pipe';
 import { GetCountQuery } from './queries/get-count.query';
 import { GetFeedCountCommand } from './usecases/get-feed-count/get-feed-count.command';
@@ -120,7 +120,7 @@ export class WidgetsController {
     );
   }
 
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Get('/notifications/feed')
   @ApiQuery({
     name: 'seen',
@@ -150,7 +150,7 @@ export class WidgetsController {
     return await this.getNotificationsFeedUsecase.execute(command);
   }
 
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Get('/notifications/unseen')
   async getUnseenCount(
     @SubscriberSession() subscriberSession: SubscriberSession,
@@ -173,7 +173,7 @@ export class WidgetsController {
     );
   }
 
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Get('/notifications/unread')
   async getUnreadCount(
     @SubscriberSession() subscriberSession: SubscriberSession,
@@ -196,7 +196,7 @@ export class WidgetsController {
     );
   }
 
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Get('/notifications/count')
   async getCount(
     @SubscriberSession() subscriberSession: SubscriberSession,
@@ -228,7 +228,7 @@ export class WidgetsController {
      deprecating old legacy endpoint.`,
     deprecated: true,
   })
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Post('/messages/markAs')
   async markMessageAs(
     @SubscriberSession() subscriberSession: SubscriberSession,
@@ -256,7 +256,7 @@ export class WidgetsController {
   @ApiOperation({
     summary: 'Mark a subscriber messages as seen, read, unseen or unread',
   })
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Post('/messages/mark-as')
   async markMessagesAs(
     @SubscriberSession() subscriberSession: SubscriberSession,
@@ -280,7 +280,7 @@ export class WidgetsController {
   @ApiOperation({
     summary: 'Remove a subscriber feed message',
   })
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Delete('/messages/:messageId')
   async removeMessage(
     @SubscriberSession() subscriberSession: SubscriberSession,
@@ -303,7 +303,7 @@ export class WidgetsController {
   @ApiOperation({
     summary: `Remove a subscriber's feed messages`,
   })
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Delete('/messages')
   @ApiNoContentResponse({ description: 'Messages removed' })
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -324,7 +324,7 @@ export class WidgetsController {
   @ApiOperation({
     summary: 'Remove subscriber messages in bulk',
   })
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Post('/messages/bulk/delete')
   @HttpCode(HttpStatus.OK)
   async removeMessagesBulk(
@@ -344,7 +344,7 @@ export class WidgetsController {
   @ApiOperation({
     summary: "Mark subscriber's all unread messages as read",
   })
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Post('/messages/read')
   async markAllUnreadAsRead(
     @SubscriberSession() subscriberSession: SubscriberSession,
@@ -366,7 +366,7 @@ export class WidgetsController {
   @ApiOperation({
     summary: "Mark subscriber's all unseen messages as seen",
   })
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Post('/messages/seen')
   async markAllUnseenAsSeen(
     @SubscriberSession() subscriberSession: SubscriberSession,
@@ -385,7 +385,7 @@ export class WidgetsController {
     );
   }
 
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Post('/messages/:messageId/actions/:type')
   async markActionAsSeen(
     @SubscriberSession() subscriberSession: SubscriberSession,
@@ -406,7 +406,7 @@ export class WidgetsController {
     );
   }
 
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Get('/organization')
   async getOrganizationData(
     @SubscriberSession() subscriberSession: SubscriberSession
@@ -420,7 +420,7 @@ export class WidgetsController {
     return await this.getOrganizationUsecase.execute(command);
   }
 
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Get('/preferences')
   async getSubscriberPreference(@SubscriberSession() subscriberSession: SubscriberSession) {
     const command = GetSubscriberPreferenceCommand.create({
@@ -434,7 +434,7 @@ export class WidgetsController {
     return await this.getSubscriberPreferenceUsecase.execute(command);
   }
 
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Get('/preferences/:level')
   async getSubscriberPreferenceByLevel(
     @SubscriberSession() subscriberSession: SubscriberSession,
@@ -451,7 +451,7 @@ export class WidgetsController {
     return await this.getSubscriberPreferenceByLevelUsecase.execute(command);
   }
 
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Patch('/preferences/:templateId')
   async updateSubscriberPreference(
     @SubscriberSession() subscriberSession: SubscriberSession,
@@ -494,7 +494,7 @@ export class WidgetsController {
     };
   }
 
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Patch('/preferences')
   async updateSubscriberGlobalPreference(
     @SubscriberSession() subscriberSession: SubscriberSession,
@@ -525,7 +525,7 @@ export class WidgetsController {
     };
   }
 
-  @UseGuards(AuthGuard('subscriberJwt'))
+  @UseGuards(LegacyWidgetSessionGuard)
   @Post('/usage/log')
   async logUsage(
     @SubscriberSession() subscriberSession: SubscriberSession,

@@ -1,6 +1,6 @@
 /**
- * `@novu/mcp-server/tools`: the workflow, activity and integration tools
- * without the Worker, for in-process use (e.g. an `McpServer` over
+ * `@novu/mcp-server/tools`: the workflow, activity, integration and subscriber
+ * reachability tools without the Worker, for in-process use (e.g. an `McpServer` over
  * `InMemoryTransport`). Nothing reachable from here may import `agents`,
  * `cloudflare:*` or other Worker-only modules; Biome enforces that for
  * `src/tools` and `src/utils`.
@@ -11,11 +11,14 @@ export type { ToolErrorDetails } from "../utils/tool-factory";
 export { toSavedControlValues, type WorkflowResponse } from "../utils/workflow-request";
 export { registerActivityTools } from "./activity";
 export { registerIntegrationTools } from "./integrations";
+export { registerSubscriberReachabilityTool } from "./subscriber-reachability";
 export {
 	ACTIVITY_TOOL_NAMES,
 	type ActivityToolName,
 	INTEGRATION_TOOL_NAMES,
 	type IntegrationToolName,
+	SUBSCRIBER_REACHABILITY_TOOL_NAMES,
+	type SubscriberReachabilityToolName,
 	WORKFLOW_TOOL_NAMES,
 	type WorkflowToolName,
 } from "./tool-names";

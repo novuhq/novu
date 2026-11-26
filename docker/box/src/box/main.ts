@@ -4,6 +4,7 @@ import { type Command, runCommand } from '../node/commands.ts';
 import { main } from '../node/main.ts';
 import { apply } from './apply.ts';
 import { doctor, quiesce, resume, state, stopApply } from './doctor.ts';
+import { onlyFlags, readFlags, setFlag } from './flags.ts';
 import { bake, start } from './lifecycle.ts';
 import { logs } from './logs.ts';
 import { migrate } from './migrate.ts';
@@ -88,6 +89,19 @@ const commands: Record<string, Command> = {
       if (!args[0]) throw new Error('usage: box channels <email>');
 
       return done(channelsTestUser(args[0]));
+    },
+  },
+  flag: {
+    usage: '[key] [value | --unset] | --only [key...]',
+    help: 'force a flag to a JSON value (true, 5) whatever LaunchDarkly serves, in this box only, and restart\nthe API and worker; --unset gives it back to LaunchDarkly; no key lists the forced flags;\n--only: exactly these flags on, the rest from LaunchDarkly (a PR box, from its `Box flags:` line)',
+    options: { unset: { type: 'boolean' }, only: { type: 'boolean' } },
+    run: ({ args, flag }) => {
+      if (flag('only')) return done(onlyFlags(args));
+      const [key, value] = args;
+      if (!key) return done(console.log(JSON.stringify(readFlags(), null, 2)));
+      if (flag('unset') === (value !== undefined)) throw new Error('usage: box flag <key> <value> | <key> --unset');
+
+      return done(setFlag(key, value === undefined ? undefined : JSON.parse(value)));
     },
   },
   migrate: {

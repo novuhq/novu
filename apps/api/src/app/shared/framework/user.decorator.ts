@@ -1,7 +1,7 @@
 import { createParamDecorator, UnauthorizedException } from '@nestjs/common';
 import { UserSession } from '@novu/application-generic';
 import { SubscriberEntity } from '@novu/dal';
-import { ApiAuthSchemeEnum } from '@novu/shared';
+import { ApiAuthSchemeEnum, SubscriberSessionAuthMethodEnum } from '@novu/shared';
 import jwt from 'jsonwebtoken';
 
 export { UserSession };
@@ -11,6 +11,7 @@ export interface SubscriberSession extends SubscriberEntity {
   environmentId: string;
   contextKeys: string[];
   scheme: ApiAuthSchemeEnum;
+  authMethod?: SubscriberSessionAuthMethodEnum.TOKEN;
 }
 
 export const SubscriberSession = createParamDecorator((data, ctx) => {

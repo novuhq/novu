@@ -5,6 +5,7 @@ const emailFields = ['primaryEmail', 'secondaryEmail', 'email'];
 const passwordFields = [
   'password',
   'token',
+  'subscriberToken',
   'apiKey',
   'apiKeys',
   'secretKey',

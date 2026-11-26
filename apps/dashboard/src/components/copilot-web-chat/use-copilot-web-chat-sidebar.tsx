@@ -1,7 +1,7 @@
 import { type ReactNode, useContext, useEffect } from 'react';
 import type { EditorCopilotMode } from './copilot-mode';
 import { CopilotNewChatButton } from './copilot-new-chat-button';
-import { type CopilotSuggestion, CopilotThreadPanel } from './copilot-thread-panel';
+import { CopilotThreadPanel } from './copilot-thread-panel';
 import { CopilotSidebarControlContext } from './copilot-web-chat-context';
 
 type CopilotWebChatSidebar = {
@@ -17,10 +17,8 @@ type CopilotWebChatSidebar = {
  */
 export function useCopilotWebChatSidebar({
   copilotMode,
-  suggestions,
 }: {
   copilotMode: EditorCopilotMode | null;
-  suggestions: CopilotSuggestion[];
 }): CopilotWebChatSidebar {
   const { isGenerating, isRevealPending, registerSidebar } = useContext(CopilotSidebarControlContext);
   const isRendered = copilotMode === 'web-chat-sidebar';
@@ -30,7 +28,7 @@ export function useCopilotWebChatSidebar({
   return {
     copilotContent: (
       <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-bg-white">
-        <CopilotThreadPanel suggestions={suggestions} />
+        <CopilotThreadPanel />
       </div>
     ),
     headerActions: <CopilotNewChatButton />,

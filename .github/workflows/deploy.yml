@@ -516,8 +516,9 @@ jobs:
           CH_MIGRATIONS_DB: ${{ secrets.CLICK_HOUSE_DATABASE }}
         run: pnpm run clickhouse:migrate:prod
 
+  # Builds run alongside the ClickHouse migrations; `deploy` still waits for both.
   build:
-    needs: [prepare-matrix, run-clickhouse-migrations]
+    needs: prepare-matrix
     if: needs.prepare-matrix.outputs.has_ecs_services == 'true'
     timeout-minutes: 60
     runs-on: ${{ github.event.inputs.runner == 'github' && 'ubuntu-latest' || 'blacksmith-8vcpu-ubuntu-2404' }}
@@ -822,35 +823,6 @@ jobs:
         with:
           secret-key: ${{ secrets.NOVU_INTERNAL_SECRET_KEY }}
           bridge-url: ${{ vars.NOVU_BRIDGE_URL }}
-
-  webhook_notification:
-    needs: [deploy, prepare-matrix]
-    runs-on: ubuntu-latest
-    if: |
-      always() && 
-      needs.deploy.result == 'success' && 
-      (contains(github.event.inputs.environment, 'production'))
-    environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
-    steps:
-      - name: Send webhook notification for US production
-        if: |
-          github.event.inputs.environment == 'production-us' || 
-          github.event.inputs.environment == 'production-us-and-eu'
-        run: |
-          curl -X POST https://webhooks.bug0.com/integrations/test/run \
-            -H "Content-Type: application/json" \
-            -H "x-api-key: ${{ secrets.BUG0_SECRET_KEY }}" \
-            -d '{"url": "https://dashboard.novu.co", "source": "novuhq-novu", "prod": "true"}'
-
-      - name: Send webhook notification for EU production
-        if: |
-          github.event.inputs.environment == 'production-eu' || 
-          github.event.inputs.environment == 'production-us-and-eu'
-        run: |
-          curl -X POST https://webhooks.bug0.com/integrations/test/run \
-            -H "Content-Type: application/json" \
-            -H "x-api-key: ${{ secrets.BUG0_SECRET_KEY }}" \
-            -d '{"url": "https://eu.dashboard.novu.co", "source": "novuhq-novu", "prod": "true"}'
 
   linear_release_cloud:
     # Cloud uses two continuous Linear pipelines: staging and production.

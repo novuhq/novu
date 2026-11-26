@@ -7,7 +7,7 @@ export function registerEnvironmentTools(server: McpServer, accessors: ToolAcces
 		server,
 		accessors,
 		"get_environments",
-		"Get all environments from your Novu application with their details and API keys. Use an environment's _id as the environmentId parameter on other tools to run them against that environment (e.g. Production instead of the default Development).",
+		"Get all environments from your Novu application with their details and API keys. OAuth sessions default to Development: pass an environment's _id from here as the environmentId parameter on other tools to target another environment (e.g. Production), which environment-bound API keys ignore.",
 		"/v1/environments",
 		"fetched environments",
 	);

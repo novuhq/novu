@@ -76,7 +76,7 @@ Card text supports `**bold**`, `_italic_`, `~~strikethrough~~`, inline code, and
 Provide at least one of `body` or `card`.
 
 <Note>
-  The chat step output has no `attachments` field, and Novu does not upload files to chat providers. Link to a hosted file, or show an image by URL with the `Image` element. See [File attachments](/platform/integrations/chat#file-attachments).
+  The chat step output has no `attachments` field. To send files with Slack or Microsoft Teams messages, pass them in the trigger's `payload.attachments` with `channels: ['chat']`. See [File attachments](/platform/integrations/chat#file-attachments).
 </Note>
 
 ### body

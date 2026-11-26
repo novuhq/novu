@@ -1,4 +1,4 @@
-import type { InboxService } from '../api';
+import type { InboxService, SessionRefresher } from '../api';
 import type { NovuEventEmitter } from '../event-emitter';
 import type { NovuSocketOptions, SocketTypeOption } from '../types';
 import { SocketType } from '../types';
@@ -51,11 +51,13 @@ export function createSocket({
   socketOptions,
   inboxServiceInstance,
   eventEmitterInstance,
+  refreshSession,
 }: {
   socketUrl?: string;
   socketOptions?: NovuSocketOptions;
   inboxServiceInstance: InboxService;
   eventEmitterInstance: NovuEventEmitter;
+  refreshSession?: SessionRefresher;
 }): BaseSocketInterface {
   const transformedSocketUrl = transformSocketUrl(socketUrl);
   const { socketType: explicitSocketType, ...restSocketOptions } = socketOptions || {};
@@ -68,6 +70,7 @@ export function createSocket({
         socketOptions: restSocketOptions,
         inboxServiceInstance,
         eventEmitterInstance,
+        refreshSession,
       });
     case SocketType.SOCKET_IO:
     default:
@@ -76,6 +79,7 @@ export function createSocket({
         socketOptions: restSocketOptions,
         inboxServiceInstance,
         eventEmitterInstance,
+        refreshSession,
       });
   }
 }

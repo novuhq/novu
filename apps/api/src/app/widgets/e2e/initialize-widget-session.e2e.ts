@@ -1,14 +1,11 @@
 import { createHash } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, InAppProviderIdEnum, SubscriberSessionAuthMethodEnum } from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AuthService } from '../../auth/services/auth.service';
-import {
-  SubscriberSessionAuthMethodEnum,
-  SubscriberSessionAuthStatsService,
-} from '../../shared/services/subscriber-session-auth-stats.service';
+import { SubscriberSessionAuthStatsService } from '../../shared/services/subscriber-session-auth-stats.service';
 
 // import { encryptApiKeysMigration } from '../../../../migrations/encrypt-api-keys/encrypt-api-keys-migration';
 

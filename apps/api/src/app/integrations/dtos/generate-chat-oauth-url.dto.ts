@@ -67,6 +67,7 @@ export class GenerateChatOauthUrlRequestDto {
       'groups:read',
       'users:read',
       'users:read.email',
+      'files:write',
       'incoming-webhook',
     ],
     required: false,

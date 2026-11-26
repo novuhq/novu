@@ -51,7 +51,7 @@ RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
  && rm /tmp/pc.tgz \
  && mongod --version >/dev/null && clickhouse --version >/dev/null && caddy version >/dev/null \
  && versitygw --version >/dev/null && process-compose version >/dev/null && node --version >/dev/null \
- && redis-server --version >/dev/null && mailpit version >/dev/null && pm2-runtime --version >/dev/null \
+ && redis-server --version >/dev/null && mailpit version --no-release-check >/dev/null && pm2-runtime --version >/dev/null \
  && stripe version >/dev/null
 
 ENV COREPACK_HOME=/data/corepack \

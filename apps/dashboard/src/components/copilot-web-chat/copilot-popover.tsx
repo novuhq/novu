@@ -5,6 +5,7 @@ import { cn } from '@/utils/ui';
 import { CopilotLauncher } from './copilot-launcher';
 import { useCopilotPageView } from './copilot-page-view-store';
 import { useCopilotPopoverTitle } from './copilot-popover-title';
+import { COPILOT_SURFACE_PROPS } from './copilot-surface';
 import { CopilotThreadPanel } from './copilot-thread-panel';
 import { useCopilotWebChat } from './copilot-web-chat-context';
 import { COPILOT_POPOVER_ID, COPILOT_SHEET_LIFT_PX, COPILOT_SHEET_LIFT_TRANSITION } from './copilot-web-chat-utils';
@@ -58,6 +59,7 @@ export function CopilotPopover() {
       {isOpen && isAvailable && (
         <motion.div
           id={COPILOT_POPOVER_ID}
+          {...COPILOT_SURFACE_PROPS}
           role="dialog"
           aria-label="Novu Copilot"
           initial={hidden}

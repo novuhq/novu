@@ -243,7 +243,8 @@ describe('NovuTokens', () => {
     it('reports an expired token as expired', () => {
       const expired = signWithNovuKey({ sub: 'subscriber-1', exp: nowSeconds() - 10 });
 
-      expect(tokens.verify('subscriberLogin', expired)).to.deep.equal({ ok: false, reason: 'expired' });
+      expect(tokens.verify('subscriberLogin', expired)).to.deep.include({ ok: false, reason: 'expired' });
+      expect(tokens.verify('subscriberLogin', expired)).to.have.nested.property('claims.sub', 'subscriber-1');
     });
 
     it('rejects a Novu-signed token that outlives the kind maximum or never expires', () => {
