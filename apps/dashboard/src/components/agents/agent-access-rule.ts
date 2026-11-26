@@ -1,3 +1,4 @@
+import { ACCESS_RULE_SUBSCRIBER_FIELDS, isAccessRuleField } from '@novu/shared';
 import {
   formatQuery,
   generateID,
@@ -15,33 +16,16 @@ import { customRuleProcessor, parseJsonLogicOptions } from '@/utils/conditions';
 
 export type AgentAccessRule = Record<string, unknown>;
 
-const SUBSCRIBER_FIELDS = ['subscriberId', 'firstName', 'lastName', 'email', 'phone', 'locale', 'avatar', 'timezone'];
-
-export const ACCESS_RULE_SUBSCRIBER_VARIABLES: EnhancedConditionVariable[] = [
-  ...SUBSCRIBER_FIELDS.map((field) => ({ name: `subscriber.${field}`, dataType: 'string' as const })),
-  { name: 'subscriber.data', dataType: 'object' },
-];
+export const ACCESS_RULE_SUBSCRIBER_VARIABLES: EnhancedConditionVariable[] = ACCESS_RULE_SUBSCRIBER_FIELDS.map(
+  (field) => ({ name: `subscriber.${field}`, dataType: field === 'data' ? 'object' : 'string' })
+);
 
 const FIELD_ISSUE =
   'Access rules can only use subscriber.<field>, subscriber.data.<key>, context.<type>.id or context.<type>.data.<key>';
 const OPERATOR_ISSUE = 'Access rules do not support this operator';
 
 export function getAccessRuleFieldIssue(field: string): string | null {
-  const [namespace, key, ...path] = field.split('.');
-
-  if (!key || [key, ...path].some((segment) => segment in Object.prototype)) {
-    return FIELD_ISSUE;
-  }
-
-  if (namespace === 'subscriber') {
-    return key === 'data' || (path.length === 0 && SUBSCRIBER_FIELDS.includes(key)) ? null : FIELD_ISSUE;
-  }
-
-  if (namespace === 'context') {
-    return path[0] === 'data' || (path[0] === 'id' && path.length === 1) ? null : FIELD_ISSUE;
-  }
-
-  return FIELD_ISSUE;
+  return isAccessRuleField(field) ? null : FIELD_ISSUE;
 }
 
 export function getAccessRuleOperatorIssue(operator: string): string | null {
