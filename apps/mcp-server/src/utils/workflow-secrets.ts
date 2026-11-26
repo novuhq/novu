@@ -269,18 +269,19 @@ export function restoreHttpRequestSecrets(
 		};
 	}
 
-	// The worker renders all of a step's control values as one Liquid template over their JSON, and only `{{ }}`
-	// output without `raw` is JSON-escaped. A tag (`{% echo %}`, `{% cycle %}`, a block spanning two fields), an
+	// The worker renders all of a step's control values but `skip` as one Liquid template over their JSON, and only
+	// `{{ }}` output without `raw` is JSON-escaped. A tag (`{% echo %}`, `{% cycle %}`, a block spanning two fields), an
 	// unbalanced `{{`, or `raw` can rewrite the rendered JSON, the URL included, so a new one never travels with a
-	// hidden value. Strings the step already stored are the user's own.
-	const storedStrings = new Set(stringsOf(saved));
+	// hidden value. Strings the step already stored are the user's own, in their stored order: moving or dropping one
+	// (an `{% assign %}` the URL reads) changes what the others render.
+	const rewrites = renderedStrings(restored).filter(canRewriteRender);
+	const storedRewrites = renderedStrings(saved).filter(canRewriteRender);
 	if (
-		stringsOf(controlValues).some(
-			(value) => !storedStrings.has(value) && canRewriteRender(value),
-		)
+		rewrites.length !== storedRewrites.length ||
+		rewrites.some((value, index) => value !== storedRewrites[index])
 	) {
 		return {
-			error: `${step} keeps hidden values ("${HIDDEN_SECRET}") next to new Liquid that can rewrite the request (a {% %} tag, an unclosed {{ or the raw filter), so they can't be kept. Use only {{ variable }} output, or have the user make this change in the dashboard.`,
+			error: `${step} keeps hidden values ("${HIDDEN_SECRET}") next to Liquid that can rewrite the request (a {% %} tag, an unclosed {{ or the raw filter) that is new, moved or removed, so they can't be kept. Keep the step's tags as they are and use only {{ variable }} output, or have the user make this change in the dashboard.`,
 			ok: false,
 		};
 	}
@@ -318,6 +319,13 @@ function stringsOf(value: unknown): string[] {
 	return record
 		? Object.entries(record).flatMap(([key, entry]) => [key, ...stringsOf(entry)])
 		: [];
+}
+
+/** The strings of a step's control values in the order the worker renders them, which leaves `skip` out. */
+function renderedStrings(controlValues: JsonObject | undefined): string[] {
+	const { skip: _skip, ...rendered } = controlValues ?? {};
+
+	return stringsOf(rendered);
 }
 
 function isTemplateOnly(value: string): boolean {
@@ -418,7 +426,9 @@ function redactAuthority(authority: string): string {
 
 /**
  * The scheme and the whole authority as written, user info and templates included: a template or `@` there can change
- * the host the rendered URL sends to, so any change to them counts as another host.
+ * the host the rendered URL sends to, so any change to them counts as another host. A URL that doesn't start with a
+ * literal `scheme://` and its host, such as `https:///host` or `{{payload.scheme}}://host`, counts whole: the worker's
+ * URL parser can find its host where this check doesn't.
  */
 function originOf(url: unknown): string | undefined {
 	if (typeof url !== "string") return undefined;
@@ -430,18 +440,20 @@ function originOf(url: unknown): string | undefined {
 		.replace(
 			LIQUID_EXPRESSION_PATTERN,
 			(expression) => `${STAND_IN_OPEN}${expressions.push(expression) - 1}${STAND_IN_CLOSE}`,
-		);
-	const match = URL_PATTERN.exec(marked);
-	if (!match) return undefined;
-
-	const [, scheme = "", authority = ""] = match;
+		)
+		// The worker's URL parser drops tabs and line breaks.
+		.replace(/[\t\n\r]/g, "");
+	const origin = ORIGIN_PATTERN.exec(marked)?.[0];
+	if (origin === undefined) return url.trim();
 
 	// Hosts compare in any case, but Liquid variable names don't: `{{payload.Host}}` reads another value.
-	return `${scheme}${authority}`
+	return origin
 		.toLowerCase()
 		.replace(STAND_IN_PATTERN, (_, index: string) => expressions[Number(index)]);
 }
 
+/** A literal scheme, `//` and a host: the spelling whose authority ends where the worker's URL parser ends it. */
+const ORIGIN_PATTERN = /^[a-z][a-z\d+.-]*:\/\/[^/\\?#]+/i;
 /** Any Liquid output or tag, quoted text included. */
 const LIQUID_EXPRESSION_PATTERN = /\{\{[\s\S]*?\}\}|\{%[\s\S]*?%\}/g;
 /** Private-use characters, which no URL holds, around the index of a set-aside expression. */
@@ -470,6 +482,20 @@ function redactQueryPair(pair: string): string {
 function looksLikeToken(segment: string): boolean {
 	if (isTemplateOnly(segment)) return false;
 	const literal = segment.replace(TEMPLATE_PATTERN, "");
+
+	// A token can be percent-encoded, as `%41%42%43%31%32%33` spells `ABC123`.
+	return isTokenShaped(literal) || isTokenShaped(percentDecoded(literal));
+}
+
+function percentDecoded(text: string): string {
+	try {
+		return decodeURIComponent(text);
+	} catch {
+		return text;
+	}
+}
+
+function isTokenShaped(literal: string): boolean {
 	const mixesLettersAndDigits =
 		literal.length >= MIN_ALPHANUMERIC_TOKEN_LENGTH &&
 		/[a-z]/i.test(literal) &&

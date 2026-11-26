@@ -168,6 +168,12 @@ describe("redactHttpRequestControlValues: values that look safe and aren't", () 
 		);
 	});
 
+	it("hides a percent-encoded token", () => {
+		expect(urlOf("https://hooks.example.com/hooks/%41%42%43%31%32%33/send")).toBe(
+			`https://hooks.example.com/hooks/${HIDDEN_SECRET}/send`,
+		);
+	});
+
 	it("shows a redacted value the same when it is redacted again", () => {
 		const once = redactHttpRequestControlValues(httpControlValues());
 
@@ -305,6 +311,51 @@ describe("restoreStepSecrets: ambiguous places are refused, never guessed", () =
 			const result = restore({ headers, url }, saved);
 			expect(!result.ok && result.error).toContain("now points at another host");
 		}
+	});
+
+	it("reads a URL whose host the worker finds elsewhere as a whole, so any change to it is another host", () => {
+		const headers = [{ key: "Authorization", value: HIDDEN_SECRET }];
+
+		for (const [stored, edited] of [
+			["https:///api.example.com/hook", "https:///attacker.example/collect"],
+			["https:/api.example.com/hook", "https:/attacker.example/collect"],
+			["https://\t/api.example.com/hook", "https://\t/attacker.example/collect"],
+			["ht\ttps://api.example.com/hook", "ht\ttps://attacker.example/collect"],
+			[
+				"{{payload.scheme}}://api.example.com/hook",
+				"{{payload.scheme}}://attacker.example/collect",
+			],
+		]) {
+			const saved = {
+				headers: [{ key: "Authorization", value: `Bearer ${TOKEN}` }],
+				url: stored,
+			};
+
+			const moved = restore({ headers, url: edited }, saved);
+			expect(!moved.ok && moved.error, edited).toContain("now points at another host");
+			expect(restore({ headers, url: stored }, saved).ok, stored).toBe(true);
+		}
+	});
+
+	it("refuses to keep hidden values when stored tags change order or go", () => {
+		const first = { key: "X-First", value: "{% assign destination = payload.firstHost %}" };
+		const second = { key: "X-Second", value: "{% assign destination = payload.secondHost %}" };
+		const saved = {
+			headers: [{ key: "Authorization", value: `Bearer ${TOKEN}` }, first, second],
+			url: "https://{{destination}}/hook",
+		};
+		const authorization = { key: "Authorization", value: HIDDEN_SECRET };
+
+		for (const headers of [
+			[authorization, second, first],
+			[authorization, first],
+		]) {
+			const result = restore({ headers, url: saved.url }, saved);
+			expect(!result.ok && result.error).toContain("can rewrite the request");
+		}
+		expect(restore({ headers: [authorization, first, second], url: saved.url }, saved).ok).toBe(
+			true,
+		);
 	});
 
 	it("refuses to keep hidden values next to a raw filter the step didn't have", () => {
