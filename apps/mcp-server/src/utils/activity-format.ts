@@ -5,6 +5,8 @@
  * outcome leave this module.
  */
 
+import { subscriberDashboardPath } from "./subscriber-reachability";
+
 type JsonRecord = Record<string, unknown>;
 
 const PROVIDER_RESPONSE_CAP = 500;
@@ -290,8 +292,15 @@ function requestDashboardPath(id: string | undefined, transactionId: string | un
 		: undefined;
 }
 
+/** The workflow editor, as a path under `/env/<environment>`; it opens a workflow by its trigger identifier. */
+function workflowDashboardPath(identifier: string | undefined): string | undefined {
+	return identifier ? `/workflows/${encodeURIComponent(identifier)}` : undefined;
+}
+
 function runFields(run: JsonRecord) {
 	const id = asString(run.id);
+	const subscriberId = asString(run.subscriberId);
+	const workflowIdentifier = asString(run.triggerIdentifier);
 
 	return {
 		createdAt: asString(run.createdAt),
@@ -300,9 +309,11 @@ function runFields(run: JsonRecord) {
 		deliveryLifecycleStatus: asString(run.deliveryLifecycleStatus),
 		id,
 		status: asString(run.status),
-		subscriberId: asString(run.subscriberId),
+		subscriberDashboardPath: subscriberId ? subscriberDashboardPath(subscriberId) : undefined,
+		subscriberId,
 		transactionId: asString(run.transactionId),
-		workflowIdentifier: asString(run.triggerIdentifier),
+		workflowDashboardPath: workflowDashboardPath(workflowIdentifier),
+		workflowIdentifier,
 		workflowName: asString(run.workflowName),
 	};
 }

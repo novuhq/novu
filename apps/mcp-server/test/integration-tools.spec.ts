@@ -129,6 +129,23 @@ describe("integration tools", () => {
 			});
 		});
 
+		it("links each integration to its settings in the dashboard", async () => {
+			fakeIntegrationsApi();
+			const client = await connectAllTools({
+				...tokenAccessors("api-key"),
+				getDashboardUrl: () => "https://eu.dashboard.novu.co/",
+			});
+
+			const text = textOf(await callTool(client, "get_integrations"));
+
+			const list = JSON.parse(text.slice(text.indexOf("[")));
+			expect(list.map((integration: Json) => integration.settingsUrl)).toEqual([
+				`https://eu.dashboard.novu.co/integrations/${SENDGRID_ID}/update`,
+				`https://eu.dashboard.novu.co/integrations/${FCM_ID}/update`,
+				`https://eu.dashboard.novu.co/integrations/${NOVU_INBOX_ID}/update`,
+			]);
+		});
+
 		it("returns the API error with its status", async () => {
 			vi.stubGlobal(
 				"fetch",

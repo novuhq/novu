@@ -118,6 +118,9 @@ export function registerIntegrationTools(server: McpServer, accessors: ToolAcces
 				return {
 					...redactIntegration(integration),
 					...(environmentName && { environmentName }),
+					...(integration._id && {
+						settingsUrl: integrationSettingsUrl(accessors, integration._id),
+					}),
 				};
 			});
 
