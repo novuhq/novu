@@ -88,7 +88,7 @@ function isRejectedResendKey(error: ResendApiError): boolean {
  * - `restricted_api_key` means Resend knows the key and it is limited to sending, which is all Novu needs.
  * - `application_error` is the SDK's own name for a request that got no usable answer.
  */
-export function classifyResendVerification(error: ResendApiError | null | undefined): VerifyCredentialsStatusEnum {
+function classifyResendVerification(error: ResendApiError | null | undefined): VerifyCredentialsStatusEnum {
   if (!error) return VerifyCredentialsStatusEnum.VALID;
   if (error.name === 'restricted_api_key') return VerifyCredentialsStatusEnum.VALID;
   if (isRejectedResendKey(error)) return VerifyCredentialsStatusEnum.INVALID;

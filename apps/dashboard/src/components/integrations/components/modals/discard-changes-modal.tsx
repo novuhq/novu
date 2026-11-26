@@ -11,7 +11,7 @@ function listFields(fields: string[]) {
   return `${fields[0]}, ${fields[1]} and ${others} other ${others === 1 ? 'field' : 'fields'}`;
 }
 
-export type DiscardChangesModalProps = {
+type DiscardChangesModalProps = {
   isOpen: boolean;
   /** Labels of the edited fields, as the form shows them. */
   changedFields: string[];

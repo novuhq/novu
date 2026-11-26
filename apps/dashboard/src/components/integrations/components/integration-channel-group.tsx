@@ -1,16 +1,14 @@
-import { ChannelTypeEnum, IEnvironment, IIntegration, IProviderConfig, PermissionsEnum } from '@novu/shared';
+import { ChannelTypeEnum, IIntegration, IProviderConfig, PermissionsEnum } from '@novu/shared';
 import { type ComponentType, useState } from 'react';
 import { RiAddLine, RiArrowDownSLine, RiArrowUpSLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
 import { PermissionButton } from '@/components/primitives/permission-button';
-import { CHANNEL_TYPE_TO_STRING } from '@/utils/channels';
 import { StepTypeEnum } from '@/utils/enums';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { TableIntegration } from '../types';
 import { INTEGRATION_CHANNELS } from '../utils/channels';
-import { IntegrationCard } from './integration-card';
 import { IntegrationStoreCard } from './integration-store-card';
 import { ProviderIcon } from './provider-icon';
 
@@ -18,92 +16,48 @@ import { ProviderIcon } from './provider-icon';
 const COLLAPSED_CARD_COUNT = 8;
 const PREVIEW_LOGO_COUNT = 3;
 
-type IntegrationChannelGroupVariant = 'default' | 'connectSheet';
-
 type IntegrationChannelGroupProps = {
   channel: ChannelTypeEnum;
   integrations: IIntegration[];
   providers: IProviderConfig[];
-  environments?: IEnvironment[];
   onItemClick: (item: TableIntegration) => void;
-  excludeIntegrationIds?: string[];
-  variant?: IntegrationChannelGroupVariant;
 };
 
 export function IntegrationChannelGroup({
   channel,
   integrations,
   providers,
-  environments,
   onItemClick,
-  excludeIntegrationIds,
-  variant = 'default',
 }: IntegrationChannelGroupProps) {
-  const exclude = excludeIntegrationIds ? new Set(excludeIntegrationIds) : null;
-  const visibleIntegrations = exclude
-    ? integrations.filter((integration) => !exclude.has(integration._id))
-    : integrations;
-
   const [isExpanded, setIsExpanded] = useState(false);
-  const isCollapsible = visibleIntegrations.length > COLLAPSED_CARD_COUNT;
-  const shownIntegrations =
-    isCollapsible && !isExpanded ? visibleIntegrations.slice(0, COLLAPSED_CARD_COUNT) : visibleIntegrations;
+  const isCollapsible = integrations.length > COLLAPSED_CARD_COUNT;
+  const shownIntegrations = isCollapsible && !isExpanded ? integrations.slice(0, COLLAPSED_CARD_COUNT) : integrations;
 
-  if (visibleIntegrations.length === 0) {
+  if (integrations.length === 0) {
     return null;
   }
 
   return (
-    <div className={variant === 'connectSheet' ? 'space-y-3' : 'space-y-4'}>
-      {variant === 'connectSheet' ? (
-        <h2 className="text-text-soft text-[11px] font-semibold uppercase tracking-wider">
-          {CHANNEL_TYPE_TO_STRING[channel]}
-        </h2>
-      ) : (
-        <ChannelSectionHeader channel={channel} count={visibleIntegrations.length} />
-      )}
-      <div
-        className={cn(
-          variant === 'connectSheet'
-            ? 'flex flex-wrap gap-4 p-1.5'
-            : 'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'
-        )}
-      >
-        {variant === 'connectSheet'
-          ? visibleIntegrations.map((integration) => {
-              const provider = providers.find((p) => p.id === integration.providerId);
-              if (!provider) return null;
+    <div className="space-y-4">
+      <ChannelSectionHeader channel={channel} count={integrations.length} />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {shownIntegrations.map((integration) => {
+          const provider = providers.find((p) => p.id === integration.providerId);
+          if (!provider) return null;
 
-              const environment = environments?.find((env) => env._id === integration._environmentId);
-              if (!environment) return null;
-
-              return (
-                <IntegrationCard
-                  key={integration._id}
-                  integration={integration}
-                  provider={provider}
-                  environment={environment}
-                  onClick={onItemClick}
-                />
-              );
-            })
-          : shownIntegrations.map((integration) => {
-              const provider = providers.find((p) => p.id === integration.providerId);
-              if (!provider) return null;
-
-              return (
-                <IntegrationStoreCard
-                  key={integration._id}
-                  integration={integration}
-                  provider={provider}
-                  onClick={onItemClick}
-                />
-              );
-            })}
+          return (
+            <IntegrationStoreCard
+              key={integration._id}
+              integration={integration}
+              provider={provider}
+              onClick={onItemClick}
+            />
+          );
+        })}
       </div>
-      {variant === 'default' && isCollapsible && (
+      {isCollapsible && (
         <ShowMoreDivider
-          hiddenIntegrations={visibleIntegrations.slice(COLLAPSED_CARD_COUNT)}
+          hiddenIntegrations={integrations.slice(COLLAPSED_CARD_COUNT)}
           providers={providers}
           isExpanded={isExpanded}
           onToggle={() => setIsExpanded((expanded) => !expanded)}

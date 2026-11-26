@@ -47,7 +47,7 @@ const MANDRILL_PING_REPLY = 'PONG!';
  * Reads the outcome of `users.ping`. The Mailchimp client never throws: on a refusal it resolves with the
  * request error, so anything other than the ping reply is a failure.
  */
-export function classifyMandrillPing(result: unknown): VerifyCredentialsStatusEnum {
+function classifyMandrillPing(result: unknown): VerifyCredentialsStatusEnum {
   if (result === MANDRILL_PING_REPLY) return VerifyCredentialsStatusEnum.VALID;
 
   const errorName = (result as { response?: { data?: { name?: unknown } } } | undefined)?.response?.data?.name;

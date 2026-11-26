@@ -3,7 +3,7 @@ import { IVerifyCredentialsResponse, VerifyCredentialsStatusEnum } from '@novu/s
 /** Credential checks are interactive (a user clicked "Test connection"), so they get a short cap. */
 export const VERIFY_CREDENTIALS_TIMEOUT_MS = 10_000;
 
-export type VerifyCredentialsClassifier = (
+type VerifyCredentialsClassifier = (
   httpStatus: number | undefined,
   error: unknown
 ) => VerifyCredentialsStatusEnum | undefined;

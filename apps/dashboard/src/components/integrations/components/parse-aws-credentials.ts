@@ -1,8 +1,8 @@
 import { CredentialsKeyEnum } from '@novu/shared';
 
-export type AwsCredentialField = CredentialsKeyEnum.ApiKey | CredentialsKeyEnum.SecretKey | CredentialsKeyEnum.Region;
+type AwsCredentialField = CredentialsKeyEnum.ApiKey | CredentialsKeyEnum.SecretKey | CredentialsKeyEnum.Region;
 
-export type ParsedAwsCredentials = Partial<Record<AwsCredentialField, string>>;
+type ParsedAwsCredentials = Partial<Record<AwsCredentialField, string>>;
 
 /** A long-term IAM user access key ID: `AKIA` and 16 more capital letters and digits. */
 const ACCESS_KEY_ID_PATTERN = /\bAKIA[A-Z0-9]{16}\b/;

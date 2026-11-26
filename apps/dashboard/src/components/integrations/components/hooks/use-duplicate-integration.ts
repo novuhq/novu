@@ -23,7 +23,7 @@ export type DuplicateTarget = {
   existing?: IIntegration;
 };
 
-export type DuplicateResult = {
+type DuplicateResult = {
   integration: IIntegration;
   environment: IEnvironment;
   /** Secrets weren't copied (or weren't readable), so the copy is paused until they're pasted. */

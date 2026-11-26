@@ -30,7 +30,7 @@ function otherEnvironmentNames(environment: IEnvironment | undefined, environmen
   return named.map((env) => env.name);
 }
 
-export type MakePrimaryModalProps = {
+type MakePrimaryModalProps = {
   isOpen: boolean;
   newPrimaryName: string;
   /** The integration that is primary now; it stays connected. */

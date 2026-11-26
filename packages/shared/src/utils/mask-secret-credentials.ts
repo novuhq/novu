@@ -14,7 +14,7 @@ const MIN_LENGTH_FOR_SUFFIX = 8;
  * Integration credentials the API returns masked. `headers` is encrypted at rest too, but it is an editable
  * key/value setting rather than a single secret, so it is returned as stored.
  */
-export const MASKED_CREDENTIAL_KEYS: readonly string[] = [
+const MASKED_CREDENTIAL_KEYS: readonly string[] = [
   CredentialsKeyEnum.ApiKey,
   CredentialsKeyEnum.ApiToken,
   CredentialsKeyEnum.SecretKey,
@@ -43,7 +43,7 @@ export function maskSecret(value: string): string {
 }
 
 /** Integration settings (`configurations`) that are secrets: the key a provider signs its delivery webhooks with. */
-export const MASKED_CONFIGURATION_KEYS: readonly string[] = ['inboundWebhookSigningKey'];
+const MASKED_CONFIGURATION_KEYS: readonly string[] = ['inboundWebhookSigningKey'];
 
 export function isMaskedSecret(value: unknown): value is string {
   return typeof value === 'string' && value.includes(MASKED_SECRET_FILL);

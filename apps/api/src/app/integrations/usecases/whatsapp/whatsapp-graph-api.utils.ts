@@ -171,7 +171,7 @@ export async function listWabaPhoneNumbers(
   });
 }
 
-export type WabaSubscribedAppsResponse = {
+type WabaSubscribedAppsResponse = {
   data?: Array<{
     whatsapp_business_api_data?: { id?: string; name?: string };
     /** Present when the app's webhook for this business account was pointed at its own callback. */

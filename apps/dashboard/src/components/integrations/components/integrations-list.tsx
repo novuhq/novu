@@ -22,14 +22,10 @@ import { IntegrationStoreZeroState } from './integration-store-zero-state';
 import { EMPTY_CHANNEL_CONTENT } from './utils/empty-channel-content';
 import { isDemoIntegration } from './utils/helpers';
 
-type IntegrationsListVariant = 'default' | 'connectSheet';
-
 const INBOX_POLL_INTERVAL_MS = 5000;
 
 type IntegrationsListProps = {
   onItemClick: (item: TableIntegration) => void;
-  excludeIntegrationIds?: string[];
-  variant?: IntegrationsListVariant;
   /** Case-insensitive match on the integration name or provider name. */
   searchQuery?: string;
   /** Only these channels; omit for every channel. */
@@ -61,32 +57,7 @@ function IntegrationCardSkeleton() {
   );
 }
 
-function ConnectSheetTileSkeleton() {
-  return (
-    <div className="flex min-w-0 flex-1 basis-[calc(50%-0.5rem)] flex-col gap-1.5">
-      <Skeleton className="border-stroke-soft h-20 w-full rounded-lg border" />
-      <Skeleton className="h-4 w-24" />
-    </div>
-  );
-}
-
-function IntegrationChannelGroupSkeleton({ variant }: { variant?: IntegrationsListVariant }) {
-  if (variant === 'connectSheet') {
-    return (
-      <div className="space-y-3">
-        <Skeleton className="h-3 w-24 rounded" />
-        <div className="flex flex-wrap gap-4 p-1.5">
-          <ConnectSheetTileSkeleton />
-          <ConnectSheetTileSkeleton />
-          <ConnectSheetTileSkeleton />
-          <ConnectSheetTileSkeleton />
-          <ConnectSheetTileSkeleton />
-          <ConnectSheetTileSkeleton />
-        </div>
-      </div>
-    );
-  }
-
+function IntegrationChannelGroupSkeleton() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -201,13 +172,11 @@ function getInboxHmacSetting(integrations: IIntegration[] | undefined, environme
 
 export function IntegrationsList({
   onItemClick,
-  excludeIntegrationIds,
-  variant = 'default',
   searchQuery = '',
   channels: channelFilter,
   showZeroState = false,
 }: IntegrationsListProps) {
-  const { currentEnvironment, environments } = useEnvironment();
+  const { currentEnvironment } = useEnvironment();
   const [isWaitingForInbox, setIsWaitingForInbox] = useState(false);
   // While the getting-started cards wait for the Inbox, poll so they notice it connect.
   const { integrations, isLoading } = useFetchIntegrations({
@@ -255,27 +224,19 @@ export function IntegrationsList({
         ?.filter((i) => !isAgentInboxProvider(i.providerId))
         .filter((i) => isChannelVisibleInUi(i.channel, isToolChannelEnabled))
         .filter((i) => !channelFilter || (!!i.channel && channelFilter.includes(i.channel)))
-        // The store shows the environment picked in the sidebar; the connect sheet keeps every environment.
-        .filter((i) => variant !== 'default' || i._environmentId === currentEnvironment?._id)
+        // The store shows the environment picked in the sidebar.
+        .filter((i) => i._environmentId === currentEnvironment?._id)
         .filter(matchesSearch)
-        // In the store, the primary leads its channel.
-        .sort((a, b) => (variant === 'default' ? Number(!!b.primary) - Number(!!a.primary) : 0))
+        // The primary leads its channel.
+        .sort((a, b) => Number(!!b.primary) - Number(!!a.primary))
         .reduce(addToChannelGroup, {} as Record<ChannelTypeEnum, IIntegration[]>)
     );
-  }, [
-    integrations,
-    isToolChannelEnabled,
-    searchQuery,
-    availableIntegrations,
-    variant,
-    currentEnvironment?._id,
-    channelFilter,
-  ]);
+  }, [integrations, isToolChannelEnabled, searchQuery, availableIntegrations, currentEnvironment?._id, channelFilter]);
 
   // With a search, store providers this environment doesn't have yet are listed so they can be added.
   const addableProviders = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (variant !== 'default' || !query) return [];
+    if (!query) return [];
 
     const installedProviderIds = new Set(
       (integrations ?? [])
@@ -286,21 +247,13 @@ export function IntegrationsList({
     return availableIntegrations.filter((provider) =>
       isAddableProvider(provider, { query, installedProviderIds, isToolChannelEnabled, channelFilter })
     );
-  }, [
-    searchQuery,
-    variant,
-    integrations,
-    currentEnvironment?._id,
-    availableIntegrations,
-    isToolChannelEnabled,
-    channelFilter,
-  ]);
+  }, [searchQuery, integrations, currentEnvironment?._id, availableIntegrations, isToolChannelEnabled, channelFilter]);
 
   if (isLoading || !currentEnvironment) {
     return (
-      <div className={variant === 'connectSheet' ? 'space-y-4' : 'space-y-6'}>
-        <IntegrationChannelGroupSkeleton variant={variant} />
-        {variant === 'default' ? <IntegrationChannelGroupSkeleton variant={variant} /> : null}
+      <div className="space-y-6">
+        <IntegrationChannelGroupSkeleton />
+        <IntegrationChannelGroupSkeleton />
       </div>
     );
   }
@@ -309,21 +262,17 @@ export function IntegrationsList({
 
   // With no real integrations, the getting-started cards lead the page; the demo and unfinished
   // integrations still list below them, without per-channel empty states (the cards cover those).
-  const isZeroState = variant === 'default' && showZeroState && !hasActiveFilter && openedInZeroState;
-  // The store lists channels in a fixed order; with no search, a channel with nothing connected shows its
-  // empty state. The connect sheet keeps the order integrations arrive in and skips empty channels.
-  const channels =
-    variant === 'default'
-      ? getStoreChannels({ groupedIntegrations, hasActiveFilter, isToolChannelEnabled, channelFilter })
-      : (Object.keys(groupedIntegrations || {}) as ChannelTypeEnum[]);
+  const isZeroState = showZeroState && !hasActiveFilter && openedInZeroState;
+  // Channels in a fixed order; with no search, a channel with nothing connected shows its empty state.
+  const channels = getStoreChannels({ groupedIntegrations, hasActiveFilter, isToolChannelEnabled, channelFilter });
 
   const hasNoMatch =
     hasActiveFilter && Object.keys(groupedIntegrations || {}).length === 0 && addableProviders.length === 0;
 
-  if (hasNoMatch) return <NoSearchMatch variant={variant} query={searchQuery.trim()} />;
+  if (hasNoMatch) return <IntegrationSearchEmptyState query={searchQuery.trim()} />;
 
   return (
-    <div className={variant === 'connectSheet' ? 'space-y-4' : 'space-y-6'}>
+    <div className="space-y-6">
       {isZeroState && (
         <IntegrationStoreZeroState isInboxConnected={isInboxConnected} isInboxHmacEnabled={isInboxHmacEnabled} />
       )}
@@ -340,25 +289,11 @@ export function IntegrationsList({
             channel={channel}
             integrations={channelIntegrations}
             providers={availableIntegrations}
-            environments={environments}
             onItemClick={onItemClick}
-            excludeIntegrationIds={excludeIntegrationIds}
-            variant={variant}
           />
         );
       })}
       <AvailableToAddSection providers={addableProviders} />
-    </div>
-  );
-}
-
-/** A search that matches nothing installed and nothing in the store. */
-function NoSearchMatch({ variant, query }: { variant: IntegrationsListVariant; query: string }) {
-  if (variant === 'default') return <IntegrationSearchEmptyState query={query} />;
-
-  return (
-    <div className="text-text-soft text-paragraph-sm flex min-h-[200px] items-center justify-center text-center">
-      No integrations match your filters.
     </div>
   );
 }

@@ -1,8 +1,8 @@
 import { CredentialsKeyEnum } from '@novu/shared';
 
-export type ResendCredentialField = CredentialsKeyEnum.ApiKey | CredentialsKeyEnum.From | CredentialsKeyEnum.SenderName;
+type ResendCredentialField = CredentialsKeyEnum.ApiKey | CredentialsKeyEnum.From | CredentialsKeyEnum.SenderName;
 
-export type ParsedResendCredentials = Partial<Record<ResendCredentialField, string>>;
+type ParsedResendCredentials = Partial<Record<ResendCredentialField, string>>;
 
 /** Resend API keys start with `re_`. */
 const API_KEY_PATTERN = /\bre_[A-Za-z0-9_-]{8,}/;

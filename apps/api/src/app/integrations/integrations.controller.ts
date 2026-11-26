@@ -1333,7 +1333,7 @@ function presentDecrypted<T extends PresentableIntegration>(view: CredentialsVie
   if (view === 'masked') return withDecryptedSecretsMasked(integration);
   if (view === 'full') return integration;
 
-  return withoutConfigurationSecrets(integration);
+  return GetDecryptedIntegrations.withoutConfigurationSecrets(integration);
 }
 
 /** An integration as the repository returns it, with its credentials still encrypted, as the caller sees it. */
@@ -1343,12 +1343,7 @@ function presentStored(view: CredentialsView, integration: IntegrationEntity): I
 
   const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
 
-  return withoutConfigurationSecrets(integrationWithoutCredentials as IntegrationResponseDto);
-}
-
-/** What a caller that may not see credentials gets back: settings without the inbound webhook signing key. */
-function withoutConfigurationSecrets<T extends { configurations?: object }>(integration: T): T {
-  return GetDecryptedIntegrations.withoutConfigurationSecrets(integration);
+  return GetDecryptedIntegrations.withoutConfigurationSecrets(integrationWithoutCredentials as IntegrationResponseDto);
 }
 
 /** Settings as a dashboard member with access to credentials gets them back: the signing key as a mask. */
@@ -1367,9 +1362,7 @@ function withMaskedConfigurations<T extends { configurations?: object }>(integra
  * For an integration whose credentials are already decrypted (the list usecases, auto-configure). Decrypting
  * twice would treat a secret that happens to start with the encryption prefix as encrypted, and throw.
  */
-function withDecryptedSecretsMasked<T extends { providerId: string; credentials?: object; configurations?: object }>(
-  integration: T
-): T {
+function withDecryptedSecretsMasked<T extends PresentableIntegration>(integration: T): T {
   return withMaskedConfigurations({
     ...integration,
     credentials: maskSecretCredentials(integration.providerId, integration.credentials ?? {}),
@@ -1377,9 +1370,7 @@ function withDecryptedSecretsMasked<T extends { providerId: string; credentials?
 }
 
 /** The same for an integration as the repository returns it, with its credentials still encrypted. */
-function withStoredSecretsMasked<T extends { providerId: string; credentials?: object; configurations?: object }>(
-  integration: T
-): T {
+function withStoredSecretsMasked<T extends PresentableIntegration>(integration: T): T {
   return withDecryptedSecretsMasked({
     ...integration,
     credentials: decryptCredentials(integration.credentials ?? {}),

@@ -11,7 +11,7 @@ const COMPACT_BUTTON = 'h-7 shrink-0 rounded-md px-2 text-[13px] leading-[1.1]';
  */
 const CENTER_ON_DRAWER = 'ml-[calc((100vw_-_min(100vw,900px))/2)]';
 
-export type DrawerConfirmDialogProps = {
+type DrawerConfirmDialogProps = {
   isOpen: boolean;
   /** The icon inside the 36px tile. */
   icon: ReactNode;

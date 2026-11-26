@@ -18,7 +18,8 @@ import { IVerifyCredentialsResponse, VerifyCredentialsStatusEnum } from '@novu/s
 import axios from 'axios';
 import { TestIntegrationConnectionCommand } from './test-integration-connection.command';
 
-type HandlerChannel = 'email' | 'sms' | 'chat' | 'push' | 'tool';
+/** The channels `ChannelFactory` has handlers for. */
+type HandlerChannel = Parameters<ChannelFactory['getHandler']>[1];
 
 const HANDLER_CHANNELS: ReadonlySet<string> = new Set<HandlerChannel>(['email', 'sms', 'chat', 'push', 'tool']);
 
