@@ -378,7 +378,7 @@ describe('buildAssistantBlocks (choices)', () => {
       parts: [{ type: 'text', text: 'Which one?\n```choices\nEmail\nSM', state: 'streaming' }],
     };
 
-    expect(buildAssistantBlocks(message).map(({ kind, streaming }) => ({ kind, streaming }))).toEqual([
+    expect(buildAssistantBlocks(message)).toMatchObject([
       { kind: 'text', streaming: false },
       { kind: 'choices', streaming: true },
     ]);
