@@ -28,7 +28,7 @@ import { handleIntegrationError } from './utils/handle-integration-error';
 import {
   ACTIVITY_TRACKING_ENABLER,
   cleanCredentials,
-  hasGuidedActivityTracking,
+  tracksDeliveryAfterCreate,
   usesProviderSetupLayout,
 } from './utils/helpers';
 
@@ -305,7 +305,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
         await setPrimaryIntegration({ integrationId: integration.data._id });
       }
 
-      if (usesSetupLayout && hasGuidedActivityTracking(provider.id) && isTrackingAvailable && isTrackingOn(data)) {
+      if (usesSetupLayout && tracksDeliveryAfterCreate(provider.id) && isTrackingAvailable && isTrackingOn(data)) {
         const isWebhookAdded = await addDeliveryWebhook(integration.data._id, data.environmentId);
         setIsSheetOpen(false);
 
@@ -336,7 +336,8 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
   /** Has Novu add the delivery webhook in the provider with the saved API key. False when it couldn't. */
   async function addDeliveryWebhook(integrationId: string, environmentId: string) {
     const environment = environments?.find((env) => env._id === environmentId);
-    if (!environment) return false;
+    // SES tracking is wired by hand in AWS (a configuration set and an SNS topic), so there is nothing to add.
+    if (!environment || provider?.id === EmailProviderIdEnum.SES) return false;
 
     setIsAddingWebhook(true);
     try {

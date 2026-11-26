@@ -161,6 +161,7 @@ const TELEGRAM_CONNECT_DOCS_URL =
 function getSetupDuration(providerId: string, mode: ProviderSetupMode) {
   if (providerId === ChatProviderIdEnum.Telegram) return '~1 min';
   if (providerId === PushProviderIdEnum.APNS) return '~3 min';
+  if (providerId === EmailProviderIdEnum.SES) return '~4 min';
   if (isGuidedSetupProvider(providerId)) return '~2 min';
   if (providerId === ChatProviderIdEnum.MsTeams) return mode === 'quick' ? '~4 min' : '~15 min';
   if (mode === 'quick') return '~2 min';

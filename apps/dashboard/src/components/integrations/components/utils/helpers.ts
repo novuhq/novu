@@ -121,6 +121,7 @@ export const ACTIVITY_TRACKING_ENABLER = 'inboundWebhookEnabled';
 const GUIDED_SETUP_PROVIDERS = [
   EmailProviderIdEnum.Resend,
   EmailProviderIdEnum.SendGrid,
+  EmailProviderIdEnum.SES,
   SmsProviderIdEnum.Twilio,
   PushProviderIdEnum.FCM,
   PushProviderIdEnum.APNS,
@@ -137,6 +138,14 @@ export function isGuidedSetupProvider(providerId?: string): providerId is Guided
  */
 export function hasGuidedActivityTracking(providerId?: string) {
   return providerId === EmailProviderIdEnum.Resend || providerId === EmailProviderIdEnum.SendGrid;
+}
+
+/**
+ * Guided email providers whose tracking is finished right after create: Novu adds the delivery webhook, or opens
+ * the integration with the webhook URL to add by hand (always the case for SES).
+ */
+export function tracksDeliveryAfterCreate(providerId?: string) {
+  return hasGuidedActivityTracking(providerId) || providerId === EmailProviderIdEnum.SES;
 }
 
 /** Providers whose create flow uses the setup layout: Quick setup / Manual, Advanced settings and the new footer. */
