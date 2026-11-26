@@ -468,10 +468,11 @@ export class SubscribersController {
   @ExcludeFromIdempotency()
   @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
   @ApiOperation({
-    summary: 'Create a subscriber login token',
+    summary: 'Create a subscriber token',
     description: `Create a short-lived, Novu-signed login token for the subscriber identified by **subscriberId**.
     Call it from your backend with your secret key, then pass the token to the browser, which exchanges it for an Inbox session.
-    Creating a token does not read or change the subscriber, so the subscriber does not need to exist yet.`,
+    Creating a token does not read or change the subscriber, so the subscriber does not need to exist yet.
+    Set **topic** to create a topic grant instead: a token of at most 60 seconds that lets the subscriber's Inbox session subscribe to that topic.`,
   })
   @ApiParam({ name: 'subscriberId', description: 'The identifier of the subscriber', type: String })
   @ApiResponse(CreateSubscriberTokenResponseDto, 201)
