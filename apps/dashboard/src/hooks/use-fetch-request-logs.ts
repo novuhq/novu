@@ -17,7 +17,7 @@ export function useFetchRequestLogs(
 ) {
   const { currentEnvironment } = useEnvironment();
   const { organization } = useOrganization();
-  const { subscription } = useFetchSubscription();
+  const { subscription, isLoading: isLoadingSubscription } = useFetchSubscription();
   const { enabled = true, status, ...queryParams } = params;
 
   // Convert status array to statusCode parameter for API
@@ -39,7 +39,8 @@ export function useFetchRequestLogs(
         createdGte: toRequestLogsCreatedGte({ createdGte: apiParams.createdGte, subscription, organization }),
       });
     },
-    enabled: !!currentEnvironment && enabled,
+    // Until the plan is known, a createdGte past its retention window would be sent as is and get a 402.
+    enabled: !!currentEnvironment && enabled && !isLoadingSubscription,
     refetchOnWindowFocus: false,
     ...options,
   });

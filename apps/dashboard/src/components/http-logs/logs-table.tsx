@@ -53,7 +53,7 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
 
   const {
     data: logsResponse,
-    isLoading,
+    isPending,
     refetch,
   } = useFetchRequestLogs({
     page: currentPage - 1,
@@ -113,7 +113,7 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
     setLastUpdated(new Date());
   };
 
-  if (!isLoading && logsData.length === 0 && !hasActiveFilters) {
+  if (!isPending && logsData.length === 0 && !hasActiveFilters) {
     return <RequestLogsEmptyState />;
   }
 
@@ -135,7 +135,7 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
           <ResizablePanel defaultSize="50%" minSize="50%" id="logs-table-panel">
             <div className="flex h-full flex-col overflow-hidden">
               <div className="flex-1 overflow-auto">
-                <Table isLoading={isLoading} loadingRow={<LogsTableSkeletonRow />} loadingRowsCount={8}>
+                <Table isLoading={isPending} loadingRow={<LogsTableSkeletonRow />} loadingRowsCount={8}>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-text-strong h-8 px-2 py-0">Requests</TableHead>
@@ -178,7 +178,7 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
                 </Table>
               </div>
 
-              {!isLoading && logsData.length === 0 && hasActiveFilters && (
+              {!isPending && logsData.length === 0 && hasActiveFilters && (
                 <div className="flex flex-1 items-center justify-center">
                   <div className="text-center">
                     <p className="text-foreground-600 mb-2">No requests found matching your filters</p>
