@@ -2,13 +2,11 @@ import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { ContentIssueEnum, EnvironmentTypeEnum, type StepUpdateDto } from '@novu/shared';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
-import { formatQuery, generateID, RQBJsonLogic, RuleGroupType, RuleType } from 'react-querybuilder';
+import { formatQuery, generateID, RQBJsonLogic, RuleGroupType } from 'react-querybuilder';
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
-import { z } from 'zod';
 
-import { getArrayItemConditionIssue, isArrayItemOperator } from '@/components/conditions-editor/array-item-condition';
 import { ConditionsEditor } from '@/components/conditions-editor/conditions-editor';
-import { isRelativeDateOperator, isValuelessOperator } from '@/components/conditions-editor/field-type-operators';
+import { getConditionsSchema } from '@/components/conditions-editor/conditions-schema';
 import { Form, FormField } from '@/components/primitives/form/form';
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import { updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
@@ -33,44 +31,6 @@ const PAYLOAD_FIELD_PREFIX = 'payload.';
 const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
 const CONTEXT_FIELD_PREFIX = 'context.';
 
-const RELATIVE_DATE_UNITS = ['minutes', 'hours', 'days', 'weeks', 'months', 'years'];
-
-function getRelativeDateValueIssue(value: string): string | null {
-  try {
-    const parsed = JSON.parse(value);
-
-    if (!parsed || (!parsed.amount && parsed.amount !== 0) || !RELATIVE_DATE_UNITS.includes(parsed.unit)) {
-      return 'Invalid amount or time unit';
-    }
-
-    return null;
-  } catch {
-    return 'Invalid relative date format';
-  }
-}
-
-function getRuleValueIssue(operator: string, value: string | null): string | null {
-  if (operator === 'between' || operator === 'notBetween') {
-    const values = value?.split(',').filter((val) => val.trim() !== '');
-
-    return !values || values.length !== 2 ? 'Both values are required' : null;
-  }
-
-  if (isRelativeDateOperator(operator)) {
-    return value ? getRelativeDateValueIssue(value) : 'Amount and unit are required';
-  }
-
-  if (isArrayItemOperator(operator)) {
-    return getArrayItemConditionIssue(value);
-  }
-
-  if (!isValuelessOperator(operator) && !value?.trim()) {
-    return 'Value is required';
-  }
-
-  return null;
-}
-
 function hasFieldSuffix(field: string, prefix: string): boolean {
   return field.startsWith(prefix) && field.length > prefix.length;
 }
@@ -89,58 +49,6 @@ function isRuleFieldAllowed(
   // Example: 'context.<anything>.id' or 'context.<anything>.data' are valid, but 'context.<anything>.invalid' is not
   return hasFieldSuffix(field, CONTEXT_FIELD_PREFIX) && isAllowedVariableFn({ name: field });
 }
-
-const getRuleSchema = (
-  fields: Array<{ value: string }>,
-  isAllowedVariableFn: (variable: { name: string }) => boolean
-): z.ZodType<RuleType | RuleGroupType> => {
-  const allowedFields = fields.map((field) => field.value);
-
-  return z.union([
-    z
-      .looseObject({
-        field: z.string().min(1),
-        operator: z.string(),
-        value: z.string().nullable(),
-      })
-      .superRefine(({ field, operator, value }, ctx) => {
-        const valueIssue = getRuleValueIssue(operator, value);
-
-        if (valueIssue) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, message: valueIssue, path: ['value'] });
-
-          // A relative date rule without a value skips the field check, as before
-          if (isRelativeDateOperator(operator) && !value) return;
-        }
-
-        if (!isRuleFieldAllowed(field, allowedFields, isAllowedVariableFn)) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Value is not valid', path: ['field'] });
-        }
-      }),
-    z.looseObject({
-      combinator: z.string(),
-      rules: z.array(z.lazy(() => getRuleSchema(fields, isAllowedVariableFn))),
-    }),
-  ]);
-};
-
-type FormQuery = {
-  query: RuleGroupType;
-};
-
-const getConditionsSchema = (
-  fields: Array<{ value: string }>,
-  isAllowedVariableFn: (variable: { name: string }) => boolean
-) => {
-  return z.object({
-    query: z
-      .object({
-        combinator: z.string(),
-        rules: z.array(getRuleSchema(fields, isAllowedVariableFn)),
-      })
-      .passthrough(),
-  });
-};
 
 export const EditStepConditionsForm = () => {
   const track = useTelemetry();
@@ -198,7 +106,15 @@ export const EditStepConditionsForm = () => {
 
   const form = useForm({
     mode: 'onSubmit',
-    resolver: standardSchemaResolver(getConditionsSchema(fields, isAllowedVariable)),
+    resolver: standardSchemaResolver(
+      getConditionsSchema((field) =>
+        isRuleFieldAllowed(
+          field,
+          fields.map(({ value }) => value),
+          isAllowedVariable
+        )
+      )
+    ),
     defaultValues: {
       query: { ...query },
     },
