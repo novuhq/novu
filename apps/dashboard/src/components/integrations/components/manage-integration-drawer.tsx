@@ -36,7 +36,7 @@ import { SheetHeader, SheetTitle } from '@/components/primitives/sheet';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
 import type { DuplicateTarget } from './hooks/use-duplicate-integration';
-import type { IntegrationHealth } from './hooks/use-integration-health';
+import type { IntegrationVerification } from './hooks/use-integration-verification';
 import { ProviderIcon } from './provider-icon';
 import { CHANNEL_LABELS } from './utils/helpers';
 
@@ -46,13 +46,13 @@ const MENU_CLASS =
 const ITEM_CLASS =
   'text-text-sub focus:text-text-strong h-7 gap-2 rounded px-2 py-0 text-[13px] leading-[1.1] focus:bg-[#f4f4f5] [&>svg]:size-[15px]';
 
-const TONE_TEXT: Record<IntegrationHealth['tone'], string> = {
+const TONE_TEXT: Record<IntegrationVerification['tone'], string> = {
   success: 'text-success-base',
   error: 'text-error-base',
   warning: 'text-warning-base',
   neutral: 'text-text-soft',
 };
-const TONE_DOT: Record<IntegrationHealth['tone'], { halo: string; dot: string }> = {
+const TONE_DOT: Record<IntegrationVerification['tone'], { halo: string; dot: string }> = {
   success: { halo: 'bg-success/15', dot: 'bg-success' },
   error: { halo: 'bg-error-base/15', dot: 'bg-error-base' },
   warning: { halo: 'bg-warning/15', dot: 'bg-warning' },
@@ -77,7 +77,7 @@ function formatUtc(value?: string) {
   return `${month} ${date.getUTCDate()} ${date.getUTCFullYear()} ${time} UTC`;
 }
 
-export function HealthDot({ tone }: { tone: IntegrationHealth['tone'] }) {
+function VerificationDot({ tone }: { tone: IntegrationVerification['tone'] }) {
   const style = TONE_DOT[tone];
 
   return (
@@ -242,33 +242,39 @@ export function ManageIntegrationHeader({
 }
 
 /** Environment name on the left and the last "Verify integration" result on the right. */
-export function EnvironmentTitle({ environment, health }: { environment?: IEnvironment; health: IntegrationHealth }) {
+export function EnvironmentTitle({
+  environment,
+  verification,
+}: {
+  environment?: IEnvironment;
+  verification: IntegrationVerification;
+}) {
   return (
     <div className="flex items-center gap-2">
       <EnvironmentBranchIcon environment={environment} size="sm" />
       <h3 className="text-label-md text-text-strong flex-1 truncate">{environment?.name ?? 'Environment'}</h3>
-      <span className={cn('text-label-xs shrink-0', TONE_TEXT[health.tone])}>{health.label}</span>
+      <span className={cn('text-label-xs shrink-0', TONE_TEXT[verification.tone])}>{verification.label}</span>
     </div>
   );
 }
 
 /** Why the last "Verify integration" didn't pass, and what to do next. */
-export function HealthBanner({ health }: { health: IntegrationHealth }) {
-  if (health.tone !== 'error' && health.tone !== 'warning') return null;
+export function VerificationBanner({ verification }: { verification: IntegrationVerification }) {
+  if (verification.tone !== 'error' && verification.tone !== 'warning') return null;
 
   const nextStep =
-    health.tone === 'error'
+    verification.tone === 'error'
       ? 'Update the credentials, save, and verify again.'
       : 'Nothing was changed. Verify again in a few minutes.';
 
   return (
     <div className="bg-bg-weak border-stroke-weak flex items-stretch gap-3 rounded-lg border px-3 py-2.5">
       <span
-        className={cn('w-1 shrink-0 rounded-full', health.tone === 'error' ? 'bg-error-base' : 'bg-warning-base')}
+        className={cn('w-1 shrink-0 rounded-full', verification.tone === 'error' ? 'bg-error-base' : 'bg-warning-base')}
         aria-hidden="true"
       />
       <p className="text-label-xs text-text-strong">
-        {health.message ? `${health.message} ` : ''}
+        {verification.message ? `${verification.message} ` : ''}
         {nextStep}
       </p>
     </div>
@@ -311,7 +317,7 @@ export function IntegrationDetailsPanel({
   environments,
   currentEnvironmentId,
   matches,
-  healthById,
+  verificationById,
   isSwitchDisabled,
   onSelect,
 }: {
@@ -321,7 +327,7 @@ export function IntegrationDetailsPanel({
   currentEnvironmentId?: string;
   /** The integrations with this identifier, one per environment. */
   matches: IIntegration[];
-  healthById: Map<string, IntegrationHealth>;
+  verificationById: Map<string, IntegrationVerification>;
   /** While a save or delete runs, the rows can't switch to another integration. */
   isSwitchDisabled?: boolean;
   onSelect: (integration: IIntegration) => void;
@@ -334,7 +340,7 @@ export function IntegrationDetailsPanel({
   const renderRow = (item: IIntegration) => {
     const environment = environmentOf(item);
     const isSelected = item._id === integration._id;
-    const health = healthById.get(item._id);
+    const verification = verificationById.get(item._id);
 
     return (
       <button
@@ -356,7 +362,7 @@ export function IntegrationDetailsPanel({
           </span>
         )}
         <span className="ml-auto flex shrink-0 items-center gap-2">
-          {health && <HealthDot tone={health.tone} />}
+          {verification && <VerificationDot tone={verification.tone} />}
           <RiArrowRightSLine className="text-text-soft size-4" />
         </span>
       </button>
@@ -429,14 +435,14 @@ export function IntegrationDetailsPanel({
 
 /** Status on the left; Cancel and the save action on the right. */
 export function ManageIntegrationFooter({
-  health,
+  verification,
   formId,
   isSaving,
   canSave,
   isReadOnly,
   onCancel,
 }: {
-  health: IntegrationHealth;
+  verification: IntegrationVerification;
   formId: string;
   isSaving: boolean;
   canSave: boolean;
@@ -446,8 +452,8 @@ export function ManageIntegrationFooter({
   return (
     <div className="bg-bg-weak border-stroke-soft flex items-center gap-2 border-t px-5 py-3">
       <span className="flex min-w-0 flex-1 items-center gap-2">
-        <HealthDot tone={health.tone} />
-        <span className="text-label-xs text-text-sub truncate">{health.label}</span>
+        <VerificationDot tone={verification.tone} />
+        <span className="text-label-xs text-text-sub truncate">{verification.label}</span>
       </span>
       <Button
         type="button"

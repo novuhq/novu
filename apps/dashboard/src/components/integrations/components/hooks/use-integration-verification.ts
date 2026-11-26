@@ -9,8 +9,8 @@ import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { testIntegrationConnection } from '@/api/integrations';
 import { isDemoIntegration } from '../utils/helpers';
 
-/** How an integration is doing, from its last "Verify integration" result. */
-export type IntegrationHealth = {
+/** What an integration's last "Verify integration" check found, as the drawer shows it. */
+export type IntegrationVerification = {
   tone: 'success' | 'error' | 'warning' | 'neutral';
   /** Short status, e.g. "Connected" or "Verification failed". */
   label: string;
@@ -18,8 +18,8 @@ export type IntegrationHealth = {
   message?: string;
 };
 
-export function getIntegrationHealthQueryKey(integrationId: string) {
-  return ['integration-health', integrationId];
+export function getIntegrationVerificationQueryKey(integrationId: string) {
+  return ['integration-verification', integrationId];
 }
 
 /** Inbox has no provider credentials, and Novu owns the demo providers' credentials, so neither can be verified. */
@@ -27,11 +27,11 @@ export function canVerifyIntegration(integration: IIntegration) {
   return integration.channel !== ChannelTypeEnum.IN_APP && !isDemoIntegration(integration.providerId);
 }
 
-function toHealth(
+function toVerification(
   integration: IIntegration,
   result: ITestIntegrationConnectionResponse | undefined,
   isChecking: boolean
-): IntegrationHealth {
+): IntegrationVerification {
   if (!integration.active) return { tone: 'neutral', label: 'Paused' };
   if (isChecking) return { tone: 'neutral', label: 'Verifying…' };
 
@@ -51,16 +51,16 @@ function toHealth(
   }
 }
 
-const HEALTH_CACHE_TIME_MS = 10 * 60_000;
+const VERIFICATION_CACHE_TIME_MS = 10 * 60_000;
 /** The caller of `verify` shows its own error, so the app-wide query error toast stays out of it. */
-const HEALTH_QUERY_META = { showError: false };
+const VERIFICATION_QUERY_META = { showError: false };
 
 /**
- * Health per integration, from the last "Verify integration" check. Checks never run on their own: for some
+ * The last "Verify integration" result per integration. Checks never run on their own: for some
  * providers the check sends a real message (e.g. a test email), so it only runs when the user asks with
  * `verify`. A result is kept for a while, so reopening the drawer still shows it.
  */
-export function useIntegrationHealth(integrations: IIntegration[], environments: IEnvironment[] | undefined) {
+export function useIntegrationVerification(integrations: IIntegration[], environments: IEnvironment[] | undefined) {
   const queryClient = useQueryClient();
 
   const runCheck = (integration: IIntegration) => {
@@ -72,34 +72,34 @@ export function useIntegrationHealth(integrations: IIntegration[], environments:
 
   const queries = useQueries({
     queries: integrations.map((integration) => ({
-      queryKey: getIntegrationHealthQueryKey(integration._id),
+      queryKey: getIntegrationVerificationQueryKey(integration._id),
       queryFn: () => runCheck(integration),
       // Read the cache only; `verify` is the one way a check starts.
       enabled: false,
-      gcTime: HEALTH_CACHE_TIME_MS,
+      gcTime: VERIFICATION_CACHE_TIME_MS,
       retry: false,
-      meta: HEALTH_QUERY_META,
+      meta: VERIFICATION_QUERY_META,
     })),
   });
 
-  const healthById = new Map(
+  const verificationById = new Map(
     integrations.map((integration, index) => {
       const query = queries[index];
 
-      return [integration._id, toHealth(integration, query?.data, !!query?.isFetching)];
+      return [integration._id, toVerification(integration, query?.data, !!query?.isFetching)];
     })
   );
 
   const verify = async (integration: IIntegration) => {
     return queryClient.fetchQuery({
-      queryKey: getIntegrationHealthQueryKey(integration._id),
+      queryKey: getIntegrationVerificationQueryKey(integration._id),
       queryFn: () => runCheck(integration),
       staleTime: 0,
-      gcTime: HEALTH_CACHE_TIME_MS,
+      gcTime: VERIFICATION_CACHE_TIME_MS,
       retry: false,
-      meta: HEALTH_QUERY_META,
+      meta: VERIFICATION_QUERY_META,
     });
   };
 
-  return { healthById, verify };
+  return { verificationById, verify };
 }

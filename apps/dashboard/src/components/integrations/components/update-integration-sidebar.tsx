@@ -24,23 +24,23 @@ import { useDeleteIntegration } from '../../../hooks/use-delete-integration';
 import { ROUTES } from '../../../utils/routes';
 import { IntegrationFormData } from '../types';
 import { getDuplicateTargets, shouldCopySecrets, useDuplicateIntegration } from './hooks/use-duplicate-integration';
+import { useIntegrationPrimaryModal } from './hooks/use-integration-primary-modal';
 import {
   canVerifyIntegration,
-  getIntegrationHealthQueryKey,
-  useIntegrationHealth,
-} from './hooks/use-integration-health';
-import { useIntegrationPrimaryModal } from './hooks/use-integration-primary-modal';
+  getIntegrationVerificationQueryKey,
+  useIntegrationVerification,
+} from './hooks/use-integration-verification';
 import { useMakePrimary } from './hooks/use-make-primary';
 import { showIntegrationDeletedToast } from './integration-deleted-toast';
 import { IntegrationSettings } from './integration-settings';
 import { IntegrationSheet } from './integration-sheet';
 import {
   EnvironmentTitle,
-  HealthBanner,
   IntegrationDetailsPanel,
   ManageIntegrationFooter,
   ManageIntegrationHeader,
   ProviderGuideLink,
+  VerificationBanner,
 } from './manage-integration-drawer';
 import { DeleteIntegrationModal } from './modals/delete-integration-modal';
 import { DiscardChangesModal } from './modals/discard-changes-modal';
@@ -130,7 +130,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
         : [],
     [integrations, integration]
   );
-  const { healthById, verify } = useIntegrationHealth(matches, environments);
+  const { verificationById, verify } = useIntegrationVerification(matches, environments);
   const environment = environments?.find((env) => env._id === integration?._environmentId);
   const { mutate: duplicate, isPending: isDuplicating } = useDuplicateIntegration({
     integration,
@@ -181,7 +181,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
 
       showSuccessToast('Integration updated successfully');
       // The last check was about the old settings, so it no longer applies.
-      queryClient.removeQueries({ queryKey: getIntegrationHealthQueryKey(integration._id) });
+      queryClient.removeQueries({ queryKey: getIntegrationVerificationQueryKey(integration._id) });
 
       setIsSheetOpen(false);
       navigate(ROUTES.INTEGRATIONS);
@@ -307,7 +307,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
   const isIntegrationDeletionAllowed =
     !isDemoIntegration(integration?.providerId) && integration?.channel !== ChannelTypeEnum.IN_APP && !isReadOnly;
 
-  const health = healthById.get(integration._id) ?? { tone: 'neutral' as const, label: '' };
+  const verification = verificationById.get(integration._id) ?? { tone: 'neutral' as const, label: '' };
   const formId = `integration-configuration-form-${provider.id}`;
   const onMakePrimary = canMakePrimary(integration, isReadOnly, isChannelSupportPrimary) ? makePrimary.open : undefined;
 
@@ -368,13 +368,13 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
             environments={environments ?? []}
             currentEnvironmentId={currentEnvironment?._id}
             matches={matches}
-            healthById={healthById}
+            verificationById={verificationById}
             isSwitchDisabled={isWriting}
             onSelect={handleSelectEnvironment}
           />
           <div className="scrollbar-custom flex min-w-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
-            <EnvironmentTitle environment={environment} health={health} />
-            <HealthBanner health={health} />
+            <EnvironmentTitle environment={environment} verification={verification} />
+            <VerificationBanner verification={verification} />
             <IntegrationSettings
               // Switching environments shows another integration, so the form starts again from its values.
               key={integration._id}
@@ -395,7 +395,7 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
         </div>
 
         <ManageIntegrationFooter
-          health={health}
+          verification={verification}
           formId={formId}
           isSaving={isUpdating || isSettingPrimary}
           canSave={formState.isValid}
