@@ -116,12 +116,21 @@ export const GITHUB_NEW_ISSUE_URL = 'https://github.com/novuhq/novu/issues/new/c
 /** The switch that turns on an email provider's activity tracking; Novu adds the webhook once the integration exists. */
 export const ACTIVITY_TRACKING_ENABLER = 'inboundWebhookEnabled';
 
-/** Email providers set up with the API key / credentials / activity tracking guide. */
-const EMAIL_SETUP_PROVIDERS = [EmailProviderIdEnum.Resend, EmailProviderIdEnum.SendGrid] as const;
-export type EmailSetupProviderId = (typeof EMAIL_SETUP_PROVIDERS)[number];
+/** Providers set up with the guided credentials steps: where to get them, the form, and tracking where it applies. */
+const GUIDED_SETUP_PROVIDERS = [
+  EmailProviderIdEnum.Resend,
+  EmailProviderIdEnum.SendGrid,
+  SmsProviderIdEnum.Twilio,
+] as const;
+export type GuidedSetupProviderId = (typeof GUIDED_SETUP_PROVIDERS)[number];
 
-export function isEmailSetupProvider(providerId?: string): providerId is EmailSetupProviderId {
-  return EMAIL_SETUP_PROVIDERS.some((id) => id === providerId);
+export function isGuidedSetupProvider(providerId?: string): providerId is GuidedSetupProviderId {
+  return GUIDED_SETUP_PROVIDERS.some((id) => id === providerId);
+}
+
+/** Guided providers whose setup has the activity tracking step: Novu adds or offers their delivery webhook. */
+export function hasGuidedActivityTracking(providerId?: string) {
+  return providerId === EmailProviderIdEnum.Resend || providerId === EmailProviderIdEnum.SendGrid;
 }
 
 /** Providers whose create flow uses the setup layout: Quick setup / Manual, Advanced settings and the new footer. */
@@ -131,7 +140,7 @@ export function usesProviderSetupLayout(providerId?: string) {
     providerId === ChatProviderIdEnum.Telegram ||
     providerId === ChatProviderIdEnum.MsTeams ||
     providerId === ChatProviderIdEnum.WhatsAppBusiness ||
-    isEmailSetupProvider(providerId)
+    isGuidedSetupProvider(providerId)
   );
 }
 
