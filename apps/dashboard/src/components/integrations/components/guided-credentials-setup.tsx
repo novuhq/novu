@@ -1,4 +1,10 @@
-import { CredentialsKeyEnum, EmailProviderIdEnum, type IConfigCredential, type IProviderConfig } from '@novu/shared';
+import {
+  CredentialsKeyEnum,
+  EmailProviderIdEnum,
+  type IConfigCredential,
+  type IProviderConfig,
+  SmsProviderIdEnum,
+} from '@novu/shared';
 import { type ClipboardEvent, useId, useState } from 'react';
 import type { Control, UseFormSetValue } from 'react-hook-form';
 import { RiInformationFill } from 'react-icons/ri';
@@ -13,22 +19,30 @@ import {
   type ResendCredentialField,
 } from './parse-resend-credentials';
 import { SegmentedControl } from './provider-setup-layout';
-import { ACTIVITY_TRACKING_ENABLER, configurationToCredential, type EmailSetupProviderId } from './utils/helpers';
+import { ACTIVITY_TRACKING_ENABLER, configurationToCredential, type GuidedSetupProviderId } from './utils/helpers';
 
 const SIGNING_KEY = 'inboundWebhookSigningKey';
+/** Stands in for a choice without a value; radio items need one. */
+const NO_VALUE = '__none__';
 
-type EmailSetupGuide = {
-  /** Where the user creates the API key. */
-  apiKeysUrl: string;
-  /** The access the key needs, in the provider's own words. */
-  keyAccess: string;
+type CredentialsGuide = {
+  /** Step 1: where the user gets the credentials for Novu. */
+  sourceStep: {
+    title: string;
+    /** Takes the environment's name, which the key is named after. */
+    description: (keyName: string) => string;
+    buttonLabel: string;
+    url: string;
+  };
   credentialsDescription: string;
-  trackingDescription: string;
-  trackingSwitchDescription: string;
+  /** Step 3, for providers whose delivery webhook Novu can track. */
+  tracking?: { description: string; switchDescription: string };
   /** The credential fields in the order the guide shows them; the rest follow. */
   fieldOrder?: CredentialsKeyEnum[];
   /** Placeholders and descriptions that fit this guide better than the generic ones. */
   fieldOverrides?: Partial<Record<string, Partial<IConfigCredential>>>;
+  /** Short lists of choices shown as a segmented control instead of a dropdown. */
+  segmentedFields?: CredentialsKeyEnum[];
   /** Fills in the fields from a pasted block of environment variables. */
   readsPastedEnv?: boolean;
 };
@@ -38,24 +52,36 @@ const SENDER_OVERRIDES: Partial<Record<string, Partial<IConfigCredential>>> = {
   [CredentialsKeyEnum.SenderName]: { placeholder: 'Acme', description: undefined },
 };
 
-const GUIDES: Record<EmailSetupProviderId, EmailSetupGuide> = {
+function dedicatedApiKeyStep(providerName: string, keyAccess: string, url: string): CredentialsGuide['sourceStep'] {
+  return {
+    title: 'Create a dedicated API key for Novu',
+    description: (keyName) =>
+      `Name it “${keyName}” and give it ${keyAccess} access only. A separate key can be rotated or revoked without touching your app.`,
+    buttonLabel: `Open ${providerName} API keys`,
+    url,
+  };
+}
+
+const GUIDES: Record<GuidedSetupProviderId, CredentialsGuide> = {
   [EmailProviderIdEnum.Resend]: {
-    apiKeysUrl: 'https://resend.com/api-keys',
-    keyAccess: 'Sending',
+    sourceStep: dedicatedApiKeyStep('Resend', 'Sending', 'https://resend.com/api-keys'),
     credentialsDescription: 'The From address must use a domain you’ve verified in Resend.',
-    trackingDescription:
-      'After you connect, Novu gives you a webhook URL to add in Resend. Delivered, opened, clicked and bounced then show in the Activity Feed.',
-    trackingSwitchDescription: 'Shows delivery events sent by the provider’s webhook.',
+    tracking: {
+      description:
+        'After you connect, Novu gives you a webhook URL to add in Resend. Delivered, opened, clicked and bounced then show in the Activity Feed.',
+      switchDescription: 'Shows delivery events sent by the provider’s webhook.',
+    },
     fieldOverrides: SENDER_OVERRIDES,
     readsPastedEnv: true,
   },
   [EmailProviderIdEnum.SendGrid]: {
-    apiKeysUrl: 'https://app.sendgrid.com/settings/api_keys',
-    keyAccess: 'Mail Send',
+    sourceStep: dedicatedApiKeyStep('SendGrid', 'Mail Send', 'https://app.sendgrid.com/settings/api_keys'),
     credentialsDescription: 'Use EU only if your SendGrid account is on the EU region.',
-    trackingDescription:
-      'After you connect, Novu adds the delivery webhook in SendGrid with your API key. Delivered, opened, clicked and bounced then show in the Activity Feed. If the key can’t, you get a URL to paste.',
-    trackingSwitchDescription: 'Novu sets up the provider’s delivery webhook for you.',
+    tracking: {
+      description:
+        'After you connect, Novu adds the delivery webhook in SendGrid with your API key. Delivered, opened, clicked and bounced then show in the Activity Feed. If the key can’t, you get a URL to paste.',
+      switchDescription: 'Novu sets up the provider’s delivery webhook for you.',
+    },
     fieldOrder: [
       CredentialsKeyEnum.ApiKey,
       CredentialsKeyEnum.From,
@@ -67,6 +93,24 @@ const GUIDES: Record<EmailSetupProviderId, EmailSetupGuide> = {
       ...SENDER_OVERRIDES,
       [CredentialsKeyEnum.IpPoolName]: { placeholder: 'transactional' },
     },
+    segmentedFields: [CredentialsKeyEnum.Region],
+  },
+  [SmsProviderIdEnum.Twilio]: {
+    sourceStep: {
+      title: 'Copy your credentials from Twilio',
+      description: (keyName) =>
+        `Create an API key named “${keyName}” in the Twilio Console instead of reusing your Auth token. Use an SMS-capable number as From.`,
+      buttonLabel: 'Open Twilio Console',
+      url: 'https://console.twilio.com/us1/account/keys-credentials/api-keys',
+    },
+    credentialsDescription: 'Choose API key as the method, then paste the API key SID and secret you created for Novu.',
+    fieldOverrides: {
+      [CredentialsKeyEnum.AccountSid]: { placeholder: 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' },
+      [CredentialsKeyEnum.AuthMethod]: { description: undefined },
+      // The region keeps its hint: EU accounts need credentials created in that region.
+      [CredentialsKeyEnum.From]: { placeholder: '+1 415 555 0132' },
+    },
+    segmentedFields: [CredentialsKeyEnum.AuthMethod],
   },
 };
 
@@ -95,8 +139,8 @@ function orderCredentials(credentials: IConfigCredential[], order?: CredentialsK
   return [...credentials].sort((a, b) => rank(a.key) - rank(b.key));
 }
 
-type EmailProviderSetupProps = {
-  providerId: EmailSetupProviderId;
+type GuidedCredentialsSetupProps = {
+  providerId: GuidedSetupProviderId;
   provider: IProviderConfig;
   credentials: IConfigCredential[];
   control: Control<IntegrationFormData>;
@@ -110,10 +154,10 @@ type EmailProviderSetupProps = {
 };
 
 /**
- * Setup for an email provider: create an API key just for Novu, enter it with the sender, and choose whether to
- * track delivery through the provider's webhook once the integration is created.
+ * Setup for a provider that connects with credentials: get them for Novu in the provider, enter them, and, where
+ * Novu can track delivery, choose whether to through the provider's webhook once the integration is created.
  */
-export function EmailProviderSetup({
+export function GuidedCredentialsSetup({
   providerId,
   provider,
   credentials,
@@ -123,7 +167,7 @@ export function EmailProviderSetup({
   isTrackingAvailable,
   isTrackingEnabled,
   isReadOnly,
-}: EmailProviderSetupProps) {
+}: GuidedCredentialsSetupProps) {
   const guide = GUIDES[providerId];
   const [foundFields, setFoundFields] = useState<ResendCredentialField[]>([]);
 
@@ -149,9 +193,10 @@ export function EmailProviderSetup({
     setFoundFields(found);
   };
 
-  const trackingGroup = isTrackingAvailable
-    ? provider.configurations?.find((group) => group.groupType === 'inboundWebhook')
-    : undefined;
+  const trackingGroup =
+    guide.tracking && isTrackingAvailable
+      ? provider.configurations?.find((group) => group.groupType === 'inboundWebhook')
+      : undefined;
   const signingKeyConfig = trackingGroup?.configurations.find((config) => config.key === SIGNING_KEY);
 
   return (
@@ -159,9 +204,9 @@ export function EmailProviderSetup({
       <SetupStep
         index={1}
         status="current"
-        title="Create a dedicated API key for Novu"
-        description={`Name it “Novu – ${environmentName ?? 'Development'}” and give it ${guide.keyAccess} access only. A separate key can be rotated or revoked without touching your app.`}
-        extraContent={<SetupButton href={guide.apiKeysUrl}>Open {provider.displayName} API keys</SetupButton>}
+        title={guide.sourceStep.title}
+        description={guide.sourceStep.description(`Novu – ${environmentName ?? 'Development'}`)}
+        extraContent={<SetupButton href={guide.sourceStep.url}>{guide.sourceStep.buttonLabel}</SetupButton>}
       />
       <SetupStep
         index={2}
@@ -173,7 +218,7 @@ export function EmailProviderSetup({
             {orderCredentials(credentials, guide.fieldOrder).map((credential) => {
               const shown = { ...credential, ...guide.fieldOverrides?.[credential.key] };
 
-              return credential.type === 'dropdown' && credential.dropdown && credential.dropdown.length <= 3 ? (
+              return guide.segmentedFields?.includes(credential.key as CredentialsKeyEnum) ? (
                 <ChoiceField key={credential.key} credential={shown} control={control} isReadOnly={isReadOnly} />
               ) : (
                 <CredentialSection key={credential.key} credential={shown} control={control} isReadOnly={isReadOnly} />
@@ -188,15 +233,19 @@ export function EmailProviderSetup({
           </div>
         }
       />
-      {trackingGroup && (
+      {guide.tracking && trackingGroup && (
         <SetupStep
           index={3}
           status="current"
           title="Track delivery and opens (optional)"
-          description={guide.trackingDescription}
+          description={guide.tracking.description}
           extraContent={
             <div className="flex flex-col gap-4">
-              <TrackingToggle control={control} description={guide.trackingSwitchDescription} isReadOnly={isReadOnly} />
+              <TrackingToggle
+                control={control}
+                description={guide.tracking.switchDescription}
+                isReadOnly={isReadOnly}
+              />
               {isTrackingEnabled && signingKeyConfig && (
                 <CredentialSection
                   name="configurations"
@@ -216,7 +265,11 @@ export function EmailProviderSetup({
   );
 }
 
-/** A short list of choices, such as SendGrid's region, as a segmented control. Unset shows the default choice. */
+/**
+ * A short list of choices, such as SendGrid's region or Twilio's authentication method, as a segmented control.
+ * An option without a value (Twilio's Auth token) is stored as an empty string, as the dropdown stores it; unset
+ * shows the default choice.
+ */
 function ChoiceField({
   credential,
   control,
@@ -227,10 +280,11 @@ function ChoiceField({
   isReadOnly?: boolean;
 }) {
   const labelId = useId();
-  const options = (credential.dropdown ?? []).flatMap((option) =>
-    typeof option.value === 'string' ? [{ value: option.value, label: option.name }] : []
-  );
-  const fallback = typeof credential.value === 'string' ? credential.value : options[0]?.value;
+  const options = (credential.dropdown ?? []).map((option) => ({
+    value: typeof option.value === 'string' && option.value ? option.value : NO_VALUE,
+    label: option.name,
+  }));
+  const fallback = typeof credential.value === 'string' && credential.value ? credential.value : NO_VALUE;
 
   return (
     <FormField
@@ -240,12 +294,13 @@ function ChoiceField({
         <FormItem className="flex flex-col gap-1">
           <span id={labelId} className="text-label-xs text-text-sub">
             {credential.displayName}
+            {credential.required && <span className="text-primary-base"> *</span>}
           </span>
           <FormControl>
             <SegmentedControl
               aria-labelledby={labelId}
-              value={typeof field.value === 'string' && field.value ? field.value : (fallback ?? '')}
-              onValueChange={field.onChange}
+              value={typeof field.value === 'string' && field.value ? field.value : fallback}
+              onValueChange={(value) => field.onChange(value === NO_VALUE ? '' : value)}
               options={options}
               disabled={isReadOnly}
             />

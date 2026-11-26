@@ -28,7 +28,7 @@ import { handleIntegrationError } from './utils/handle-integration-error';
 import {
   ACTIVITY_TRACKING_ENABLER,
   cleanCredentials,
-  isEmailSetupProvider,
+  hasGuidedActivityTracking,
   usesProviderSetupLayout,
 } from './utils/helpers';
 
@@ -305,7 +305,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
         await setPrimaryIntegration({ integrationId: integration.data._id });
       }
 
-      if (usesSetupLayout && isEmailSetupProvider(provider.id) && isTrackingAvailable && isTrackingOn(data)) {
+      if (usesSetupLayout && hasGuidedActivityTracking(provider.id) && isTrackingAvailable && isTrackingOn(data)) {
         const isWebhookAdded = await addDeliveryWebhook(integration.data._id, data.environmentId);
         setIsSheetOpen(false);
 

@@ -29,7 +29,7 @@ import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown'
 import { IntegrationFormData } from '../types';
 import { isIntegrationFailing } from '../utils/integration-health';
 import { CredentialSection } from './credential-section';
-import { EmailProviderSetup } from './email-provider-setup';
+import { GuidedCredentialsSetup } from './guided-credentials-setup';
 import { IntegrationConditionsDrawer } from './integration-conditions-drawer';
 import { GeneralSettings } from './integration-general-settings';
 import { MsTeamsManualSetup } from './msteams-manual-setup';
@@ -55,8 +55,9 @@ import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-
 import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
 import {
   ACTIVITY_TRACKING_ENABLER,
+  hasGuidedActivityTracking,
   isDemoIntegration,
-  isEmailSetupProvider,
+  isGuidedSetupProvider,
   isSecureCredential,
   usesProviderSetupLayout,
 } from './utils/helpers';
@@ -145,7 +146,7 @@ const TELEGRAM_CONNECT_DOCS_URL =
 
 function getSetupDuration(providerId: string, mode: ProviderSetupMode) {
   if (providerId === ChatProviderIdEnum.Telegram) return '~1 min';
-  if (isEmailSetupProvider(providerId)) return '~2 min';
+  if (isGuidedSetupProvider(providerId)) return '~2 min';
   if (providerId === ChatProviderIdEnum.MsTeams) return mode === 'quick' ? '~4 min' : '~15 min';
   if (mode === 'quick') return '~2 min';
 
@@ -272,7 +273,7 @@ export function IntegrationSettings({
           // The email setup guides turn on activity tracking where it is available.
           // A string, as the form types it; the integration schema stores it as a boolean.
           configurations:
-            setupLayout && isEmailSetupProvider(provider?.id) && isTrackingAvailable
+            setupLayout && hasGuidedActivityTracking(provider?.id) && isTrackingAvailable
               ? { [ACTIVITY_TRACKING_ENABLER]: 'true' }
               : {},
           environmentId: currentEnvironment?._id ?? '',
@@ -351,7 +352,7 @@ export function IntegrationSettings({
 
   // The default values are read once, and the flags that make tracking available can load after that: turn the
   // switch on when they do, unless the user has already set it.
-  const shouldDefaultTrackingOn = mode === 'create' && !!setupLayout && isEmailSetupProvider(provider.id);
+  const shouldDefaultTrackingOn = mode === 'create' && !!setupLayout && hasGuidedActivityTracking(provider.id);
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs only when tracking becomes available
   useEffect(() => {
     if (!shouldDefaultTrackingOn || !isTrackingAvailable) return;
@@ -576,7 +577,7 @@ export function IntegrationSettings({
     const isTelegram = provider.id === ChatProviderIdEnum.Telegram;
     const isWhatsApp = provider.id === ChatProviderIdEnum.WhatsAppBusiness;
     const isMsTeams = provider.id === ChatProviderIdEnum.MsTeams;
-    const emailSetupProviderId = isEmailSetupProvider(provider.id) ? provider.id : undefined;
+    const guidedSetupProviderId = isGuidedSetupProvider(provider.id) ? provider.id : undefined;
 
     const generalSettings = (
       <GeneralSettings
@@ -587,7 +588,7 @@ export function IntegrationSettings({
         hidePrimarySelector={!isChannelSupportPrimary}
         disabledPrimary={!hasOtherProviders && integration?.primary}
         // Activity tracking is step 3 of the email setup guides, so it isn't repeated here.
-        configurations={emailSetupProviderId ? undefined : provider.configurations}
+        configurations={hasGuidedActivityTracking(provider.id) ? undefined : provider.configurations}
         integrationId={integration?._id}
         isDemo={isDemo}
         provider={provider}
@@ -630,7 +631,16 @@ export function IntegrationSettings({
             onModeChange={hasSetupModeSwitch ? setSetupMode : undefined}
             footer={
               <>
-                {emailSetupProviderId ? (
+                {guidedSetupProviderId && provider.channel === ChannelTypeEnum.SMS ? (
+                  <SetupTip>
+                    Novu texts each subscriber’s <code className="font-code">phone</code>. Set it when you create or
+                    identify subscribers.{' '}
+                    <a href={SUBSCRIBERS_DOCS_URL} target="_blank" rel="noopener noreferrer" className="underline">
+                      Read docs
+                    </a>
+                    .
+                  </SetupTip>
+                ) : guidedSetupProviderId ? (
                   <SetupTip>
                     Novu emails each subscriber’s <code className="font-code">email</code>. Set it when you create or
                     identify subscribers.{' '}
@@ -680,10 +690,10 @@ export function IntegrationSettings({
               </>
             }
           >
-            {emailSetupProviderId && (
+            {guidedSetupProviderId && (
               <Protect permission={PermissionsEnum.INTEGRATION_WRITE}>
-                <EmailProviderSetup
-                  providerId={emailSetupProviderId}
+                <GuidedCredentialsSetup
+                  providerId={guidedSetupProviderId}
                   provider={provider}
                   credentials={providerCredentials}
                   control={control}
