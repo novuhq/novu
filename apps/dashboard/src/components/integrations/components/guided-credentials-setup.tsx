@@ -3,6 +3,7 @@ import {
   EmailProviderIdEnum,
   type IConfigCredential,
   type IProviderConfig,
+  PushProviderIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
 import { type ClipboardEvent, useId, useState } from 'react';
@@ -18,7 +19,8 @@ import {
   parseResendCredentials,
   type ResendCredentialField,
 } from './parse-resend-credentials';
-import { SegmentedControl } from './provider-setup-layout';
+import { type ProviderSetupMode, SegmentedControl } from './provider-setup-layout';
+import { ServiceAccountPaste, ServiceAccountUpload } from './service-account-fields';
 import { ACTIVITY_TRACKING_ENABLER, configurationToCredential, type GuidedSetupProviderId } from './utils/helpers';
 
 const SIGNING_KEY = 'inboundWebhookSigningKey';
@@ -34,9 +36,17 @@ type CredentialsGuide = {
     buttonLabel: string;
     url: string;
   };
+  /** Step 2's title; "Enter your credentials" when left out. */
+  credentialsTitle?: string;
   credentialsDescription: string;
+  /** Quick setup's step 2, for providers whose credentials come as a file: upload it instead of pasting it. */
+  fileUpload?: { title: string; description: string };
   /** Step 3, for providers whose delivery webhook Novu can track. */
-  tracking?: { description: string; switchDescription: string };
+  tracking?: {
+    description: string;
+    switchLabel: string;
+    switchDescription: string;
+  };
   /** The credential fields in the order the guide shows them; the rest follow. */
   fieldOrder?: CredentialsKeyEnum[];
   /** Placeholders and descriptions that fit this guide better than the generic ones. */
@@ -69,6 +79,7 @@ const GUIDES: Record<GuidedSetupProviderId, CredentialsGuide> = {
     tracking: {
       description:
         'After you connect, Novu gives you a webhook URL to add in Resend. Delivered, opened, clicked and bounced then show in the Activity Feed.',
+      switchLabel: 'Email Activity Tracking',
       switchDescription: 'Shows delivery events sent by the provider’s webhook.',
     },
     fieldOverrides: SENDER_OVERRIDES,
@@ -80,6 +91,7 @@ const GUIDES: Record<GuidedSetupProviderId, CredentialsGuide> = {
     tracking: {
       description:
         'After you connect, Novu adds the delivery webhook in SendGrid with your API key. Delivered, opened, clicked and bounced then show in the Activity Feed. If the key can’t, you get a URL to paste.',
+      switchLabel: 'Email Activity Tracking',
       switchDescription: 'Novu sets up the provider’s delivery webhook for you.',
     },
     fieldOrder: [
@@ -111,6 +123,27 @@ const GUIDES: Record<GuidedSetupProviderId, CredentialsGuide> = {
       [CredentialsKeyEnum.From]: { placeholder: '+1 415 555 0132' },
     },
     segmentedFields: [CredentialsKeyEnum.AuthMethod],
+  },
+  [PushProviderIdEnum.FCM]: {
+    sourceStep: {
+      title: 'Generate a private key in Firebase',
+      description: () =>
+        'In Project settings, open Service accounts and click Generate new private key. A JSON file downloads.',
+      buttonLabel: 'Open Firebase console',
+      url: 'https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk',
+    },
+    credentialsTitle: 'Paste the service account JSON',
+    credentialsDescription: 'Paste the entire file, including the private key.',
+    fileUpload: {
+      title: 'Upload the JSON file',
+      description: 'Drop the file here. Novu reads the project from it.',
+    },
+    tracking: {
+      description:
+        'Every push carries __nvMessageId. After you connect, send delivered and opened events from your app with the Environment ID and Integration ID shown on the integration, and they show in the Activity Feed.',
+      switchLabel: 'Push Activity Tracking',
+      switchDescription: 'Receive push events to track delivery and opens.',
+    },
   },
 };
 
@@ -150,6 +183,8 @@ type GuidedCredentialsSetupProps = {
   /** False hides the tracking step. */
   isTrackingAvailable: boolean;
   isTrackingEnabled: boolean;
+  /** For providers with Quick setup / Manual: Quick setup takes a file where Manual takes the pasted text. */
+  setupMode?: ProviderSetupMode;
   isReadOnly?: boolean;
 };
 
@@ -166,6 +201,7 @@ export function GuidedCredentialsSetup({
   environmentName,
   isTrackingAvailable,
   isTrackingEnabled,
+  setupMode,
   isReadOnly,
 }: GuidedCredentialsSetupProps) {
   const guide = GUIDES[providerId];
@@ -208,31 +244,57 @@ export function GuidedCredentialsSetup({
         description={guide.sourceStep.description(`Novu – ${environmentName ?? 'Development'}`)}
         extraContent={<SetupButton href={guide.sourceStep.url}>{guide.sourceStep.buttonLabel}</SetupButton>}
       />
-      <SetupStep
-        index={2}
-        status="current"
-        title="Enter your credentials"
-        description={guide.credentialsDescription}
-        extraContent={
-          <div className="flex flex-col gap-3" onPasteCapture={handlePaste}>
-            {orderCredentials(credentials, guide.fieldOrder).map((credential) => {
-              const shown = { ...credential, ...guide.fieldOverrides?.[credential.key] };
+      {guide.fileUpload && setupMode === 'quick' ? (
+        <SetupStep
+          index={2}
+          status="current"
+          title={guide.fileUpload.title}
+          description={guide.fileUpload.description}
+          extraContent={<ServiceAccountUpload control={control} setValue={setValue} isReadOnly={isReadOnly} />}
+        />
+      ) : (
+        <SetupStep
+          index={2}
+          status="current"
+          title={guide.credentialsTitle ?? 'Enter your credentials'}
+          description={guide.credentialsDescription}
+          extraContent={
+            <div className="flex flex-col gap-3" onPasteCapture={handlePaste}>
+              {orderCredentials(credentials, guide.fieldOrder).map((credential) => {
+                const shown = { ...credential, ...guide.fieldOverrides?.[credential.key] };
 
-              return guide.segmentedFields?.includes(credential.key as CredentialsKeyEnum) ? (
-                <ChoiceField key={credential.key} credential={shown} control={control} isReadOnly={isReadOnly} />
-              ) : (
-                <CredentialSection key={credential.key} credential={shown} control={control} isReadOnly={isReadOnly} />
-              );
-            })}
-            {foundFields.length > 0 && (
-              <p className="text-paragraph-xs text-text-sub flex items-center gap-1" aria-live="polite">
-                <RiInformationFill className="text-text-soft size-4 shrink-0" />
-                Found {formatList(foundFields.map((key) => PASTED_FIELD_LABELS[key]))}
-              </p>
-            )}
-          </div>
-        }
-      />
+                if (guide.fileUpload && credential.key === CredentialsKeyEnum.ServiceAccount) {
+                  return (
+                    <ServiceAccountPaste
+                      key={credential.key}
+                      control={control}
+                      label={shown.displayName}
+                      isReadOnly={isReadOnly}
+                    />
+                  );
+                }
+
+                return guide.segmentedFields?.includes(credential.key as CredentialsKeyEnum) ? (
+                  <ChoiceField key={credential.key} credential={shown} control={control} isReadOnly={isReadOnly} />
+                ) : (
+                  <CredentialSection
+                    key={credential.key}
+                    credential={shown}
+                    control={control}
+                    isReadOnly={isReadOnly}
+                  />
+                );
+              })}
+              {foundFields.length > 0 && (
+                <p className="text-paragraph-xs text-text-sub flex items-center gap-1" aria-live="polite">
+                  <RiInformationFill className="text-text-soft size-4 shrink-0" />
+                  Found {formatList(foundFields.map((key) => PASTED_FIELD_LABELS[key]))}
+                </p>
+              )}
+            </div>
+          }
+        />
+      )}
       {guide.tracking && trackingGroup && (
         <SetupStep
           index={3}
@@ -243,6 +305,7 @@ export function GuidedCredentialsSetup({
             <div className="flex flex-col gap-4">
               <TrackingToggle
                 control={control}
+                label={guide.tracking.switchLabel}
                 description={guide.tracking.switchDescription}
                 isReadOnly={isReadOnly}
               />
@@ -313,10 +376,12 @@ function ChoiceField({
 
 function TrackingToggle({
   control,
+  label,
   description,
   isReadOnly,
 }: {
   control: Control<IntegrationFormData>;
+  label: string;
   description: string;
   isReadOnly?: boolean;
 }) {
@@ -329,7 +394,7 @@ function TrackingToggle({
       render={({ field }) => (
         <FormItem className="flex items-center gap-2 py-1">
           <label htmlFor={switchId} className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="text-label-sm text-text-strong">Email Activity Tracking</span>
+            <span className="text-label-sm text-text-strong">{label}</span>
             <span className="text-paragraph-xs text-text-sub">{description}</span>
           </label>
           <FormControl>

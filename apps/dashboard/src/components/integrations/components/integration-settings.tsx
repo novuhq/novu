@@ -7,6 +7,7 @@ import {
   IIntegration,
   IProviderConfig,
   PermissionsEnum,
+  PushProviderIdEnum,
   SmsProviderIdEnum,
   slackConfig,
   ToolProviderIdEnum,
@@ -138,6 +139,8 @@ type IntegrationConfigurationProps = {
 };
 
 const SUBSCRIBERS_DOCS_URL = 'https://docs.novu.co/platform/concepts/subscribers';
+/** How a subscriber's FCM device tokens are set, in the Firebase integration docs. */
+const PUSH_DEVICE_TOKENS_DOCS_URL = 'https://docs.novu.co/platform/integrations/push/fcm';
 const TEAMS_CONNECT_DOCS_URL = 'https://docs.novu.co/platform/integrations/chat/ms-teams-connect';
 const SLACK_CONNECT_DOCS_URL = 'https://docs.novu.co/platform/integrations/chat/slack';
 /** The TelegramConnectButton section of the Telegram integration docs: how subscribers link their chat. */
@@ -311,11 +314,17 @@ export function IntegrationSettings({
   const [selectedSetupMode, setSetupMode] = useState<ProviderSetupMode>('quick');
   // Only providers with a Quick setup have the two modes; the rest set up one way.
   const hasQuickSetup = !!slackQuickSetup || !!whatsAppQuickSetup || !!msTeamsQuickSetup;
+  // Firebase's two modes both run in the browser: Quick setup uploads the service account file, Manual pastes it.
+  const hasLocalSetupModes = usesSetupLayout && provider.id === PushProviderIdEnum.FCM;
   // A number connected by Embedded Signup runs on Novu's Meta app. Credentials typed in Manual would be saved
   // onto that same integration and still resolve to Novu's app, so the mode stays on Quick setup from then on.
   const isSetupModeLocked = !!whatsAppQuickSetup?.isConnected;
-  const hasSetupModeSwitch = hasQuickSetup && !isSetupModeLocked;
-  const setupMode = resolveSetupMode({ hasQuickSetup, isLocked: isSetupModeLocked, selected: selectedSetupMode });
+  const hasSetupModeSwitch = (hasQuickSetup || hasLocalSetupModes) && !isSetupModeLocked;
+  const setupMode = resolveSetupMode({
+    hasQuickSetup: hasQuickSetup || hasLocalSetupModes,
+    isLocked: isSetupModeLocked,
+    selected: selectedSetupMode,
+  });
   // Quick setup saves the credentials on the server, so the form is ready once that has happened.
   const isQuickSetupMode = usesSetupLayout && hasQuickSetup && setupMode === 'quick';
   const isQuickSetupDone = !!slackQuickSetup?.appId || !!whatsAppQuickSetup?.isConnected || !!msTeamsQuickSetup?.appId;
@@ -587,8 +596,12 @@ export function IntegrationSettings({
         isReadOnly={isReadOnly}
         hidePrimarySelector={!isChannelSupportPrimary}
         disabledPrimary={!hasOtherProviders && integration?.primary}
-        // Activity tracking is step 3 of the email setup guides, so it isn't repeated here.
-        configurations={hasGuidedActivityTracking(provider.id) ? undefined : provider.configurations}
+        // Activity tracking is step 3 of the guided setups, so it isn't repeated here; the rest stays.
+        configurations={
+          guidedSetupProviderId
+            ? provider.configurations?.filter((group) => group.groupType !== 'inboundWebhook')
+            : provider.configurations
+        }
         integrationId={integration?._id}
         isDemo={isDemo}
         provider={provider}
@@ -631,7 +644,21 @@ export function IntegrationSettings({
             onModeChange={hasSetupModeSwitch ? setSetupMode : undefined}
             footer={
               <>
-                {guidedSetupProviderId && provider.channel === ChannelTypeEnum.SMS ? (
+                {guidedSetupProviderId && provider.channel === ChannelTypeEnum.PUSH ? (
+                  <SetupTip>
+                    Register each subscriber’s FCM <code className="font-code">deviceTokens</code> from your app so Novu
+                    can reach their devices.{' '}
+                    <a
+                      href={PUSH_DEVICE_TOKENS_DOCS_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline"
+                    >
+                      Read docs
+                    </a>
+                    .
+                  </SetupTip>
+                ) : guidedSetupProviderId && provider.channel === ChannelTypeEnum.SMS ? (
                   <SetupTip>
                     Novu texts each subscriber’s <code className="font-code">phone</code>. Set it when you create or
                     identify subscribers.{' '}
@@ -701,6 +728,7 @@ export function IntegrationSettings({
                   environmentName={environments?.find((environment) => environment._id === environmentId)?.name}
                   isTrackingAvailable={isTrackingAvailable}
                   isTrackingEnabled={Boolean(trackingEnabled) && trackingEnabled !== 'false'}
+                  setupMode={setupMode}
                   isReadOnly={isReadOnly}
                 />
               </Protect>
