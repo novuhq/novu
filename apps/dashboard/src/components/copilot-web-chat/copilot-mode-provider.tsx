@@ -1,4 +1,4 @@
-import { AiResourceTypeEnum, EnvironmentTypeEnum, FeatureFlagsKeysEnum, ResourceOriginEnum } from '@novu/shared';
+import { AiResourceTypeEnum, CopilotPageEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { type ReactNode, useState } from 'react';
 import { IS_AI_FEATURES_ENABLED } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
@@ -11,6 +11,7 @@ import {
   type CopilotMode,
   type EditorCopilotMode,
   getCopilotSurface,
+  getEditorCopilotAccess,
   isPendingCopilotMode,
   isWebChatMode,
   resolveCopilotMode,
@@ -18,9 +19,12 @@ import {
 import { CopilotModeContext, useLiveCopilotMode } from './copilot-mode-context';
 import { CopilotPopoverMount } from './copilot-popover';
 import { CopilotWebChatProvider } from './copilot-web-chat-provider';
+import { useCopilotPageEnabled } from './use-copilot-pages';
 import { useCopilotPendingPrompt } from './use-copilot-pending-prompt';
 
 type VisitMode = { workflowKey: string; mode: CopilotMode };
+
+const NO_LEGACY_CHAT = { isPending: false, isError: false, hasPendingChanges: false };
 
 /**
  * Fixes the Copilot mode once per workflow visit: LaunchDarkly pushes flag changes into the page live, and swapping
@@ -36,26 +40,32 @@ function useVisitCopilotMode(workflowSlug: string | undefined, workflowKey: stri
     useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED) && IS_AI_FEATURES_ENABLED;
   const { currentEnvironment } = useEnvironment();
   const { workflow } = useFetchWorkflow({ workflowSlug });
+  const isWorkflowsPageEnabled = useCopilotPageEnabled(CopilotPageEnum.WORKFLOWS);
   // Read live, so turning AI workflow generation off still removes the Copilot mid-visit.
-  const hasCopilot =
-    isAiWorkflowGenerationEnabled &&
-    currentEnvironment?.type === EnvironmentTypeEnum.DEV &&
-    !!workflow &&
-    workflow.origin !== ResourceOriginEnum.EXTERNAL;
+  const { hasCopilot, isReadOnly: isReadOnlyCopilot } = getEditorCopilotAccess({
+    environmentType: currentEnvironment?.type,
+    workflow,
+    isAiWorkflowGenerationEnabled,
+    isWorkflowsPageEnabled,
+    liveMode,
+  });
   const { latestChat, isPending, isFetching, error } = useFetchLatestAiChat({
     resourceType: AiResourceTypeEnum.WORKFLOW,
-    // The latest-chat endpoint answers 404 (an error toast) while AI workflow generation is off.
-    resourceId: hasCopilot && isWebChatMode(liveMode) ? workflow._id : undefined,
+    // The latest-chat endpoint answers 404 (an error toast) while AI workflow generation is off. The legacy chat only
+    // ever edited workflows in Development, so a read-only visit has none to review.
+    resourceId: workflow && hasCopilot && !isReadOnlyCopilot && isWebChatMode(liveMode) ? workflow._id : undefined,
   });
   const resolvedMode = resolveCopilotMode({
     isFlagsReady: isLaunchDarklyReady && isLaunchDarklyIdentified,
     liveMode,
     // A cached chat from an earlier visit can be stale while its refresh runs; the visit's mode waits for it.
-    legacyChat: {
-      isPending: isPending || isFetching,
-      isError: !!error,
-      hasPendingChanges: !!latestChat?.hasPendingChanges,
-    },
+    legacyChat: isReadOnlyCopilot
+      ? NO_LEGACY_CHAT
+      : {
+          isPending: isPending || isFetching,
+          isError: !!error,
+          hasPendingChanges: !!latestChat?.hasPendingChanges,
+        },
   });
   const [visitMode, setVisitMode] = useState<VisitMode>();
 
@@ -67,7 +77,15 @@ function useVisitCopilotMode(workflowSlug: string | undefined, workflowKey: stri
     return null;
   }
 
-  return visitMode?.workflowKey === workflowKey ? visitMode.mode : resolvedMode;
+  const mode = visitMode?.workflowKey === workflowKey ? visitMode.mode : resolvedMode;
+
+  // The legacy Copilot edits, so a read-only visit never shows it: one fixed on legacy before its flags flipped to web
+  // chat shows no Copilot until the user opens another workflow or reloads.
+  if (isReadOnlyCopilot && (mode === 'legacy' || mode === 'pending-legacy')) {
+    return null;
+  }
+
+  return mode;
 }
 
 function CopilotPendingPrompt() {
@@ -77,8 +95,9 @@ function CopilotPendingPrompt() {
 }
 
 /**
- * Decides which Copilot the workflow editor shows on this visit (a Development environment, a non-external workflow,
- * AI workflow generation, then the mode flags) and hosts the web-chat conversation when that is the one.
+ * Decides which Copilot the workflow editor shows on this visit (AI workflow generation; a Development environment and
+ * a non-external workflow, or else read-only web chat with the Workflows page on; then the mode flags) and hosts the
+ * web-chat conversation when that is the one.
  */
 export function CopilotModeProvider({ workflowSlug, children }: { workflowSlug?: string; children: ReactNode }) {
   const { currentUser } = useAuth();

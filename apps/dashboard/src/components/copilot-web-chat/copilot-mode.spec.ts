@@ -1,5 +1,42 @@
+import { EnvironmentTypeEnum, ResourceOriginEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
-import { getCopilotSurface, isPendingCopilotMode, resolveCopilotMode } from './copilot-mode';
+import { getCopilotSurface, getEditorCopilotAccess, isPendingCopilotMode, resolveCopilotMode } from './copilot-mode';
+
+describe('getEditorCopilotAccess', () => {
+  const visit = {
+    environmentType: EnvironmentTypeEnum.DEV,
+    workflow: { origin: ResourceOriginEnum.NOVU_CLOUD },
+    isAiWorkflowGenerationEnabled: true,
+    isWorkflowsPageEnabled: true,
+    liveMode: 'web-chat-popover' as const,
+  };
+
+  it('edits a dashboard workflow in Development', () => {
+    expect(getEditorCopilotAccess(visit)).toEqual({ hasCopilot: true, isReadOnly: false });
+  });
+
+  it('reads a workflow in Production and a code workflow in Development, with the Workflows page on', () => {
+    const readOnly = { hasCopilot: true, isReadOnly: true };
+
+    expect(getEditorCopilotAccess({ ...visit, environmentType: EnvironmentTypeEnum.PROD })).toEqual(readOnly);
+    expect(getEditorCopilotAccess({ ...visit, workflow: { origin: ResourceOriginEnum.EXTERNAL } })).toEqual(readOnly);
+  });
+
+  it('shows no Copilot outside Development without the Workflows page, or on the legacy Copilot', () => {
+    const none = { hasCopilot: false, isReadOnly: false };
+    const production = { ...visit, environmentType: EnvironmentTypeEnum.PROD };
+
+    expect(getEditorCopilotAccess({ ...production, isWorkflowsPageEnabled: false })).toEqual(none);
+    expect(getEditorCopilotAccess({ ...production, liveMode: 'legacy' })).toEqual(none);
+  });
+
+  it('decides nothing until the environment and the workflow load', () => {
+    const none = { hasCopilot: false, isReadOnly: false };
+
+    expect(getEditorCopilotAccess({ ...visit, environmentType: undefined })).toEqual(none);
+    expect(getEditorCopilotAccess({ ...visit, workflow: undefined })).toEqual(none);
+  });
+});
 
 const settledWithoutReview = { isPending: false, isError: false, hasPendingChanges: false };
 

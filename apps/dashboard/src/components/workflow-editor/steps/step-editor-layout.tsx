@@ -26,7 +26,11 @@ import { Button } from '@/components/primitives/button';
 import { FormRoot } from '@/components/primitives/form/form';
 import { LocaleSelect } from '@/components/primitives/locale-select';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { getStepNewChatSuggestions, isContentStepType } from '@/components/workflow-editor/new-chat-suggestions';
+import {
+  getReadOnlyStepSuggestions,
+  getStepNewChatSuggestions,
+  isContentStepType,
+} from '@/components/workflow-editor/new-chat-suggestions';
 import { PreviewContextContainer } from '@/components/workflow-editor/steps/context/preview-context-container';
 import { StepEditorProvider, useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { StepEditorFactory } from '@/components/workflow-editor/steps/editor/step-editor-factory';
@@ -49,6 +53,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useDisconnectStepResolver } from '@/hooks/use-disconnect-step-resolver';
 import { useFetchTranslationGroup } from '@/hooks/use-fetch-translation-group';
 import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { useIsTranslationEnabled } from '@/hooks/use-is-translation-enabled';
 import { LocalizationResourceEnum } from '@/types/translations';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_RESOLVER_SUPPORTED_STEP_TYPES } from '@/utils/constants';
@@ -151,9 +156,20 @@ function StepEditorContent() {
   const isContentStep = isContentStepType(step.type);
   const hasBody = !!step.controlValues?.body;
   const hasStepIssues = Object.keys(step.issues?.controls ?? {}).length > 0;
+  const { currentEnvironment } = useEnvironment();
+  const has = useHasPermission();
+  // Read-only as the agent decides it: outside Development, for a code workflow, or without Workflow write. The step
+  // editor's own read-only state differs (a step resolver's step, a code workflow's control overrides).
+  const isCopilotReadOnly =
+    isExternalWorkflow ||
+    currentEnvironment?.type !== EnvironmentTypeEnum.DEV ||
+    !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
   const newChatSuggestions = useMemo(
-    () => getStepNewChatSuggestions({ isContentStep, hasBody, hasIssues: hasStepIssues }),
-    [isContentStep, hasBody, hasStepIssues]
+    () =>
+      isCopilotReadOnly
+        ? getReadOnlyStepSuggestions()
+        : getStepNewChatSuggestions({ isContentStep, hasBody, hasIssues: hasStepIssues }),
+    [isCopilotReadOnly, isContentStep, hasBody, hasStepIssues]
   );
   const copilotMode = useWorkflowEditorCopilot({
     workflowId: workflow?._id,
@@ -161,6 +177,7 @@ function StepEditorContent() {
     stepId: step.stepId,
     stepLabel: step.stepId,
     suggestions: newChatSuggestions,
+    readOnly: isCopilotReadOnly,
     onRefetch: () => refetchWorkflow({ cancelRefetch: true }),
   });
 

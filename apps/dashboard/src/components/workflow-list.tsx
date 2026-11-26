@@ -1,6 +1,7 @@
-import { DirectionEnum, ListWorkflowResponse } from '@novu/shared';
+import { CopilotPageEnum, DirectionEnum, ListWorkflowResponse } from '@novu/shared';
 import { RiMore2Fill } from 'react-icons/ri';
 import { useSearchParams } from 'react-router-dom';
+import { useRegisterCopilotPageView } from '@/components/copilot-web-chat';
 import { Skeleton } from '@/components/primitives/skeleton';
 import {
   Table,
@@ -13,6 +14,7 @@ import {
   TableRow,
 } from '@/components/primitives/table';
 import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
+import { buildWorkflowListViewing } from '@/components/workflow-list-copilot';
 import { WorkflowListEmpty } from '@/components/workflow-list-empty';
 import { WorkflowRow } from '@/components/workflow-row';
 import { ServerErrorPage } from '@/pages/server-error-page';
@@ -80,6 +82,8 @@ export function WorkflowList({
   onPageSizeChange,
 }: WorkflowListProps) {
   const [searchParams, setSearchParams] = useSearchParams();
+  // The list's filters, so the Copilot reads "these workflows" as the list the page shows.
+  useRegisterCopilotPageView(CopilotPageEnum.WORKFLOWS, { viewing: buildWorkflowListViewing(searchParams) });
 
   const offset = parseInt(searchParams.get('offset') || '0');
   const currentPage = Math.floor(offset / limit) + 1;

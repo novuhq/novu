@@ -36,7 +36,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ToastClose, ToastIcon } from '../primitives/sonner';
 import { showErrorToast, showSuccessToast, showToast } from '../primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
-import { getWorkflowNewChatSuggestions, isContentStepType } from './new-chat-suggestions';
+import {
+  getReadOnlyWorkflowSuggestions,
+  getWorkflowNewChatSuggestions,
+  isContentStepType,
+} from './new-chat-suggestions';
 import { CopilotSidebar, CopilotSidebarSkeleton } from './steps/layout/copilot-sidebar';
 import { getInitialPayload, getInitialSubscriber } from './steps/utils/preview-context-storage.utils';
 import { TestWorkflowDrawer } from './test-workflow/test-workflow-drawer';
@@ -299,13 +303,17 @@ export const WorkflowTabs = () => {
   const hasContentSteps = !!workflow?.steps.some((step) => isContentStepType(step.type));
   const hasIssues = !!workflow?.steps.some((step) => Object.keys(step.issues?.controls ?? {}).length > 0);
   const newChatSuggestions = useMemo(
-    () => getWorkflowNewChatSuggestions({ hasSteps, hasContentSteps, hasIssues }),
-    [hasSteps, hasContentSteps, hasIssues]
+    () =>
+      isReadOnly
+        ? getReadOnlyWorkflowSuggestions({ hasIssues })
+        : getWorkflowNewChatSuggestions({ hasSteps, hasContentSteps, hasIssues }),
+    [isReadOnly, hasSteps, hasContentSteps, hasIssues]
   );
   const copilotMode = useWorkflowEditorCopilot({
     workflowId: workflow?._id,
     workflowLabel: workflow?.workflowId,
     suggestions: newChatSuggestions,
+    readOnly: isReadOnly,
     onRefetch: () => refetchWorkflow({ cancelRefetch: true }),
   });
   // Memoize subscriber data and payload for integration instructions

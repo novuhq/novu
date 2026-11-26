@@ -4,6 +4,7 @@ import type { ApiResponse } from "../types";
 import { toSlugIdentifier } from "../utils/slug";
 import type { ToolAccessors } from "../utils/tool-accessors";
 import { type ApiCallResult, type ToolContext, ToolFactory } from "../utils/tool-factory";
+import { withWorkflowLink, withWorkflowListLinks } from "../utils/workflow-links";
 import {
 	normalizeControlValues,
 	type WorkflowResponse,
@@ -32,7 +33,9 @@ const AGENT_ASSIGNMENT_GUIDE = [
 ].join(" ");
 
 export function registerWorkflowTools(server: McpServer, accessors: ToolAccessors) {
-	// Get all workflows - simple GET endpoint; a listed HTTP request step's issue text can quote a secret
+	// Get all workflows - simple GET endpoint, with a dashboard link on the list and on each workflow; a listed HTTP
+	// request step's issue text can quote a secret
+
 	ToolFactory.createQueryGetTool(
 		server,
 		accessors,
@@ -43,7 +46,7 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 		{
 			buildEndpoint: () => "/v2/workflows",
 			formatSuccess: (data) =>
-				`Successfully fetched workflows:\n\n${JSON.stringify(redactWorkflowListSecrets(data), null, 2)}`,
+				`Successfully fetched workflows:\n\n${JSON.stringify(withWorkflowListLinks(redactWorkflowListSecrets(data)), null, 2)}`,
 		},
 	);
 
@@ -59,7 +62,7 @@ export function registerWorkflowTools(server: McpServer, accessors: ToolAccessor
 		"The workflow ID to retrieve (obtained from get_workflows)",
 		// HTTP request steps can hold credentials; the write tools put the stored values back.
 		(data, id) =>
-			`Successfully fetched workflow ${id}:\n\n${JSON.stringify(redactWorkflowSecrets(data), null, 2)}`,
+			`Successfully fetched workflow ${id}:\n\n${JSON.stringify(withWorkflowLink(redactWorkflowSecrets(data)), null, 2)}`,
 	);
 
 	// Trigger workflow - custom logic using the factory

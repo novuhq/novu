@@ -4,6 +4,8 @@ import {
   RiBarChartBoxLine,
   RiGroup2Line,
   RiPlugLine,
+  RiRouteFill,
+  RiRouteLine,
   RiStore3Line,
   RiUser3Line,
 } from 'react-icons/ri';
@@ -40,11 +42,17 @@ describe('matchCopilotPage', () => {
     }
   );
 
+  it('matches the workflows list to Workflows', () => {
+    expect(matchCopilotPage('/env/dev-env/workflows')).toBe(CopilotPageEnum.WORKFLOWS);
+  });
+
   it.each([
-    '/env/dev-env/workflows',
     '/env/dev-env/topics',
     '/env/dev-env/activity/unknown-tab',
+    '/env/dev-env/workflows/welcome_wf_123',
     '/env/dev-env/workflows/welcome_wf_123/activity',
+    '/env/dev-env/workflows/create',
+    '/env/dev-env/workflows/templates',
   ])('matches no page at %s', (pathname) => {
     expect(matchCopilotPage(pathname)).toBeUndefined();
   });
@@ -161,6 +169,29 @@ describe('getCopilotPanelCopy', () => {
       placeholder: 'Ask anything about this page…',
       suggestions,
       chip: { label: 'welcome / email' },
+    });
+  });
+
+  it('tells a read-only workflow editor that the Copilot only explains the workflow', () => {
+    expect(getCopilotPanelCopy({ workflowId: 'wf_1', workflowLabel: 'welcome', readOnly: true })).toMatchObject({
+      emptyState: {
+        title: 'Novu Copilot',
+        body: "Explains what this workflow sends, to whom and when. It can't change the workflow here.",
+      },
+      placeholder: 'Ask about this workflow…',
+      chip: { label: 'welcome' },
+    });
+  });
+
+  it('names Workflows in the chip on the workflows list', () => {
+    expect(getCopilotPanelCopy({ page: CopilotPageEnum.WORKFLOWS })).toMatchObject({
+      emptyState: { title: 'Ask about workflows' },
+      chip: { label: 'Workflows', icon: RiRouteFill },
+      suggestions: [
+        { label: 'Which workflows need action?', icon: RiRouteLine },
+        { label: 'Which workflows send SMS?', icon: RiRouteLine },
+        { label: 'Which workflows are inactive?', icon: RiRouteLine },
+      ],
     });
   });
 

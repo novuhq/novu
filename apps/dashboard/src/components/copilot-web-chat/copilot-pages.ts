@@ -5,6 +5,8 @@ import {
   RiBarChartBoxLine,
   RiGroup2Line,
   RiPlugLine,
+  RiRouteFill,
+  RiRouteLine,
   RiStore3Line,
   RiUser3Line,
 } from 'react-icons/ri';
@@ -78,6 +80,17 @@ export const COPILOT_PAGE_CONFIGS: Partial<Record<CopilotPageEnum, CopilotPageCo
     suggestions: ['Can we reach jane@acme.com on SMS?', "Why didn't user_123 get their last notification?"],
     suggestionIcon: RiUser3Line,
   },
+  [CopilotPageEnum.WORKFLOWS]: {
+    routes: [ROUTES.WORKFLOWS],
+    chip: { label: 'Workflows', icon: RiRouteFill },
+    emptyState: {
+      title: 'Ask about workflows',
+      body: 'I explain what each workflow sends, to whom and when. Every answer names the environment it used.',
+    },
+    placeholder: 'Ask about your workflows…',
+    suggestions: ['Which workflows need action?', 'Which workflows send SMS?', 'Which workflows are inactive?'],
+    suggestionIcon: RiRouteLine,
+  },
 };
 
 const CONFIGURED_PAGES = Object.keys(COPILOT_PAGE_CONFIGS) as CopilotPageEnum[];
@@ -119,6 +132,15 @@ const WORKFLOW_EDITOR_COPY = {
   placeholder: 'Ask anything about this page…',
 };
 
+// The read-only editor (outside Development, a code workflow, no Workflow write); the placeholder is the design's.
+const WORKFLOW_EDITOR_READ_ONLY_COPY = {
+  emptyState: {
+    title: 'Novu Copilot',
+    body: "Explains what this workflow sends, to whom and when. It can't change the workflow here.",
+  },
+  placeholder: 'Ask about this workflow…',
+};
+
 /**
  * On a Copilot page: its copy, its suggestions led by `question` about what is open, and its chip naming the open
  * resource or else the page. In the workflow editor: the suggestions it registered and a chip naming the workflow/step.
@@ -129,7 +151,7 @@ export function getCopilotPanelCopy(context: CopilotPageContext | undefined): Co
 
   if (!config) {
     return {
-      ...WORKFLOW_EDITOR_COPY,
+      ...(context?.readOnly ? WORKFLOW_EDITOR_READ_ONLY_COPY : WORKFLOW_EDITOR_COPY),
       suggestions: context?.suggestions ?? [],
       chip: contextLabel ? { label: contextLabel } : undefined,
     };
