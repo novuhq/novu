@@ -8,6 +8,11 @@ interface ResolveActivityRetentionRangeOptions {
   before?: string;
 }
 
+interface AssertWithinActivityRetentionOptions {
+  organizationId: string;
+  createdAt: Date;
+}
+
 export interface ActivityRetentionRange {
   after?: string;
   before?: string;
@@ -63,6 +68,22 @@ function getActivityRetentionPolicy(organization: OrganizationEntity): ActivityR
   };
 }
 
+function isBeforeRetentionWindow(date: Date, earliestAllowedDate: Date): boolean {
+  if (process.env.NODE_ENV === 'local') {
+    return false;
+  }
+
+  const bufferedEarliestAllowedDate = new Date(
+    earliestAllowedDate.getTime() - RETENTION_DST_BUFFER_MS - RETENTION_REQUEST_DELAY_MS
+  );
+
+  return date < bufferedEarliestAllowedDate;
+}
+
+function formatEarliestAllowedDate(earliestAllowedDate: Date): string {
+  return earliestAllowedDate.toISOString().split('T')[0];
+}
+
 @Injectable()
 export class ActivityRetentionService {
   constructor(private organizationRepository: CommunityOrganizationRepository) {}
@@ -72,12 +93,7 @@ export class ActivityRetentionService {
     after,
     before,
   }: ResolveActivityRetentionRangeOptions): Promise<ActivityRetentionRange> {
-    const organization = await this.organizationRepository.findById(organizationId);
-    if (!organization) {
-      throw new HttpException('Organization not found', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    const policy = getActivityRetentionPolicy(organization);
+    const policy = await this.getPolicy(organizationId);
     const effectiveAfterDate = after ? parseAndValidateDate(after, 'after') : undefined;
     const effectiveBeforeDate = before ? parseAndValidateDate(before, 'before') : undefined;
 
@@ -96,17 +112,13 @@ export class ActivityRetentionService {
 
     assertValidChronology(resolvedAfterDate, resolvedBeforeDate);
 
-    const bufferedEarliestAllowedDate = new Date(
-      earliestAllowedDate.getTime() - RETENTION_DST_BUFFER_MS - RETENTION_REQUEST_DELAY_MS
-    );
-
     if (
-      process.env.NODE_ENV !== 'local' &&
-      (resolvedAfterDate < bufferedEarliestAllowedDate || resolvedBeforeDate < bufferedEarliestAllowedDate)
+      isBeforeRetentionWindow(resolvedAfterDate, earliestAllowedDate) ||
+      isBeforeRetentionWindow(resolvedBeforeDate, earliestAllowedDate)
     ) {
       throw new HttpException(
         `Requested date range exceeds your plan's retention period. ` +
-          `The earliest accessible date for your plan is ${earliestAllowedDate.toISOString().split('T')[0]}. ` +
+          `The earliest accessible date for your plan is ${formatEarliestAllowedDate(earliestAllowedDate)}. ` +
           `Please upgrade your plan to access older activities.`,
         HttpStatus.PAYMENT_REQUIRED
       );
@@ -116,5 +128,33 @@ export class ActivityRetentionService {
       after: resolvedAfterDate.toISOString(),
       before: resolvedBeforeDate.toISOString(),
     };
+  }
+
+  /** For by-ID reads: a record that a list endpoint can no longer return is not readable by its ID either. */
+  async assertWithinRetention({ organizationId, createdAt }: AssertWithinActivityRetentionOptions): Promise<void> {
+    const policy = await this.getPolicy(organizationId);
+    if (policy.kind === 'unlimited') {
+      return;
+    }
+
+    const earliestAllowedDate = new Date(Date.now() - policy.durationMs);
+
+    if (isBeforeRetentionWindow(createdAt, earliestAllowedDate)) {
+      throw new HttpException(
+        `This activity is older than your plan's retention period. ` +
+          `The earliest accessible date for your plan is ${formatEarliestAllowedDate(earliestAllowedDate)}. ` +
+          `Please upgrade your plan to access older activities.`,
+        HttpStatus.PAYMENT_REQUIRED
+      );
+    }
+  }
+
+  private async getPolicy(organizationId: string): Promise<ActivityRetentionPolicy> {
+    const organization = await this.organizationRepository.findById(organizationId);
+    if (!organization) {
+      throw new HttpException('Organization not found', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    return getActivityRetentionPolicy(organization);
   }
 }

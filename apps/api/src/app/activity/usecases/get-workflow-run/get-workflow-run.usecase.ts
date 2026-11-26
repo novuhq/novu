@@ -12,6 +12,7 @@ import {
 import { JobEntity, JobRepository, NotificationEntity, NotificationRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { subDays } from 'date-fns';
+import { ActivityRetentionService } from '../../../shared/services/activity-retention.service';
 import { GetWorkflowRunResponseDto, StepRunDto } from '../../dtos/workflow-run-response.dto';
 import {
   mapTraceToExecutionDetailDto,
@@ -87,6 +88,7 @@ export class GetWorkflowRun {
     private traceLogRepository: TraceLogRepository,
     private jobRepository: JobRepository,
     private notificationRepository: NotificationRepository,
+    private activityRetentionService: ActivityRetentionService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -122,6 +124,12 @@ export class GetWorkflowRun {
       }
 
       const workflowRun = workflowRunResult.data;
+
+      await this.activityRetentionService.assertWithinRetention({
+        organizationId: command.organizationId,
+        createdAt: new Date(`${workflowRun.created_at} UTC`),
+      });
+
       const [stepRuns, overrides] = await Promise.all([
         this.getStepRunsForWorkflowRun(command, workflowRun),
         this.getOverrides(workflowRun.transaction_id, command),

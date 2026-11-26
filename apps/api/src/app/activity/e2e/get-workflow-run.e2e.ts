@@ -1,9 +1,10 @@
 import { Novu } from '@novu/api';
-import { WorkflowRunRepository } from '@novu/application-generic';
-import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
-import { EmailBlockTypeEnum, StepTypeEnum } from '@novu/shared';
+import { WorkflowRunRepository, WorkflowRunStatusEnum } from '@novu/application-generic';
+import { NotificationRepository, NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
+import { ApiServiceLevelEnum, EmailBlockTypeEnum, StepTypeEnum } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { subDays } from 'date-fns';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Workflow Run - GET /v1/activity/workflow-runs/:workflowRunId #novu-v2', () => {
@@ -81,5 +82,55 @@ describe('Workflow Run - GET /v1/activity/workflow-runs/:workflowRunId #novu-v2'
     const nonExistentId = 'non-existent-workflow-run-id';
 
     await session.testAgent.get(`/v1/activity/workflow-runs/${nonExistentId}`).expect(404);
+  });
+
+  it("should reject a workflow run older than the plan's retention window", async () => {
+    const originalWriteEnabled = process.env.IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED;
+    (process.env as any).IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED = 'true';
+
+    try {
+      const workflowRunId = NotificationRepository.createObjectId();
+      await workflowRunRepository.create(
+        {
+          _id: workflowRunId,
+          _templateId: template._id,
+          _environmentId: session.environment._id,
+          _organizationId: session.organization._id,
+          _subscriberId: subscriber._id,
+          topics: [],
+          transactionId: `txn_${workflowRunId}`,
+          channels: [StepTypeEnum.EMAIL],
+          to: subscriber.subscriberId,
+          payload: {},
+          controls: undefined,
+          tags: [],
+          createdAt: subDays(new Date(), 3).toISOString(),
+        },
+        template,
+        {
+          status: WorkflowRunStatusEnum.COMPLETED,
+          userId: session.user._id,
+          externalSubscriberId: subscriber.subscriberId,
+        }
+      );
+
+      const { body } = await session.testAgent.get(`/v1/activity/workflow-runs/${workflowRunId}`).expect(402);
+
+      expect(body.message).to.contain("older than your plan's retention period");
+
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
+
+      const { body: businessBody } = await session.testAgent
+        .get(`/v1/activity/workflow-runs/${workflowRunId}`)
+        .expect(200);
+
+      expect(businessBody.data.id).to.equal(workflowRunId);
+    } finally {
+      if (originalWriteEnabled === undefined) {
+        delete (process.env as any).IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED;
+      } else {
+        (process.env as any).IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED = originalWriteEnabled;
+      }
+    }
   });
 });

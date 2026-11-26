@@ -26,6 +26,37 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
     requestLogRepository = session.testServer?.getService(RequestLogRepository);
   });
 
+  function buildRequestLog(createdAt: Date): Omit<RequestLog, 'id' | 'expires_at'> {
+    return {
+      user_id: session.user._id,
+      environment_id: session.environment._id,
+      organization_id: session.organization._id,
+      transaction_id: generateTransactionId(),
+      status_code: 200,
+      created_at: LogRepository.formatDateTime64(createdAt) as any,
+      path: '/test-path',
+      url: '/test-url',
+      url_pattern: '/test-url-pattern/:id',
+      hostname: 'localhost',
+      method: 'GET',
+      ip: '127.0.0.1',
+      user_agent: 'test-agent',
+      request_body: '{}',
+      response_body: '{}',
+      auth_type: 'ApiKey',
+      duration_ms: 42,
+      source: RequestLogSourceEnum.HTTP,
+    };
+  }
+
+  async function seedRequestLogs(requestLogs: Omit<RequestLog, 'id' | 'expires_at'>[]) {
+    await requestLogRepository.createMany(requestLogs, {
+      organizationId: session.organization._id,
+      environmentId: session.environment._id,
+      userId: session.user._id,
+    });
+  }
+
   it('should return a list of http logs', async () => {
     const requestLog: Omit<RequestLog, 'id' | 'expires_at'> = {
       user_id: session.user._id,
@@ -283,40 +314,9 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
   });
 
   it("should only return logs inside the plan's retention window when createdGte is omitted", async () => {
-    const baseRequestLog: Omit<RequestLog, 'id' | 'expires_at' | 'transaction_id' | 'created_at'> = {
-      user_id: session.user._id,
-      environment_id: session.environment._id,
-      organization_id: session.organization._id,
-      status_code: 200,
-      path: '/test-path',
-      url: '/test-url',
-      url_pattern: '/test-url-pattern/:id',
-      hostname: 'localhost',
-      method: 'GET',
-      ip: '127.0.0.1',
-      user_agent: 'test-agent',
-      request_body: '{}',
-      response_body: '{}',
-      auth_type: 'ApiKey',
-      duration_ms: 42,
-      source: RequestLogSourceEnum.HTTP,
-    };
-    const recentLog = {
-      ...baseRequestLog,
-      transaction_id: generateTransactionId(),
-      created_at: LogRepository.formatDateTime64(new Date()) as any,
-    };
-    const threeDaysOldLog = {
-      ...baseRequestLog,
-      transaction_id: generateTransactionId(),
-      created_at: LogRepository.formatDateTime64(subDays(new Date(), 3)) as any,
-    };
-
-    await requestLogRepository.createMany([recentLog, threeDaysOldLog], {
-      organizationId: session.organization._id,
-      environmentId: session.environment._id,
-      userId: session.user._id,
-    });
+    const recentLog = buildRequestLog(new Date());
+    const threeDaysOldLog = buildRequestLog(subDays(new Date(), 3));
+    await seedRequestLogs([recentLog, threeDaysOldLog]);
 
     const { body: freeBody } = await session.testAgent.get('/v1/activity/requests').expect(200);
 
@@ -348,6 +348,30 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
       .get('/v1/activity/requests')
       .query({ createdGte: subHours(new Date(), 2).getTime() })
       .expect(200);
+  });
+
+  it("should reject a request log older than the plan's retention window by ID", async () => {
+    const threeDaysOldLog = buildRequestLog(subDays(new Date(), 3));
+    await seedRequestLogs([threeDaysOldLog]);
+    const storedLog = await requestLogRepository.findOne({
+      where: {
+        enforced: { environmentId: session.environment._id },
+        conditions: [{ field: 'transaction_id', operator: '=', value: threeDaysOldLog.transaction_id }],
+      },
+      select: ['id'],
+    });
+    const requestId = storedLog.data?.id;
+    expect(requestId, 'seeded request log id').to.be.a('string');
+
+    const { body } = await session.testAgent.get(`/v1/activity/requests/${requestId}`).expect(402);
+
+    expect(body.message).to.contain("older than your plan's retention period");
+
+    await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
+
+    const { body: businessBody } = await session.testAgent.get(`/v1/activity/requests/${requestId}`).expect(200);
+
+    expect(businessBody.data.request.transactionId).to.equal(threeDaysOldLog.transaction_id);
   });
 });
 

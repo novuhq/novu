@@ -1,3 +1,4 @@
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { WorkflowRunStatusEnum } from '@novu/application-generic';
 import { DeliveryLifecycleDetail, DeliveryLifecycleStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
@@ -62,10 +63,13 @@ describe('GetWorkflowRun', () => {
   function buildUsecase(
     workflowRun: Record<string, unknown>,
     stepRuns: Record<string, unknown>[],
-    traces: Record<string, unknown>[] = []
+    traces: Record<string, unknown>[] = [],
+    {
+      activityRetentionService = { assertWithinRetention: stub().resolves() },
+      stepRunRepository = { find: stub().resolves({ data: stepRuns }) },
+    } = {}
   ) {
     const workflowRunRepository = { findOne: stub().resolves({ data: workflowRun }) };
-    const stepRunRepository = { find: stub().resolves({ data: stepRuns }) };
     const traceLogRepository = { find: stub().resolves({ data: traces }) };
     const jobRepository = { find: stub().resolves([]) };
     const notificationRepository = { findOne: stub().resolves({ overrides: { email: { from: 'a@b.c' } } }) };
@@ -77,6 +81,7 @@ describe('GetWorkflowRun', () => {
       traceLogRepository as never,
       jobRepository as never,
       notificationRepository as never,
+      activityRetentionService as never,
       logger as never
     );
   }
@@ -149,5 +154,35 @@ describe('GetWorkflowRun', () => {
 
     expect(empty.deliveryLifecycleDetail).to.equal(undefined);
     expect(unknown.deliveryLifecycleDetail).to.equal(undefined);
+  });
+
+  it("checks the run's creation time against the plan's retention window", async () => {
+    const assertWithinRetention = stub().resolves();
+    await buildUsecase(workflowRunRow(), [], [], { activityRetentionService: { assertWithinRetention } }).execute(
+      command
+    );
+
+    expect(assertWithinRetention.firstCall.args[0]).to.deep.equal({
+      organizationId: 'organization-id',
+      createdAt: new Date('2026-11-20T10:00:00.000Z'),
+    });
+  });
+
+  it('returns the 402 for a run older than the window without reading its steps', async () => {
+    const retentionError = new HttpException('older than your plan', HttpStatus.PAYMENT_REQUIRED);
+    const stepRunRepository = { find: stub().resolves({ data: [stepRunRow()] }) };
+    const usecase = buildUsecase(workflowRunRow(), [], [], {
+      activityRetentionService: { assertWithinRetention: stub().rejects(retentionError) },
+      stepRunRepository,
+    });
+
+    try {
+      await usecase.execute(command);
+      expect.fail('Expected the retention check to reject the run');
+    } catch (error) {
+      expect(error).to.equal(retentionError);
+    }
+
+    expect(stepRunRepository.find.called).to.equal(false);
   });
 });

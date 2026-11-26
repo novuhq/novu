@@ -8,6 +8,7 @@ import {
   TraceLogRepository,
 } from '@novu/application-generic';
 import { subDays } from 'date-fns';
+import { ActivityRetentionService } from '../../../shared/services/activity-retention.service';
 import { GetRequestResponseDto, TraceResponseDto } from '../../dtos/get-request.response.dto';
 import { mapTraceToResponseDto } from '../../shared/mappers';
 import { requestLogSelectColumns, traceSelectColumns } from '../../shared/select.const';
@@ -19,7 +20,8 @@ const TRACE_AFTER_BUFFER_DAYS = 1;
 export class GetRequest {
   constructor(
     private readonly requestLogRepository: RequestLogRepository,
-    private readonly traceLogRepository: TraceLogRepository
+    private readonly traceLogRepository: TraceLogRepository,
+    private readonly activityRetentionService: ActivityRetentionService
   ) {}
 
   async execute(command: GetRequestCommand): Promise<GetRequestResponseDto> {
@@ -38,6 +40,13 @@ export class GetRequest {
       throw new NotFoundException(`Request with requestId ${command.requestId} not found`);
     }
 
+    const requestCreatedAt = new Date(`${request.data.created_at} UTC`);
+
+    await this.activityRetentionService.assertWithinRetention({
+      organizationId: command.organizationId,
+      createdAt: requestCreatedAt,
+    });
+
     const traceQueryBuilder = new QueryBuilder<Trace>({
       environmentId: command.environmentId,
     });
@@ -49,7 +58,6 @@ export class GetRequest {
     // by the request's creation time (with a buffer for clock skew) so ClickHouse
     // can prune partitions and skip granules on the `toDate(created_at)` sort key.
     if (request.data.created_at) {
-      const requestCreatedAt = new Date(`${request.data.created_at} UTC`);
       traceQueryBuilder.whereGreaterThanOrEqual('created_at', subDays(requestCreatedAt, TRACE_AFTER_BUFFER_DAYS));
     }
 

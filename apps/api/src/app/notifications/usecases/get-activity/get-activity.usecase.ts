@@ -29,6 +29,7 @@ import {
 } from '@novu/shared';
 import { subDays } from 'date-fns';
 
+import { ActivityRetentionService } from '../../../shared/services/activity-retention.service';
 import { ActivityNotificationResponseDto } from '../../dtos/activities-response.dto';
 import { NotificationFeedV2Reader } from '../../services/notification-feed-v2-reader.service';
 import { mapFeedItemToDto } from '../get-activity-feed/map-feed-item-to.dto';
@@ -80,7 +81,8 @@ export class GetActivity {
     private workflowRunRepository: WorkflowRunRepository,
     private logger: PinoLogger,
     private featureFlagsService: FeatureFlagsService,
-    private notificationFeedV2Reader: NotificationFeedV2Reader
+    private notificationFeedV2Reader: NotificationFeedV2Reader,
+    private activityRetentionService: ActivityRetentionService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -114,6 +116,8 @@ export class GetActivity {
           cause: `Notification with id ${command.notificationId} not found`,
         });
       }
+
+      await this.assertWithinRetention(feedItemV2, command);
 
       return mapFeedItemToDto(feedItemV2);
     }
@@ -171,7 +175,20 @@ export class GetActivity {
       });
     }
 
+    await this.assertWithinRetention(feedItem, command);
+
     return mapFeedItemToDto(feedItem);
+  }
+
+  private async assertWithinRetention(feedItem: NotificationFeedItemEntity, command: GetActivityCommand) {
+    if (!feedItem.createdAt) {
+      return;
+    }
+
+    await this.activityRetentionService.assertWithinRetention({
+      organizationId: command.organizationId,
+      createdAt: new Date(feedItem.createdAt),
+    });
   }
 
   private mapTraceStatusToExecutionStatus(traceStatus: string): ExecutionDetailsStatusEnum {
