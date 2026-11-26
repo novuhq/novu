@@ -60,6 +60,7 @@ import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { useOnboardingWorkflowSuggestions } from '@/hooks/use-onboarding-workflow-suggestions';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { useWorkflowLimitDialog } from '@/hooks/use-workflow-limit-dialog';
 import { QueryKeys } from '@/utils/query-keys';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -202,8 +203,13 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
 
   const duplicateWorkflow = useDuplicateWorkflow({ workflowSlug: workflowId || '' });
   const createWorkflowHook = useCreateWorkflow();
-  const { submit: submitWorkflow, isLoading: isSubmitting } =
-    mode === 'duplicate' ? duplicateWorkflow : createWorkflowHook;
+  const {
+    submit: submitWorkflow,
+    isLoading: isSubmitting,
+    workflowLimitError: submitLimitError,
+    clearWorkflowLimitError,
+  } = mode === 'duplicate' ? duplicateWorkflow : createWorkflowHook;
+  const limitDialog = useWorkflowLimitDialog({ submitLimitError, clearSubmitLimitError: clearWorkflowLimitError });
 
   const isLoading = isSubmitting || isGenerating || isCreatingChat;
   const isLoadingTemplate = mode === 'duplicate' && isLoadingWorkflow;
@@ -350,10 +356,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
           </div>
         </DialogContent>
       </Dialog>
-      <WorkflowLimitUpgradeDialog
-        error={createWorkflowHook.workflowLimitError}
-        onClose={createWorkflowHook.clearWorkflowLimitError}
-      />
+      <WorkflowLimitUpgradeDialog error={limitDialog.error} onClose={limitDialog.onClose} />
       {ProtectionAlert}
     </>
   );

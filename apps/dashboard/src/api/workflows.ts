@@ -4,6 +4,7 @@ import type {
   IEnvironment,
   ListWorkflowResponse,
   PatchWorkflowDto,
+  ResourceLimitSource,
   SyncWorkflowDto,
   UpdateWorkflowDto,
   WorkflowResponseDto,
@@ -76,6 +77,26 @@ export const getWorkflows = async ({
   }
 
   const { data } = await getV2<{ data: ListWorkflowResponse }>(`/workflows?${params.toString()}`, { environment });
+
+  return data;
+};
+
+export type WorkflowLimitUsage = {
+  used: number;
+  limit: number;
+  limitSource: ResourceLimitSource;
+  /** Whether creating or duplicating a workflow would be rejected. */
+  isLimitReached: boolean;
+};
+
+export const getWorkflowLimitUsage = async ({
+  environment,
+  signal,
+}: {
+  environment: IEnvironment;
+  signal?: AbortSignal;
+}): Promise<WorkflowLimitUsage> => {
+  const { data } = await getV2<{ data: WorkflowLimitUsage }>('/workflows/usage/limit', { environment, signal });
 
   return data;
 };

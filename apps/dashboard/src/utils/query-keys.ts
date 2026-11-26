@@ -5,6 +5,7 @@ export const QueryKeys = Object.freeze({
   fetchWorkflow: 'fetchWorkflow',
   fetchWorkflowTestData: 'fetchWorkflowTestData',
   fetchWorkflows: 'fetchWorkflows',
+  fetchWorkflowLimitUsage: 'fetchWorkflowLimitUsage',
   fetchTags: 'fetchTags',
   getApiKeys: 'getApiKeys',
   dashboardInboxHashes: 'dashboardInboxHashes',

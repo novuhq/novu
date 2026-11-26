@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { duplicateWorkflow } from '@/api/workflows';
-import { useEnvironment } from '@/context/environment/hooks';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { parseWorkflowLimitError, type WorkflowLimitError } from '@/hooks/use-create-workflow';
 import { QueryKeys } from '@/utils/query-keys';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { workflowSchema } from '../components/workflow-editor/schema';
@@ -20,10 +21,15 @@ export function useDuplicateWorkflow({ workflowSlug, onSuccess }: UseDuplicateWo
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
   const [toastId] = useState<string | number>('');
+  const [workflowLimitError, setWorkflowLimitError] = useState<WorkflowLimitError | null>(null);
 
   const mutation = useMutation({
     mutationFn: async (workflow: DuplicateWorkflowDto) =>
-      duplicateWorkflow({ environment: currentEnvironment!, workflow, workflowSlug }),
+      duplicateWorkflow({
+        environment: requireEnvironment(currentEnvironment, 'No current environment selected'),
+        workflow,
+        workflowSlug,
+      }),
     onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflows, currentEnvironment?._id] });
       queryClient.invalidateQueries({
@@ -47,6 +53,14 @@ export function useDuplicateWorkflow({ workflowSlug, onSuccess }: UseDuplicateWo
     },
 
     onError: (error) => {
+      const limitError = parseWorkflowLimitError(error);
+
+      if (limitError) {
+        setWorkflowLimitError(limitError);
+
+        return;
+      }
+
       showErrorToast(toastId, error);
     },
   });
@@ -64,5 +78,8 @@ export function useDuplicateWorkflow({ workflowSlug, onSuccess }: UseDuplicateWo
   return {
     submit,
     isLoading: mutation.isPending,
+    /** Set when the duplicate was blocked by a workflow limit; render `WorkflowLimitUpgradeDialog` with it. */
+    workflowLimitError,
+    clearWorkflowLimitError: () => setWorkflowLimitError(null),
   };
 }

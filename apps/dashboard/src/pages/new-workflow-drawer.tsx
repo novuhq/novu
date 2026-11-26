@@ -22,6 +22,7 @@ import { useCreateWorkflow } from '@/hooks/use-create-workflow';
 import { useDuplicateWorkflow } from '@/hooks/use-duplicate-workflow';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
+import { useWorkflowLimitDialog } from '@/hooks/use-workflow-limit-dialog';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
 type NewWorkflowDrawerProps = {
@@ -40,7 +41,16 @@ export function NewWorkflowDrawer({ mode, workflowId }: NewWorkflowDrawerProps) 
 
   const duplicateWorkflow = useDuplicateWorkflow({ workflowSlug: workflowId || '' });
   const createWorkflow = useCreateWorkflow();
-  const { submit, isLoading: isSubmitting } = mode === 'duplicate' ? duplicateWorkflow : createWorkflow;
+  const {
+    submit,
+    isLoading: isSubmitting,
+    workflowLimitError,
+    clearWorkflowLimitError,
+  } = mode === 'duplicate' ? duplicateWorkflow : createWorkflow;
+  const limitDialog = useWorkflowLimitDialog({
+    submitLimitError: workflowLimitError,
+    clearSubmitLimitError: clearWorkflowLimitError,
+  });
 
   const { ref: unmountRef } = useOnElementUnmount({
     callback: () => {
@@ -100,10 +110,7 @@ export function NewWorkflowDrawer({ mode, workflowId }: NewWorkflowDrawerProps) 
             {buttonText}
           </Button>
         </SheetFooter>
-        <WorkflowLimitUpgradeDialog
-          error={createWorkflow.workflowLimitError}
-          onClose={createWorkflow.clearWorkflowLimitError}
-        />
+        <WorkflowLimitUpgradeDialog error={limitDialog.error} onClose={limitDialog.onClose} />
       </SheetContent>
     </Sheet>
   );
