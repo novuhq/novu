@@ -8,6 +8,7 @@ import {
 import { describe, expect, it } from 'vitest';
 import {
   formatCopilotThoughtFor,
+  getCopilotAnswerId,
   getCopilotAnswerText,
   getCopilotFollowUps,
   groupCopilotTurns,
@@ -229,6 +230,45 @@ describe('getCopilotAnswerText and hasCopilotReviewCard', () => {
     expect(hasCopilotReviewCard(groupCopilotTurns([userMessage('u1', 'Hi'), assistantMessage('a1', 'Hi')])[0])).toBe(
       false
     );
+  });
+
+  it('finds review buttons inside a section, as the card renderer draws them', () => {
+    const nested = cardMessage('c1', [
+      {
+        type: 'section',
+        children: [
+          {
+            type: 'section',
+            children: [{ type: 'button', id: CopilotReviewActionEnum.TRY_AGAIN, label: 'Try again', value: 's1' }],
+          },
+        ],
+      },
+    ]);
+    const turn = groupCopilotTurns([
+      userMessage('u1', 'Add a digest'),
+      withData(assistantMessage('a1', 'Added a digest.'), COPILOT_ANSWER_DETAILS_EVENT, DETAILS),
+      nested,
+      noteCard('n1'),
+    ])[0];
+
+    expect(hasCopilotReviewCard(turn)).toBe(true);
+    expect(getCopilotFollowUps(turn)).toEqual([]);
+  });
+});
+
+describe('getCopilotAnswerId', () => {
+  it("names the reply with the answer's text, which a review note added later does not change", () => {
+    const placeholder = withData({ ...assistantMessage('run_1', ''), parts: [] }, COPILOT_RESULT_CARD_EVENT, LIST_CARD);
+    const answered = [
+      userMessage('u1', 'Add a digest'),
+      placeholder,
+      assistantMessage('a1', 'Added.'),
+      reviewCard('c1'),
+    ];
+
+    expect(getCopilotAnswerId(groupCopilotTurns(answered)[0])).toBe('a1');
+    expect(getCopilotAnswerId(groupCopilotTurns([...answered, noteCard('n1')])[0])).toBe('a1');
+    expect(getCopilotAnswerId(groupCopilotTurns([userMessage('u1', 'Hi')])[0])).toBe('u1');
   });
 });
 

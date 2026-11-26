@@ -1,4 +1,4 @@
-import type { AgentMessage } from '@novu/js';
+import type { AgentCardChild, AgentMessage } from '@novu/js';
 import {
   COPILOT_ANSWER_DETAILS_EVENT,
   COPILOT_FOLLOW_UPS_LIMIT,
@@ -207,16 +207,31 @@ export function getCopilotAnswerText(turn: CopilotTurn): string {
     .trim();
 }
 
+/** The containers the card renderer draws (`actions`, `section`, a bare `button`), walked for a review button. */
+function hasReviewButton(children: readonly AgentCardChild[]): boolean {
+  return children.some((child) => {
+    if (child.type === 'actions') {
+      return child.children.some((action) => action.type === 'button' && isCopilotReviewActionId(action.id));
+    }
+
+    if (child.type === 'section') return hasReviewButton(child.children);
+
+    return child.type === 'button' && isCopilotReviewActionId(child.id);
+  });
+}
+
 function isReviewCard(reply: AgentMessage): boolean {
-  return reply.parts.some(
-    (part) =>
-      part.type === 'card' &&
-      part.card.children.some((child) =>
-        child.type === 'actions'
-          ? child.children.some((action) => action.type === 'button' && isCopilotReviewActionId(action.id))
-          : child.type === 'button' && isCopilotReviewActionId(child.id)
-      )
-  );
+  return reply.parts.some((part) => part.type === 'card' && hasReviewButton(part.card.children));
+}
+
+/**
+ * The id of the reply that holds the answer's text: unlike the turn's last reply, it stays the same when a review
+ * click adds its note to the turn.
+ */
+export function getCopilotAnswerId(turn: CopilotTurn): string {
+  const answer = turn.replies.find((reply) => buildAssistantBlocks(reply).some((block) => block.kind === 'text'));
+
+  return answer?.id ?? turn.key;
 }
 
 /** Whether the turn changed the workflow: its Keep / Revert / Try again card then offers a retry of its own. */

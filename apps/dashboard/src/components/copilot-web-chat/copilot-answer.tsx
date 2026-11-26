@@ -20,6 +20,7 @@ import { cn } from '@/utils/ui';
 import {
   type CopilotTurn,
   formatCopilotThoughtFor,
+  getCopilotAnswerId,
   getCopilotAnswerText,
   hasCopilotReviewCard,
 } from './copilot-answers';
@@ -102,7 +103,7 @@ function ActionButton({
 function AnswerActions({ turn, onRetry }: { turn: CopilotTurn; onRetry?: () => void }) {
   const { chat, surface, pageContext } = useCopilotWebChat();
   const track = useTelemetry();
-  const answerId = turn.replies[turn.replies.length - 1]?.id ?? turn.key;
+  const answerId = getCopilotAnswerId(turn);
   const [feedback, setFeedback] = useState(() => feedbackByAnswer.get(answerId));
   const [isCopied, setIsCopied] = useState(false);
   const copiedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
