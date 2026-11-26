@@ -26,7 +26,11 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { fetchWorkflowSuggestions, WorkflowSuggestionResponse } from '@/api/ai';
-import { type CopilotPromptLocationState, useCopilotWebChatActive } from '@/components/copilot-web-chat';
+import {
+  type CopilotPromptLocationState,
+  useCopilotBlockedReason,
+  useCopilotWebChatActive,
+} from '@/components/copilot-web-chat';
 import { Sparkling } from '@/components/icons/sparkling';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
@@ -172,6 +176,7 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
   const { currentEnvironment } = useEnvironment();
   const track = useTelemetry();
   const isCopilotWebChatEnabled = useCopilotWebChatActive();
+  const { blockedReason: copilotBlockedReason } = useCopilotBlockedReason();
   const [open, setOpen] = useState(true);
   const [tab, setTab] = useState<CreateWorkflowTab>(IS_AI_FEATURES_ENABLED ? 'guided' : 'manual');
 
@@ -255,9 +260,10 @@ export function CreateWorkflowModal({ mode, workflowId }: { mode: 'create' | 'du
   };
 
   const isDuplicateMode = mode === 'duplicate';
-  const showTabs = IS_AI_FEATURES_ENABLED && !isDuplicateMode;
-  const showGuidedContent = IS_AI_FEATURES_ENABLED && !isDuplicateMode && tab === 'guided';
-  const showManualContent = isDuplicateMode || tab === 'manual';
+  // Guided generation is the Copilot, so it goes away with it when an admin turns the Copilot off.
+  const showTabs = IS_AI_FEATURES_ENABLED && !isDuplicateMode && !copilotBlockedReason;
+  const showGuidedContent = showTabs && tab === 'guided';
+  const showManualContent = !showGuidedContent;
 
   const title = isDuplicateMode ? 'Duplicate workflow' : 'Create workflow';
 

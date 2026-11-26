@@ -42,7 +42,7 @@ function HeaderButton({
 }
 
 export function CopilotPopover() {
-  const { isAvailable, isOpen, close, chat, startNewConversation, isBusy } = useCopilotWebChat();
+  const { isAvailable, blockedReason, isOpen, close, chat, startNewConversation, isBusy } = useCopilotWebChat();
   const title = useCopilotPopoverTitle(chat);
   // Above a sheet (z-50) and its overlay, with the launcher, as the design shows it.
   const isOverSheet = !!useCopilotPageView()?.overSheet;
@@ -56,7 +56,7 @@ export function CopilotPopover() {
 
   return (
     <AnimatePresence>
-      {isOpen && isAvailable && (
+      {isOpen && (isAvailable || !!blockedReason) && (
         <motion.div
           id={COPILOT_POPOVER_ID}
           {...COPILOT_SURFACE_PROPS}
@@ -78,7 +78,7 @@ export function CopilotPopover() {
           <div className="flex h-11 shrink-0 items-center gap-2 border-b border-stroke-soft bg-bg-weak pl-3.5 pr-2">
             <BroomSparkle className="size-4 shrink-0" isAnimating={isBusy} />
             <span className="min-w-0 flex-1 truncate text-label-sm text-text-sub">{title}</span>
-            <HeaderButton label="New chat" disabled={!!chat?.isRunning} onClick={startNewConversation}>
+            <HeaderButton label="New chat" disabled={!isAvailable || !!chat?.isRunning} onClick={startNewConversation}>
               <RiAddLine className="size-3.5" />
             </HeaderButton>
             <HeaderButton label="Close" onClick={close}>

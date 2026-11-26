@@ -7,9 +7,17 @@ export type CopilotOpenOptions = { prefill?: string };
 /** Where the workflow editor shows the conversation: inside its sidebar, or in the floating popover. */
 export type CopilotSurface = 'sidebar' | 'popover';
 
+/**
+ * Why the Copilot can't run for anyone in the organization, shown in place of the conversation: it only runs on Novu
+ * Cloud (`cloud-only`), or an admin turned it off in Organization settings (`turned-off`).
+ */
+export type CopilotBlockedReason = 'cloud-only' | 'turned-off';
+
 export type CopilotWebChatContextValue = {
   /** False on self-hosted or while the tenant context is unavailable. */
   isAvailable: boolean;
+  /** Set when the Copilot can't run here at all; the panel explains why instead of connecting. */
+  blockedReason?: CopilotBlockedReason;
   /** True until the tenant context has been minted or failed to mint; false once it is known whether the Copilot is available. */
   isConnecting: boolean;
   /** `null` while the workflow editor does not run the Copilot on web chat. */

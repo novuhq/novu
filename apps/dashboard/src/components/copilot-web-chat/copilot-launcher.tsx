@@ -7,7 +7,7 @@ import { cn } from '@/utils/ui';
 import { useCopilotPageView } from './copilot-page-view-store';
 import { COPILOT_SURFACE_PROPS } from './copilot-surface';
 import { DotGrid } from './copilot-thread-parts';
-import { useCopilotWebChat } from './copilot-web-chat-context';
+import { type CopilotBlockedReason, useCopilotWebChat } from './copilot-web-chat-context';
 import {
   COPILOT_POPOVER_ID,
   COPILOT_SHEET_LIFT_PX,
@@ -70,8 +70,14 @@ function LauncherIcon({ state }: { state: LauncherState }) {
   }
 }
 
+function getLauncherLabel(state: LauncherState, blockedReason: CopilotBlockedReason | undefined): string {
+  if (blockedReason === 'cloud-only') return 'Ask Copilot';
+
+  return state === 'off' ? 'Copilot is off' : 'Ask Copilot';
+}
+
 export function CopilotLauncher() {
-  const { isAvailable, isOpen, open, close, hasUnseenAnswer, hasRunError, isBusy } = useCopilotWebChat();
+  const { isAvailable, blockedReason, isOpen, open, close, hasUnseenAnswer, hasRunError, isBusy } = useCopilotWebChat();
   // Over a sheet it stays visible above it, as the design shows, rising clear of the sheet's footer so its buttons stay usable.
   const isOverSheet = !!useCopilotPageView()?.overSheet;
   // Back under a modal dialog opened over the sheet, with the popover.
@@ -96,6 +102,8 @@ export function CopilotLauncher() {
     hasUnseenAnswer,
   });
   const isOff = !isOpen && state === 'off';
+  // A blocked Copilot still opens, to say why it is off; one that failed to connect has nothing to show.
+  const isDisabled = isOff && !blockedReason;
 
   return (
     // Closed, it is named by its visible text, so the status (Working…, Answer ready, Couldn’t finish) is read out with it.
@@ -107,7 +115,7 @@ export function CopilotLauncher() {
       initial={false}
       animate={{ bottom: 16 + (isOverSheet ? COPILOT_SHEET_LIFT_PX : 0) }}
       transition={shouldReduceMotion ? { duration: 0 } : COPILOT_SHEET_LIFT_TRANSITION}
-      disabled={isOff}
+      disabled={isDisabled}
       onClick={isOpen ? close : () => open()}
       aria-label={isOpen ? 'Close Copilot' : undefined}
       title={isOpen ? 'Close Copilot' : undefined}
@@ -118,9 +126,9 @@ export function CopilotLauncher() {
         'fixed right-4 flex h-[38px] items-center rounded-full border border-stroke-soft py-2 pr-2.5 transition-[padding,background-color] duration-150 ease-out motion-reduce:transition-colors',
         isOverSheet && !isModalDialogOpen ? 'z-[51]' : 'z-40',
         isOpen ? 'pl-2.5' : 'pl-3',
-        isOff
-          ? 'cursor-not-allowed bg-bg-weak'
-          : 'bg-bg-white shadow-[0_8px_12px_rgba(15,23,41,0.04),0_1px_1px_rgba(15,23,41,0.04)] hover:bg-bg-weak'
+        isOff && 'bg-bg-weak',
+        isDisabled && 'cursor-not-allowed',
+        !isOff && 'bg-bg-white shadow-[0_8px_12px_rgba(15,23,41,0.04),0_1px_1px_rgba(15,23,41,0.04)] hover:bg-bg-weak'
       )}
     >
       {isOpen ? <RiArrowDownSLine className="size-4 text-text-sub" /> : <LauncherIcon state={state} />}
@@ -132,7 +140,7 @@ export function CopilotLauncher() {
       >
         <span className="flex items-center gap-2 whitespace-nowrap pl-2">
           <span className={cn('text-label-sm', isOff ? 'text-text-soft' : 'text-text-strong')}>
-            {isOff ? 'Copilot is off' : 'Ask Copilot'}
+            {getLauncherLabel(state, blockedReason)}
           </span>
           <LauncherStatus state={state} />
         </span>

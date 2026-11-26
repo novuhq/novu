@@ -6,6 +6,10 @@ export const COPILOT_SURFACE_PROPS = { 'data-copilot-surface': '' } as const;
 
 const COPILOT_SURFACE_SELECTOR = '[data-copilot-surface]';
 
+/** The raised white surface of the Copilot's cards: the hero's icon tile, the suggestions list and the settings card. */
+export const COPILOT_RAISED_SURFACE_SHADOW =
+  'shadow-[0_0_0_1px_rgba(14,18,27,0.04),0_1px_2px_0_rgba(14,18,27,0.06),0_0_2px_0_rgba(14,18,27,0.08)]';
+
 /**
  * Whether an event target sits inside the Copilot launcher or popover. Sheets use it to stay open when the Copilot is
  * clicked or focused, since Radix counts both as an outside interaction that dismisses them.

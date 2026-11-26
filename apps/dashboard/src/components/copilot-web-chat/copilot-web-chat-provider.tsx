@@ -31,6 +31,7 @@ import {
   readStoredConversationId,
   writeStoredConversationId,
 } from './copilot-web-chat-utils';
+import { useCopilotBlockedReason } from './use-copilot-blocked-reason';
 import { useCopilotHotkey } from './use-copilot-hotkey';
 import { useCopilotRefetch } from './use-copilot-refetch';
 
@@ -144,6 +145,9 @@ export function CopilotWebChatProvider({
   const [connected, setConnected] = useState<ConnectedState | null>(null);
   // The bridge mounts once the tenant context has been minted or failed to; failing leaves `connected` empty.
   const [isBridgeMounted, setIsBridgeMounted] = useState(false);
+  // A blocked Copilot never connects, so it opens no web-chat session for an organization that turned it off.
+  const { blockedReason, isLoading: isBlockedReasonLoading } = useCopilotBlockedReason();
+  const canConnect = !!surface && !blockedReason && !isBlockedReasonLoading;
   const {
     isOpen,
     open,
@@ -175,7 +179,8 @@ export function CopilotWebChatProvider({
   const value = useMemo<CopilotWebChatContextValue>(
     () => ({
       isAvailable: !!connected,
-      isConnecting: surface !== null && !isBridgeMounted,
+      blockedReason,
+      isConnecting: surface !== null && !blockedReason && !isBridgeMounted,
       surface,
       isOpen,
       open,
@@ -199,6 +204,7 @@ export function CopilotWebChatProvider({
     }),
     [
       connected,
+      blockedReason,
       isBridgeMounted,
       surface,
       isOpen,
@@ -219,7 +225,7 @@ export function CopilotWebChatProvider({
       <CopilotSidebarControlContext.Provider value={sidebarControl}>
         <CopilotWebChatContext.Provider value={value}>
           {children}
-          {surface && (
+          {canConnect && (
             <CopilotConnectProvider>
               <CopilotWebChatBridge
                 key={conversationScope}

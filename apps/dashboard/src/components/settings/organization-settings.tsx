@@ -12,6 +12,7 @@ import { OrganizationSettings as BetterAuthOrganizationSettings } from '@/utils/
 import { Protect } from '@/utils/protect';
 import { ROUTES } from '@/utils/routes';
 import { ConnectedWorkspacesSection } from './connected-workspaces-section';
+import { CopilotSettingsSection } from './copilot-settings-section';
 import { NovuBrandingSwitch } from './novu-branding-switch';
 
 // After deleting (or leaving) an org, Clerk falls back to `<ClerkProvider signInUrl>` when this
@@ -177,6 +178,8 @@ export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: Cle
           </div>
         </div>
       </Protect>
+
+      <CopilotSettingsSection />
 
       {/* Connected Workspaces Section */}
       <ConnectedWorkspacesSection />

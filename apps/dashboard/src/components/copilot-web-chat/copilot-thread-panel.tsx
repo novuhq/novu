@@ -1,11 +1,13 @@
 import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiCloseLine, RiCornerDownLeftLine, RiErrorWarningFill, RiStopFill } from 'react-icons/ri';
 import { CopilotSlackConnectBanner } from '@/components/agents/copilot-slack-connect-banner';
-import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
+import { CopilotBlockedComposer, CopilotBlockedState } from './copilot-blocked-state';
+import { CopilotEmptyHero } from './copilot-empty-hero';
 import { type CopilotPanelCopy, getCopilotPanelCopy } from './copilot-pages';
+import { COPILOT_RAISED_SURFACE_SHADOW } from './copilot-surface';
 import {
   CopilotAssistantMessage,
   CopilotErrorNotice,
@@ -14,23 +16,6 @@ import {
 } from './copilot-thread-parts';
 import { useCopilotWebChat } from './copilot-web-chat-context';
 import { getCopilotTypingLabel, getFailedSend, hasPendingReplyGap, orderStoppedTurns } from './copilot-web-chat-utils';
-
-// The raised white surface of the hero's icon tile and the suggestions list.
-const RAISED_SURFACE_SHADOW =
-  'shadow-[0_0_0_1px_rgba(14,18,27,0.04),0_1px_2px_0_rgba(14,18,27,0.06),0_0_2px_0_rgba(14,18,27,0.08)]';
-
-/** A faint 24px grid and glow behind the icon tile, fading out from the middle. */
-function EmptyHeroBackdrop() {
-  return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-x-0 -top-[60px] h-[300px] overflow-hidden opacity-40 [mask-image:radial-gradient(closest-side,black,rgb(0_0_0/0.4)_55%,transparent)]"
-    >
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--stroke-soft))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--stroke-soft))_1px,transparent_1px)] bg-[size:24px_24px] bg-[position:12px_12px] opacity-20" />
-      <div className="absolute left-1/2 top-10 h-40 w-[220px] -translate-x-1/2 rounded-full bg-feature-base opacity-[0.03] blur-[30px]" />
-    </div>
-  );
-}
 
 function EmptyState({
   copy,
@@ -45,25 +30,11 @@ function EmptyState({
     // `my-auto` rather than `justify-center`, which would push the top out of reach once a short panel scrolls.
     <div className="flex flex-1 flex-col overflow-y-auto px-4 pb-3 pt-4">
       <div className="my-auto flex flex-col gap-4">
-        <div className="relative flex flex-col items-center gap-3 px-4 pb-5 pt-10 text-center">
-          <EmptyHeroBackdrop />
-          <div
-            className={cn(
-              'relative flex size-11 items-center justify-center rounded-xl bg-bg-white',
-              RAISED_SURFACE_SHADOW
-            )}
-          >
-            <BroomSparkle className="size-[22px]" />
-          </div>
-          <div className="relative flex w-full flex-col gap-1">
-            <div className="text-label-md text-text-strong">{copy.title}</div>
-            <p className="text-label-xs text-text-soft">{copy.body}</p>
-          </div>
-        </div>
+        <CopilotEmptyHero title={copy.title} body={copy.body} />
         {suggestions.length > 0 && (
           <div className="relative flex flex-col rounded-[10px] border border-stroke-white bg-bg-weak p-1">
             <div className="px-2 py-1.5 font-code text-code-xs uppercase text-text-sub">Try asking</div>
-            <div className={cn('flex flex-col overflow-hidden rounded-md bg-bg-white', RAISED_SURFACE_SHADOW)}>
+            <div className={cn('flex flex-col overflow-hidden rounded-md bg-bg-white', COPILOT_RAISED_SURFACE_SHADOW)}>
               {suggestions.map(({ label, icon: Icon }) => (
                 <button
                   key={label}
@@ -377,9 +348,18 @@ function ThreadBody({
  * page's copy and suggestions replace the workflow editor's.
  */
 export function CopilotThreadPanel() {
-  const { chat, pageContext } = useCopilotWebChat();
+  const { chat, pageContext, blockedReason } = useCopilotWebChat();
   const hasMessages = (chat?.messages.length ?? 0) > 0;
   const copy = getCopilotPanelCopy(pageContext);
+
+  if (blockedReason) {
+    return (
+      <>
+        <CopilotBlockedState reason={blockedReason} />
+        <CopilotBlockedComposer reason={blockedReason} />
+      </>
+    );
+  }
 
   return (
     <>

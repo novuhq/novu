@@ -18,6 +18,7 @@ import {
 import { CopilotModeContext, useLiveCopilotMode } from './copilot-mode-context';
 import { CopilotPopoverMount } from './copilot-popover';
 import { CopilotWebChatProvider } from './copilot-web-chat-provider';
+import { useCopilotBlockedReason } from './use-copilot-blocked-reason';
 import { useCopilotPendingPrompt } from './use-copilot-pending-prompt';
 
 type VisitMode = { workflowKey: string; mode: CopilotMode };
@@ -34,21 +35,23 @@ function useVisitCopilotMode(workflowSlug: string | undefined, workflowKey: stri
   const liveMode = useLiveCopilotMode();
   const isAiWorkflowGenerationEnabled =
     useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED) && IS_AI_FEATURES_ENABLED;
+  const { blockedReason, isLoading: isBlockedReasonLoading } = useCopilotBlockedReason();
   const { currentEnvironment } = useEnvironment();
   const { workflow } = useFetchWorkflow({ workflowSlug });
-  // Read live, so turning AI workflow generation off still removes the Copilot mid-visit.
+  // Read live, so turning AI workflow generation off still removes the Copilot mid-visit. Self-hosted shows it only to
+  // say it runs on Novu Cloud, which needs none of the AI flags.
   const hasCopilot =
-    isAiWorkflowGenerationEnabled &&
+    (isAiWorkflowGenerationEnabled || blockedReason === 'cloud-only') &&
     currentEnvironment?.type === EnvironmentTypeEnum.DEV &&
     !!workflow &&
     workflow.origin !== ResourceOriginEnum.EXTERNAL;
   const { latestChat, isPending, isFetching, error } = useFetchLatestAiChat({
     resourceType: AiResourceTypeEnum.WORKFLOW,
     // The latest-chat endpoint answers 404 (an error toast) while AI workflow generation is off.
-    resourceId: hasCopilot && isWebChatMode(liveMode) ? workflow._id : undefined,
+    resourceId: hasCopilot && !blockedReason && isWebChatMode(liveMode) ? workflow._id : undefined,
   });
   const resolvedMode = resolveCopilotMode({
-    isFlagsReady: isLaunchDarklyReady && isLaunchDarklyIdentified,
+    isFlagsReady: isLaunchDarklyReady && isLaunchDarklyIdentified && !isBlockedReasonLoading,
     liveMode,
     // A cached chat from an earlier visit can be stale while its refresh runs; the visit's mode waits for it.
     legacyChat: {
@@ -65,6 +68,11 @@ function useVisitCopilotMode(workflowSlug: string | undefined, workflowKey: stri
 
   if (!hasCopilot) {
     return null;
+  }
+
+  // The popover says why the Copilot is off, whichever Copilot the flags pick.
+  if (blockedReason) {
+    return 'web-chat-popover';
   }
 
   return visitMode?.workflowKey === workflowKey ? visitMode.mode : resolvedMode;
@@ -85,6 +93,7 @@ export function CopilotModeProvider({ workflowSlug, children }: { workflowSlug?:
   const { currentEnvironment } = useEnvironment();
   const workflowKey = getIdFromSlug({ slug: workflowSlug ?? '', divider: WORKFLOW_DIVIDER });
   const mode = useVisitCopilotMode(workflowSlug, workflowKey);
+  const { blockedReason } = useCopilotBlockedReason();
   const surface = getCopilotSurface(mode);
   const conversationScope =
     currentUser?._id && currentEnvironment?._id && workflowSlug
@@ -95,7 +104,7 @@ export function CopilotModeProvider({ workflowSlug, children }: { workflowSlug?:
     <CopilotModeContext.Provider value={mode}>
       <CopilotWebChatProvider surface={surface} conversationScope={conversationScope}>
         {children}
-        {surface && <CopilotPendingPrompt />}
+        {surface && !blockedReason && <CopilotPendingPrompt />}
         {surface === 'popover' && <CopilotPopoverMount />}
       </CopilotWebChatProvider>
     </CopilotModeContext.Provider>

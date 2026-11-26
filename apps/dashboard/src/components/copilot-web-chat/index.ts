@@ -7,6 +7,7 @@ export { CopilotPageMount } from './copilot-page-mount';
 export { useRegisterCopilotPageView } from './copilot-page-view-store';
 export { getWorkflowRunQuestion } from './copilot-pages';
 export type { CopilotSuggestion } from './copilot-web-chat-utils';
+export { useCopilotBlockedReason } from './use-copilot-blocked-reason';
 export { useActiveCopilotPage, useCopilotPageEnabled } from './use-copilot-pages';
 export type { CopilotPromptLocationState } from './use-copilot-pending-prompt';
 export { useCopilotWebChatSidebar } from './use-copilot-web-chat-sidebar';

@@ -1,4 +1,4 @@
-import type { IEnvironment, UpdateExternalOrganizationDto } from '@novu/shared';
+import type { IEnvironment, IOrganizationCopilotSettings, UpdateExternalOrganizationDto } from '@novu/shared';
 import { get, patch, post } from './api.client';
 
 export type GetOrganizationSettingsDto = {
@@ -29,6 +29,28 @@ export async function updateOrganizationSettings({
   environment: IEnvironment;
 }): Promise<{ data: GetOrganizationSettingsDto }> {
   return patch('/organizations/settings', { environment, body: data });
+}
+
+export type CopilotSettings = Required<IOrganizationCopilotSettings>;
+
+export async function getCopilotSettings({
+  environment,
+  signal,
+}: {
+  environment: IEnvironment;
+  signal?: AbortSignal;
+}): Promise<{ data: CopilotSettings }> {
+  return get('/organizations/settings/copilot', { environment, signal });
+}
+
+export async function updateCopilotSettings({
+  data,
+  environment,
+}: {
+  data: IOrganizationCopilotSettings;
+  environment: IEnvironment;
+}): Promise<{ data: CopilotSettings }> {
+  return patch('/organizations/settings/copilot', { environment, body: data });
 }
 
 // Writes onboarding metadata (e.g. productUseCases) onto the external (Clerk) organization
