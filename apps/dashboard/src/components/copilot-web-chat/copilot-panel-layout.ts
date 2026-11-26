@@ -66,13 +66,19 @@ export function canCopilotDock({ dockTop, viewport }: DockContext): boolean {
   return dockTop !== undefined && viewport.width >= COPILOT_DOCK_MIN_VIEWPORT_WIDTH;
 }
 
+/** Where a docked panel starts: under the top bar, or at the very top beside a sheet, which covers the top bar too. */
+export function getCopilotDockedTop({ dockTop, isOverSheet }: { dockTop: number; isOverSheet: boolean }): number {
+  return isOverSheet ? 0 : dockTop;
+}
+
 export function resolveCopilotPanelPlacement({
   layout,
   dockTop,
   viewport,
-}: DockContext & { layout: CopilotPanelLayout }): CopilotPanelPlacement {
+  isOverSheet = false,
+}: DockContext & { layout: CopilotPanelLayout; isOverSheet?: boolean }): CopilotPanelPlacement {
   if (layout.mode === 'docked' && dockTop !== undefined && canCopilotDock({ dockTop, viewport })) {
-    return { kind: 'docked', top: dockTop };
+    return { kind: 'docked', top: getCopilotDockedTop({ dockTop, isOverSheet }) };
   }
 
   return layout.position ? { kind: 'free', position: layout.position } : { kind: 'anchored' };

@@ -53,6 +53,12 @@ describe('resolveCopilotPanelPlacement', () => {
     });
   });
 
+  it('docks from the very top beside a sheet, which covers the top bar too', () => {
+    expect(
+      resolveCopilotPanelPlacement({ layout: { mode: 'docked' }, dockTop: 48, viewport: wide, isOverSheet: true })
+    ).toEqual({ kind: 'docked', top: 0 });
+  });
+
   it('floats above the launcher when docking is not possible and it was never dragged', () => {
     expect(resolveCopilotPanelPlacement({ layout: { mode: 'docked' }, dockTop: 48, viewport: narrow })).toEqual({
       kind: 'anchored',

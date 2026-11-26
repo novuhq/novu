@@ -1,10 +1,12 @@
 import { useMemo, useSyncExternalStore } from 'react';
+import { useCopilotPageView } from './copilot-page-view-store';
 import {
   COPILOT_PANEL_WIDTH,
   type CopilotPanelLayout,
   type CopilotPanelPlacement,
   type CopilotViewport,
   canCopilotDock,
+  getCopilotDockedTop,
   getCopilotTopLimit,
   parseCopilotPanelLayout,
   resolveCopilotPanelPlacement,
@@ -138,7 +140,8 @@ export function useCopilotDockTop(): number | undefined {
 export function useCopilotPanelPlacement(): {
   layout: CopilotPanelLayout;
   placement: CopilotPanelPlacement;
-  dockTop: number | undefined;
+  /** Where a docked panel starts on this page; `undefined` on a page without a dock slot. */
+  dockedTop: number | undefined;
   /** The highest a floating panel goes, under the top bar. */
   topLimit: number;
   canDock: boolean;
@@ -147,16 +150,22 @@ export function useCopilotPanelPlacement(): {
   const currentLayout = useCopilotPanelLayout();
   const dockTop = useCopilotDockTop();
   const currentViewport = useCopilotViewport();
+  const isOverSheet = !!useCopilotPageView()?.overSheet;
 
   return useMemo(
     () => ({
       layout: currentLayout,
-      placement: resolveCopilotPanelPlacement({ layout: currentLayout, dockTop, viewport: currentViewport }),
-      dockTop,
+      placement: resolveCopilotPanelPlacement({
+        layout: currentLayout,
+        dockTop,
+        viewport: currentViewport,
+        isOverSheet,
+      }),
+      dockedTop: dockTop === undefined ? undefined : getCopilotDockedTop({ dockTop, isOverSheet }),
       topLimit: getCopilotTopLimit(dockTop),
       canDock: canCopilotDock({ dockTop, viewport: currentViewport }),
       viewport: currentViewport,
     }),
-    [currentLayout, dockTop, currentViewport]
+    [currentLayout, dockTop, currentViewport, isOverSheet]
   );
 }

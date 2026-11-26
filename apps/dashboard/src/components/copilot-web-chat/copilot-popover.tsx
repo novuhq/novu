@@ -159,8 +159,13 @@ function CopilotPopover({
   const isDocked = shown.kind === 'docked';
   const geometry = getPanelGeometry({ shown, drag, viewport, topLimit, isOverSheet });
   const hidden = isDocked ? DOCKED_HIDDEN : FLOATING_HIDDEN;
+  // Read during render: true only when the previous render was docked too, so a panel that just docked lands in place.
+  const wasDockedRef = useRef(false);
 
   useEffect(() => (isShown && isDocked ? showCopilotDock() : undefined), [isShown, isDocked]);
+  useEffect(() => {
+    wasDockedRef.current = isDocked;
+  });
 
   return (
     <AnimatePresence>
@@ -181,6 +186,10 @@ function CopilotPopover({
             'fixed flex flex-col overflow-hidden border-stroke-soft bg-bg-white',
             // Over a sheet it glides up with the launcher, clear of the sheet's footer, with the sheet's 500ms slide-in.
             shown.kind === 'anchored' && 'transition-[bottom] duration-500 ease-in-out motion-reduce:transition-none',
+            // Docked, it grows to the full height beside a sheet (and back) with the same slide.
+            isDocked &&
+              wasDockedRef.current &&
+              'transition-[top] duration-500 ease-in-out motion-reduce:transition-none',
             geometry.className,
             isOverSheet && !isModalDialogOpen ? 'z-[51]' : 'z-40'
           )}
@@ -239,7 +248,7 @@ function CopilotDockPreview({ isVisible, top }: { isVisible: boolean; top: numbe
 export function CopilotPopoverMount() {
   const { pageContext, isOpen, isAvailable } = useCopilotWebChat();
   const panelRef = useRef<HTMLDivElement>(null);
-  const { layout, placement, dockTop, topLimit, canDock, viewport } = useCopilotPanelPlacement();
+  const { layout, placement, dockedTop, topLimit, canDock, viewport } = useCopilotPanelPlacement();
   const drag = useCopilotPanelDrag({ panelRef, layout, canDock, topLimit, isShown: isOpen && isAvailable });
   const shown: ShownPlacement = drag.isDragging ? { kind: 'dragging' } : placement;
 
@@ -249,7 +258,7 @@ export function CopilotPopoverMount() {
     <>
       {/* The panel grows out of the launcher only while it floats above it; anywhere else the launcher steps aside. */}
       <CopilotLauncher isHiddenWhileOpen={shown.kind !== 'anchored'} />
-      <CopilotDockPreview isVisible={drag.isOverDockZone} top={dockTop} />
+      <CopilotDockPreview isVisible={drag.isOverDockZone} top={dockedTop} />
       <CopilotPopover
         panelRef={panelRef}
         layout={layout}
