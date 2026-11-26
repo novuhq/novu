@@ -534,7 +534,7 @@ describe("get_workflow_run", () => {
 									detail: "HTTP request returned a non-object response",
 									raw: JSON.stringify({
 										message:
-											"Expected an object from https://user:pw@api.example.com/hooks/T0123456789ABCDEFG/handle?token=short-secret-123",
+											"Expected an object from https://user:pw@api.example.com/hooks/T0123456789ABCDEFG/bot123456:AAHdqTcv/AbCdEfGhIjKlMnOpQrStUvWx/handle?token=short-secret-123",
 									}),
 									status: "Warning",
 								},
@@ -555,9 +555,15 @@ describe("get_workflow_run", () => {
 
 		expect(result.steps[0].executionDetails[0].providerResponse).toEqual({
 			message:
-				"Expected an object from https://api.example.com/hooks/[redacted]/handle?[redacted]",
+				"Expected an object from https://api.example.com/hooks/[redacted]/[redacted]/[redacted]/handle?[redacted]",
 		});
-		for (const secret of ["short-secret-123", "user:pw", "T0123456789ABCDEFG"]) {
+		for (const secret of [
+			"short-secret-123",
+			"user:pw",
+			"T0123456789ABCDEFG",
+			"AAHdqTcv",
+			"AbCdEfGhIjKlMnOpQrStUvWx",
+		]) {
 			expect(JSON.stringify(result), secret).not.toContain(secret);
 		}
 	});

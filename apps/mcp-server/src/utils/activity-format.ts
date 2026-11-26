@@ -43,8 +43,13 @@ const LONG_TOKEN = /[A-Za-z0-9_\-+=]{40,}/g;
 const URL_IN_TEXT = /\bhttps?:\/\/[^\s"'<>]+/gi;
 // A failed context lookup on trigger appends the whole trigger context, data included, to its error message.
 const CONTEXT_SUFFIX = /\s*\| Context: [\s\S]*$/;
-/** A path segment that reads like an id or secret, such as the last parts of a chat webhook URL. */
-export const SECRET_LIKE_SEGMENT = /^(?=[^/]*\d)(?=[^/]*[A-Za-z])[\w\-.~]{16,}$/;
+/**
+ * A path segment that reads like an id or secret, such as the last parts of a chat webhook URL or a bot token
+ * (`bot<id>:<token>`), as `workflow-secrets.ts` hides them in a step's URL: 6+ characters mixing letters and digits,
+ * or 16+ letters and digits mixing upper and lower case.
+ */
+export const SECRET_LIKE_SEGMENT =
+	/^(?:(?=[^/]*\d)(?=[^/]*[A-Za-z])[^/]{6,}|(?=[^/]*[a-z])(?=[^/]*[A-Z])[A-Za-z\d]{16,})$/;
 
 const ATTENTION_STATUSES = new Set(["Failed", "Warning"]);
 
