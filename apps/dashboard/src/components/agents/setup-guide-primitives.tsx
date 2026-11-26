@@ -1,27 +1,14 @@
-import { providers as novuProviders } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import ReactConfetti from 'react-confetti';
 import { createPortal } from 'react-dom';
 import { RiArrowRightUpLine, RiFlashlightLine, RiListCheck2 } from 'react-icons/ri';
-import { useSearchParams } from 'react-router-dom';
 import { getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
-import { IntegrationSettings } from '@/components/integrations/components/integration-settings';
-import { IntegrationSheet } from '@/components/integrations/components/integration-sheet';
-import { handleIntegrationError } from '@/components/integrations/components/utils/handle-integration-error';
-import { cleanCredentials } from '@/components/integrations/components/utils/helpers';
-import { useIsIntegrationStoreV2Enabled } from '@/components/integrations/integration-store-routes';
-import { IntegrationSettings as LegacyIntegrationSettings } from '@/components/integrations/legacy/integration-settings';
-import { IntegrationSheet as LegacyIntegrationSheet } from '@/components/integrations/legacy/integration-sheet';
-import type { IntegrationFormData } from '@/components/integrations/types';
 import { Button, buttonVariants } from '@/components/primitives/button';
 import { CopyButton } from '@/components/primitives/copy-button';
-import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { ExternalLink } from '@/components/shared/external-link';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { AGENTS_DOCS_PROVIDERS_URL } from '@/utils/agent-docs';
 import { cn } from '@/utils/ui';
 import { hasAgentInboundConnection } from './is-agent-integration-connected';
@@ -506,120 +493,5 @@ export function ListeningStatus({
         inline={inline}
       />
     </>
-  );
-}
-
-export function IntegrationCredentialsSidebar({
-  integrationId,
-  isOpen,
-  onClose,
-  onSaveSuccess,
-  agentOnboarding,
-  agentIdentifier,
-  testSubscriberId,
-  submitLabel,
-}: {
-  integrationId: string;
-  isOpen: boolean;
-  onClose: () => void;
-  onSaveSuccess?: () => void;
-  agentOnboarding?: boolean;
-  /**
-   * Agent identifier for agent-onboarding flows. Threaded through to
-   * provider-specific paste components so they can render agent-scoped UI
-   * (e.g. the Telegram mobile setup QR code) inside the modal.
-   */
-  agentIdentifier?: string;
-  /** Quickstart test subscriber for Telegram mobile `/start` deep links. */
-  testSubscriberId?: string | null;
-  submitLabel?: string;
-}) {
-  const { integrations } = useFetchIntegrations();
-  const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown>, isDirty: false });
-  const isIntegrationStoreV2Enabled = useIsIntegrationStoreV2Enabled();
-
-  const integration = integrations?.find((i) => i._id === integrationId);
-  const provider = novuProviders?.find((p) => p.id === integration?.providerId);
-
-  useEffect(() => {
-    if (!agentOnboarding) {
-      return;
-    }
-
-    const hasAgentOnboardingParam = searchParams.get('agent_onboarding') === 'true';
-
-    if ((isOpen && hasAgentOnboardingParam) || (!isOpen && !searchParams.has('agent_onboarding'))) {
-      return;
-    }
-
-    const nextSearchParams = new URLSearchParams(searchParams);
-
-    if (isOpen) {
-      nextSearchParams.set('agent_onboarding', 'true');
-    } else {
-      nextSearchParams.delete('agent_onboarding');
-    }
-
-    setSearchParams(nextSearchParams, { replace: true });
-  }, [agentOnboarding, isOpen, searchParams, setSearchParams]);
-
-  async function onSubmit(data: IntegrationFormData) {
-    if (!integration) return;
-
-    try {
-      await updateIntegration({
-        integrationId: integration._id,
-        data: {
-          name: data.name,
-          identifier: data.identifier,
-          active: data.active,
-          primary: data.primary,
-          credentials: cleanCredentials(data.credentials),
-          check: data.check,
-          configurations: data.configurations,
-        },
-      });
-
-      showSuccessToast('Integration updated successfully');
-      onSaveSuccess?.();
-      onClose();
-    } catch (error: unknown) {
-      handleIntegrationError(error, 'update');
-    }
-  }
-
-  if (!integration || !provider) return null;
-
-  const Sheet = isIntegrationStoreV2Enabled ? IntegrationSheet : LegacyIntegrationSheet;
-  const Settings = isIntegrationStoreV2Enabled ? IntegrationSettings : LegacyIntegrationSettings;
-
-  return (
-    <Sheet isOpened={isOpen} onClose={onClose} provider={provider} mode="update">
-      <div className="scrollbar-custom flex-1 overflow-y-auto">
-        <Settings
-          provider={provider}
-          integration={integration}
-          onSubmit={onSubmit}
-          mode="update"
-          agentOnboarding={agentOnboarding}
-          agentIdentifier={agentIdentifier}
-          testSubscriberId={testSubscriberId}
-          onFormStateChange={setFormState}
-        />
-      </div>
-
-      <div className="bg-background flex justify-end gap-2 border-t p-3">
-        <Button
-          type="submit"
-          form={`integration-configuration-form-${provider.id}`}
-          isLoading={isUpdating}
-          disabled={!formState.isValid}
-        >
-          {submitLabel ?? 'Save Changes'}
-        </Button>
-      </div>
-    </Sheet>
   );
 }

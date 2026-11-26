@@ -8,8 +8,8 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { isWhatsAppEmbeddedSignupConfigured } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { IntegrationCredentialsSidebar } from './integration-credentials-sidebar';
 import {
-  IntegrationCredentialsSidebar,
   ListeningStatus,
   ProviderSetupStepperRail,
   SetupButton,

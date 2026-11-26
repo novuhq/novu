@@ -7,9 +7,9 @@ import { IS_SELF_HOSTED_EE } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { InboundAddressConfig } from './inbound-address-config';
+import { IntegrationCredentialsSidebar } from './integration-credentials-sidebar';
 import { OutboundProviderSelect } from './outbound-provider-select';
 import {
-  IntegrationCredentialsSidebar,
   ListeningStatus,
   ProviderSetupStepperRail,
   SetupButton,
@@ -37,6 +37,7 @@ export type EmailSetupGuideProps = {
   isOnboarding?: boolean;
 };
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing on next; this change only moves an import
 export function EmailSetupGuide({
   agent,
   integrationId,

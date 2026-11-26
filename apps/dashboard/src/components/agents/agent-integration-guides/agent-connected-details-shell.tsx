@@ -1,4 +1,4 @@
-import { ChatProviderIdEnum, FeatureFlagsKeysEnum, type ICredentials } from '@novu/shared';
+import { ChatProviderIdEnum, FeatureFlagsKeysEnum, type ICredentials, isMaskedSecret } from '@novu/shared';
 import { type ReactNode, useId, useMemo } from 'react';
 import { RiArrowRightSLine, RiArrowRightUpLine, RiCheckLine, RiInformationLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
@@ -65,11 +65,15 @@ export function ReadOnlyField({
   mono?: boolean;
 }) {
   const fieldId = useId();
+  // With the redesigned integration store the API returns saved secrets masked; there is nothing to reveal or copy.
+  const isMasked = secret && isMaskedSecret(value);
 
   return (
     <div className="flex flex-col gap-1.5">
       <FieldLabel htmlFor={fieldId} label={label} required={required} info={info} />
-      {secret ? (
+      {isMasked ? (
+        <Input id={fieldId} value={value} readOnly size="2xs" className="font-mono" />
+      ) : secret ? (
         <SecretInput id={fieldId} value={value} onChange={() => {}} readOnly size="2xs" className="font-mono" />
       ) : (
         <Input

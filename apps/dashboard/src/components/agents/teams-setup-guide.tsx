@@ -26,8 +26,8 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildAgentConnectionIdentifier } from '@/utils/connect-subscriber-id';
 import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
+import { IntegrationCredentialsSidebar } from './integration-credentials-sidebar';
 import {
-  IntegrationCredentialsSidebar,
   ListeningStatus,
   ProviderSetupStepperRail,
   SetupButton,
