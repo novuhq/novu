@@ -7,8 +7,8 @@ import {
   resolvePublicAddresses,
   SsrfBlockedError,
 } from '@novu/shared/utils/ssrf-url-validation';
+import { assertSubscriberTokensEnabled } from '../../../../shared/utils/assert-subscriber-tokens-enabled';
 import { SyncAgentEmailSenderName } from '../../../email/sync-agent-email-sender-name.service';
-import { assertSubscriberTokensEnabled } from '../../../shared/assert-subscriber-tokens-enabled';
 import type { AgentResponseDto, AgentRuntimeConfigResponseDto } from '../../../shared/dtos';
 import { toAgentResponse } from '../../../shared/mappers/agent-response.mapper';
 import { getAgentAccessRuleIssues } from '../../../shared/util/agent-access-rule';

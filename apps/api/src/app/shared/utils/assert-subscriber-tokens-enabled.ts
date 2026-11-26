@@ -25,7 +25,7 @@ export async function assertSubscriberTokensEnabled(args: {
   if (!enabled) {
     throw new ForbiddenException({
       statusCode: 403,
-      message: 'Subscriber access rules are not enabled for this organization.',
+      message: 'Signed subscriber tokens are not enabled for this organization.',
       error: 'subscriber_tokens_disabled',
     });
   }

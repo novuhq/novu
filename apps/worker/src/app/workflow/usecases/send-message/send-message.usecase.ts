@@ -9,6 +9,7 @@ import {
   GetPreferences,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
+  getCachedEnvironment,
   ICompileContext,
   InMemoryLRUCacheService,
   Instrument,
@@ -37,7 +38,7 @@ import {
   PreferencesTypeEnum,
   StepTypeEnum,
 } from '@novu/shared';
-import { buildWorkflowEnvVariables, getCachedEnvironment, getCachedEnvironmentVariables } from '../../../shared/utils';
+import { buildWorkflowEnvVariables, getCachedEnvironmentVariables } from '../../../shared/utils';
 import { ExecuteBridgeJob } from '../execute-bridge-job';
 import { Digest } from './digest';
 import { ExecuteCodeFirstCustomStep } from './execute-code-first-custom-step.usecase';
