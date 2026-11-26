@@ -274,6 +274,23 @@ describe("restoreStepSecrets: ambiguous places are refused, never guessed", () =
 		expect(!result.ok && result.error).toContain("now points at another host");
 	});
 
+	it("refuses a case change inside a Liquid expression, which reads another variable", () => {
+		const saved = {
+			headers: [{ key: "Authorization", value: `Bearer ${TOKEN}` }],
+			url: "https://{{payload.host}}.example.com/hook",
+		};
+		const headers = [{ key: "Authorization", value: HIDDEN_SECRET }];
+
+		const renamed = restore(
+			{ headers, url: "https://{{payload.Host}}.example.com/hook" },
+			saved,
+		);
+		expect(!renamed.ok && renamed.error).toContain("now points at another host");
+		expect(
+			restore({ headers, url: "https://{{payload.host}}.EXAMPLE.com/hook" }, saved).ok,
+		).toBe(true);
+	});
+
 	it("refuses a host change hidden in the user info or behind a backslash", () => {
 		const saved = {
 			headers: [{ key: "Authorization", value: `Bearer ${TOKEN}` }],

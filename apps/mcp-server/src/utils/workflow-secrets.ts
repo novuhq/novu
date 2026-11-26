@@ -435,12 +435,11 @@ function originOf(url: unknown): string | undefined {
 	if (!match) return undefined;
 
 	const [, scheme = "", authority = ""] = match;
-	const restored = authority.replace(
-		STAND_IN_PATTERN,
-		(_, index: string) => expressions[Number(index)],
-	);
 
-	return `${scheme}${restored}`.toLowerCase();
+	// Hosts compare in any case, but Liquid variable names don't: `{{payload.Host}}` reads another value.
+	return `${scheme}${authority}`
+		.toLowerCase()
+		.replace(STAND_IN_PATTERN, (_, index: string) => expressions[Number(index)]);
 }
 
 /** Any Liquid output or tag, quoted text included. */
