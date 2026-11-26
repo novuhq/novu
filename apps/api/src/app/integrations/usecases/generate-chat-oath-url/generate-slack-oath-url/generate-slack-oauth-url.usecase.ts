@@ -52,6 +52,7 @@ export const SLACK_DEFAULT_OAUTH_SCOPES = [
   'groups:read',
   'users:read',
   'users:read.email',
+  'files:write',
 ] as const;
 
 export const SLACK_LINK_USER_OAUTH_SCOPES = ['identity.basic'] as const;
@@ -89,6 +90,7 @@ export class GenerateSlackOauthUrl {
 
     const resolvedScope = command.mode === 'link_user' ? undefined : await this.resolveBotScopes(command);
 
+    // biome-ignore lint/style/noNonNullAssertion: Existing clientId assertion is outside this change.
     return this.getOAuthUrl(clientId!, secureState, resolvedScope, command.userScope, command.mode);
   }
 

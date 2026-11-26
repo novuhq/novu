@@ -7,6 +7,7 @@ export enum CopilotPageEnum {
   SUBSCRIBERS = 'subscribers',
   INTEGRATIONS = 'integrations',
   AGENTS = 'agents',
+  USAGE = 'usage',
 }
 
 const COPILOT_PAGES = new Set<string>(Object.values(CopilotPageEnum));

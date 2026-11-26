@@ -53,6 +53,11 @@ export const SUBSCRIBER_REACHABILITY_TOOL_NAMES = ["get_subscriber_reachability"
 
 export type SubscriberReachabilityToolName = (typeof SUBSCRIBER_REACHABILITY_TOOL_NAMES)[number];
 
+/** Every tool `registerUsageTools` registers, by public MCP name. All are read-only. */
+export const USAGE_TOOL_NAMES = ["get_usage"] as const;
+
+export type UsageToolName = (typeof USAGE_TOOL_NAMES)[number];
+
 /** Every tool `registerIntegrationTools` registers, by public MCP name. */
 export const INTEGRATION_TOOL_NAMES = {
 	DELETE_INTEGRATION: "delete_integration",

@@ -3,6 +3,7 @@ import { poll } from '../node/poll.ts';
 import { output } from '../node/process.ts';
 import { Applied, Applying, Baked, type BoxState, type DoctorReport } from '../shared/contracts.ts';
 import { runnable } from './apply.ts';
+import { readFlags } from './flags.ts';
 import { isAlive, lockHolder } from './lock.ts';
 import { API_HEALTH, APPLIED, APPLYING, BAKED } from './paths.ts';
 import { APPS, PROCESSES, STORES } from './processes.ts';
@@ -45,7 +46,7 @@ export async function doctor(): Promise<DoctorReport> {
     if (http[name] !== 200) problems.push(`${name} answered ${http[name] || 'nothing'} at ${url}`);
   }
 
-  return { ok: !problems.length, problems, baked, applied, lock, http, processes };
+  return { ok: !problems.length, problems, flags: readFlags(), baked, applied, lock, http, processes };
 }
 
 function processProblem({ name, status, ready, exitCode }: DoctorReport['processes'][number]): string | undefined {

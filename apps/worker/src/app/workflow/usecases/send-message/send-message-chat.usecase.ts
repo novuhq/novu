@@ -9,8 +9,10 @@ import {
   DetailEnum,
   FeatureFlagsService,
   GetNovuProviderCredentials,
+  type IChatHandler,
   InstrumentUsecase,
   type IntegrationSelectionResult,
+  MsTeamsTokenService,
   messageWebhookMapper,
   SelectIntegration,
   SelectIntegrationCommand,
@@ -47,9 +49,17 @@ import {
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
-import { CardElement, ChannelData, IChatRenderValidation, ISendMessageSuccessResponse } from '@novu/stateless';
+import {
+  CardElement,
+  ChannelData,
+  IChatFile,
+  IChatFileDeliveryResult,
+  IChatRenderValidation,
+  ISendMessageSuccessResponse,
+} from '@novu/stateless';
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
+import { getChatAttachments } from './attachment-channels';
 import { ResolveChannelEndpointsCommand } from './channel-endpoint-resolution/resolve-channel-endpoints.command';
 import {
   IntegrationEndpoints,
@@ -65,6 +75,16 @@ import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageChat';
+
+/** Azure AD token errors carry the readable text (an `AADSTS…` code) in `error_description`. */
+function describeAadError(error: unknown): string {
+  const data = (error as { response?: { data?: { error_description?: unknown } } } | undefined)?.response?.data;
+  const description = typeof data?.error_description === 'string' ? data.error_description : undefined;
+  const message = description ?? (error instanceof Error ? error.message : String(error));
+
+  // The first line is the explanation; the rest are trace and correlation ids.
+  return message.split(/\r?\n/)[0].slice(0, 300);
+}
 
 /**
  * True when overrides carry payload that replaces the compiled card (primary content key,
@@ -169,7 +189,8 @@ export class SendMessageChat extends SendMessageBase {
     private resolveChannelEndpoints: ResolveChannelEndpoints,
     private agentRepository: AgentRepository,
     private agentIntegrationRepository: AgentIntegrationRepository,
-    private featureFlagsService: FeatureFlagsService
+    private featureFlagsService: FeatureFlagsService,
+    private msTeamsTokenService: MsTeamsTokenService
   ) {
     super(
       messageRepository,
@@ -798,6 +819,9 @@ export class SendMessageChat extends SendMessageBase {
     // Apply channel data overrides if present for this specific endpoint
     const overriddenChannelData = this.applyEndpointSpecificOverrides(channelData, combinedOverrides);
 
+    let sentMessage: ISendMessageSuccessResponse;
+    let sendResult: SendMessageResult;
+
     try {
       // Rich Chat: resolve the compiled card into transport-ready fields once, here — before
       // `send` — so the provider stays a pure transport and the editor preview can reuse the
@@ -816,7 +840,7 @@ export class SendMessageChat extends SendMessageBase {
         this.logCardRenderWarnings(resolved.validation, command);
       }
 
-      const result = await chatHandler.send({
+      sentMessage = await chatHandler.send({
         channelData: overriddenChannelData,
         bridgeProviderData: combinedOverrides,
         customData: overrides,
@@ -824,13 +848,148 @@ export class SendMessageChat extends SendMessageBase {
         nativePayload,
       });
 
-      if (result.id) {
-        await this.persistProviderIdentifier(result.id, message, command, assignedAgentId);
+      if (sentMessage.id) {
+        await this.persistProviderIdentifier(sentMessage.id, message, command, assignedAgentId);
       }
 
-      return await this.handleMessageSendSuccess(result, message, command, overriddenChannelData);
+      sendResult = await this.handleMessageSendSuccess(sentMessage, message, command, overriddenChannelData);
     } catch (error) {
       return await this.handleMessageSendError(error, message, command, overriddenChannelData);
+    }
+
+    // Outside the try: the message is delivered, so nothing about its files may turn it into a failure.
+    await this.sendChatFiles({
+      chatHandler,
+      integration,
+      channelData: overriddenChannelData,
+      sentMessage,
+      bridgeProviderData: combinedOverrides,
+      customData: overrides,
+      message,
+      command,
+    });
+
+    return sendResult;
+  }
+
+  /**
+   * Sends the trigger attachments marked for chat (`channels` includes `chat`) right after the
+   * message, to the same place. Never throws: problems only add a warning to the activity log.
+   */
+  private async sendChatFiles({
+    chatHandler,
+    integration,
+    channelData,
+    sentMessage,
+    bridgeProviderData,
+    customData,
+    message,
+    command,
+  }: {
+    chatHandler: IChatHandler;
+    integration: IntegrationEntity;
+    channelData: ChannelData;
+    sentMessage: ISendMessageSuccessResponse;
+    bridgeProviderData: Record<string, unknown>;
+    customData: Record<string, unknown>;
+    message: MessageEntity;
+    command: SendMessageChannelCommand;
+  }): Promise<void> {
+    try {
+      const { files, unavailable } = getChatAttachments(command.payload);
+
+      if (files.length === 0 && unavailable.length === 0) {
+        return;
+      }
+
+      const delivered =
+        files.length > 0
+          ? await this.deliverChatFiles(files, chatHandler, integration, {
+              channelData,
+              sentMessage,
+              bridgeProviderData,
+              customData,
+            })
+          : [];
+      const results = [...delivered, ...unavailable];
+      const notSent = results.filter((result) => result.status !== 'sent');
+
+      if (notSent.length > 0) {
+        Logger.warn(
+          { jobId: command.jobId, providerId: integration.providerId, files: notSent },
+          `${notSent.length} of ${results.length} chat file(s) were not sent`,
+          LOG_CONTEXT
+        );
+      }
+
+      await this.createExecutionDetail(
+        command,
+        notSent.length > 0 ? DetailEnum.CHAT_FILES_NOT_SENT : DetailEnum.CHAT_FILES_SENT,
+        notSent.length > 0 ? ExecutionDetailsStatusEnum.WARNING : ExecutionDetailsStatusEnum.SUCCESS,
+        message._id,
+        { files: results, channelData: this.redactChannelData(channelData) }
+      );
+    } catch (error) {
+      Logger.error(error, 'Failed to send or record chat files', LOG_CONTEXT);
+    }
+  }
+
+  private async deliverChatFiles(
+    files: IChatFile[],
+    chatHandler: IChatHandler,
+    integration: IntegrationEntity,
+    target: {
+      channelData: ChannelData;
+      sentMessage: ISendMessageSuccessResponse;
+      bridgeProviderData: Record<string, unknown>;
+      customData: Record<string, unknown>;
+    }
+  ): Promise<IChatFileDeliveryResult[]> {
+    try {
+      const channelData = await this.withFileUploadAccess(target.channelData, integration);
+      const results = await chatHandler.sendFiles({ ...target, channelData, files });
+
+      if (results) {
+        return results;
+      }
+
+      return files.map((file) => ({
+        name: file.name,
+        status: 'skipped',
+        reason: `Novu doesn't send files to ${integration.providerId} yet.`,
+      }));
+    } catch (error) {
+      return files.map((file) => ({ name: file.name, status: 'failed', reason: this.getErrorMessage(error) }));
+    }
+  }
+
+  /**
+   * Microsoft Teams files are uploaded with Microsoft Graph, which needs its own app-only token
+   * in the subscriber's tenant. Fetched only here, when a message has files to send.
+   */
+  private async withFileUploadAccess(channelData: ChannelData, integration: IntegrationEntity): Promise<ChannelData> {
+    if (channelData.type !== ENDPOINT_TYPES.MS_TEAMS_CHANNEL && channelData.type !== ENDPOINT_TYPES.MS_TEAMS_USER) {
+      return channelData;
+    }
+
+    const { clientId, secretKey } = integration.credentials ?? {};
+
+    if (!clientId || !secretKey) {
+      throw new Error('The Microsoft Teams integration is missing its client ID or client secret.');
+    }
+
+    try {
+      const graphToken = await this.msTeamsTokenService.getGraphToken(
+        clientId,
+        secretKey,
+        channelData.subscriberTenantId
+      );
+
+      return { ...channelData, graphToken };
+    } catch (error) {
+      throw new Error(
+        `Couldn't get Microsoft Graph access in tenant ${channelData.subscriberTenantId}: ${describeAadError(error)}`
+      );
     }
   }
 

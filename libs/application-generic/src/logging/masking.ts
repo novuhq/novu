@@ -6,6 +6,7 @@ const passwordFields = [
   'password',
   'token',
   'subscriberToken',
+  'topicGrant',
   'apiKey',
   'apiKeys',
   'secretKey',

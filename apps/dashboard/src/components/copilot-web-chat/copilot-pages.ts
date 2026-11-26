@@ -3,8 +3,10 @@ import type { IconType } from 'react-icons';
 import {
   RiBarChart2Line,
   RiBarChartBoxLine,
+  RiBarChartGroupedLine,
   RiChat1Line,
   RiGroup2Line,
+  RiLineChartLine,
   RiPlugLine,
   RiRobot2Line,
   RiStore3Line,
@@ -90,6 +92,22 @@ export const COPILOT_PAGE_CONFIGS: Partial<Record<CopilotPageEnum, CopilotPageCo
     placeholder: 'Ask about an agent…',
     suggestions: ['Which channels can my agents reply on?', 'What did people ask my agents today?'],
     suggestionIcon: RiChat1Line,
+  },
+  [CopilotPageEnum.USAGE]: {
+    routes: [ROUTES.ANALYTICS],
+    chip: { label: 'Usage', icon: RiLineChartLine },
+    emptyState: {
+      title: 'Ask about usage',
+      body: 'I read the Usage charts: messages per channel and workflow, active subscribers and Inbox interactions. Every answer names the environment and period it used.',
+    },
+    placeholder: 'Ask about usage…',
+    // "In this period" is the period the page shows, which the plan's retention limits; a fixed one could fail.
+    suggestions: [
+      'How did email do in this period?',
+      'Which workflows ran the most in this period?',
+      'How many active subscribers did we have in this period?',
+    ],
+    suggestionIcon: RiBarChartGroupedLine,
   },
 };
 

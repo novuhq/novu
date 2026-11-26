@@ -2,7 +2,12 @@ import { randomUUID } from 'node:crypto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { NovuTokens, SubscriberLoginClaims, TOKEN_KINDS } from '../../../shared/services/novu-tokens.service';
+import {
+  NovuTokens,
+  SubscriberLoginClaims,
+  SubscriberTopicGrantClaims,
+  TOKEN_KINDS,
+} from '../../../shared/services/novu-tokens.service';
 import { CreateSubscriberTokenResponseDto } from '../../dtos/create-subscriber-token-response.dto';
 import { CreateSubscriberTokenCommand } from './create-subscriber-token.command';
 
@@ -27,6 +32,12 @@ export class CreateSubscriberToken {
       throw new NotFoundException();
     }
 
+    return command.request.topic === undefined
+      ? this.mintLogin(command)
+      : this.mintTopicGrant(command, command.request.topic);
+  }
+
+  private mintLogin(command: CreateSubscriberTokenCommand): CreateSubscriberTokenResponseDto {
     const { context, subscriber, expiresIn } = command.request;
     const scope = command.request.scope ?? [];
     const claims: SubscriberLoginClaims = {
@@ -38,7 +49,6 @@ export class CreateSubscriberToken {
       scope,
       jti: randomUUID(),
     };
-
     const signed = this.novuTokens.sign(
       'subscriberLogin',
       claims,
@@ -56,6 +66,36 @@ export class CreateSubscriberToken {
         expiresAt,
       },
       'Subscriber login token created'
+    );
+
+    return { token: signed.token, expiresAt };
+  }
+
+  private mintTopicGrant(command: CreateSubscriberTokenCommand, topic: string): CreateSubscriberTokenResponseDto {
+    const claims: SubscriberTopicGrantClaims = {
+      iss: command.environmentId,
+      aud: 'novu',
+      sub: command.subscriberId,
+      topic,
+      jti: randomUUID(),
+    };
+    const signed = this.novuTokens.sign(
+      'subscriberTopicGrant',
+      claims,
+      command.request.expiresIn ?? TOKEN_KINDS.subscriberTopicGrant.maxLifetimeSeconds
+    );
+    const expiresAt = signed.expiresAt.toISOString();
+
+    this.logger.info(
+      {
+        jti: claims.jti,
+        subscriberId: command.subscriberId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        topic,
+        expiresAt,
+      },
+      'Subscriber topic grant created'
     );
 
     return { token: signed.token, expiresAt };
