@@ -11,6 +11,7 @@ import {
 import { MessageResponse } from '@/components/ai-elements/message';
 import { Shimmer } from '@/components/ai-elements/shimmer';
 import { cn } from '@/utils/ui';
+import { CopilotApprovalBlock } from './copilot-approval-card';
 import { CopilotCardBlock } from './copilot-card';
 import {
   type AssistantBlock,
@@ -218,6 +219,8 @@ export function CopilotAssistantMessage({ message }: { message: AgentMessage }) 
         if (block.kind === 'card') {
           return <CopilotCardBlock key={block.key} card={block.card} sourceMessageId={block.sourceMessageId} />;
         }
+
+        if (block.kind === 'approval') return <CopilotApprovalBlock key={block.key} part={block.part} />;
 
         return <ToolGroup key={block.key} block={block} />;
       })}

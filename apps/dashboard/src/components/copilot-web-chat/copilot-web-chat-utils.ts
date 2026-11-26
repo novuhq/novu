@@ -1,4 +1,11 @@
-import type { AgentCardChild, AgentCardElement, AgentCardPart, AgentMessage, AgentToolPart } from '@novu/js';
+import type {
+  AgentApprovalPart,
+  AgentCardChild,
+  AgentCardElement,
+  AgentCardPart,
+  AgentMessage,
+  AgentToolPart,
+} from '@novu/js';
 import {
   AiWorkflowToolsEnum,
   type CopilotPageEnum,
@@ -31,7 +38,7 @@ const WORKFLOW_WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
 ]);
 
 /** Tool names may arrive namespaced by the MCP server (`server__tool`), so match on the last segment. */
-function normalizeToolName(toolName: string): string {
+export function normalizeToolName(toolName: string): string {
   const parts = toolName.split(/__|\./);
 
   return parts[parts.length - 1] ?? toolName;
@@ -243,7 +250,8 @@ export type AssistantBlock =
   | { kind: 'text'; key: string; text: string; streaming: boolean }
   | { kind: 'thinking'; key: string; text: string; streaming: boolean }
   | { kind: 'tools'; key: string; rows: ToolRow[] }
-  | { kind: 'card'; key: string; card: AgentCardElement; sourceMessageId: string };
+  | { kind: 'card'; key: string; card: AgentCardElement; sourceMessageId: string }
+  | { kind: 'approval'; key: string; part: AgentApprovalPart };
 
 /**
  * Groups consecutive tool parts into one block and drops parts this UI does not render, including the "Powered by
@@ -269,6 +277,8 @@ export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
       else blocks.push({ kind: 'tools', key, rows: [row] });
     } else if (part.type === 'card') {
       blocks.push({ kind: 'card', key, card: part.card, sourceMessageId: part.sourceMessageId });
+    } else if (part.type === 'approval') {
+      blocks.push({ kind: 'approval', key, part });
     }
   });
 
