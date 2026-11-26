@@ -1,7 +1,7 @@
 import { RiArrowRightSLine, RiCornerDownLeftLine } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
-import { LinkButton } from '@/components/primitives/button-link';
+import { linkButtonVariants } from '@/components/primitives/button-link';
 import { useAuth } from '@/context/auth/hooks';
 import { ROUTES } from '@/utils/routes';
 import { CopilotEmptyHero } from './copilot-empty-hero';
@@ -25,6 +25,7 @@ function getBlockedPlaceholder(reason: CopilotBlockedReason): string {
 
 function TurnedOffState() {
   const { currentOrganization } = useAuth();
+  const navigate = useNavigate();
   const title = currentOrganization?.name ? `Copilot is off for ${currentOrganization.name}` : 'Copilot is off';
 
   return (
@@ -33,25 +34,32 @@ function TurnedOffState() {
         title={title}
         body="An admin turned it off for this organization. Turn it on in Organization settings."
       />
-      <Button variant="secondary" mode="outline" size="2xs" asChild>
-        <Link to={ROUTES.SETTINGS_ORGANIZATION}>Open settings</Link>
+      <Button
+        type="button"
+        variant="secondary"
+        mode="outline"
+        size="2xs"
+        onClick={() => void navigate(ROUTES.SETTINGS_ORGANIZATION)}
+      >
+        Open settings
       </Button>
     </>
   );
 }
 
 function CloudOnlyState() {
+  const { root, icon } = linkButtonVariants({ variant: 'black', size: 'sm' });
+
   return (
     <>
       <CopilotEmptyHero
         title="Copilot runs on Novu Cloud"
         body="It is not available in Community or self-hosted Novu. Your data stays on your servers."
       />
-      <LinkButton variant="black" size="sm" trailingIcon={RiArrowRightSLine} className="text-label-xs" asChild>
-        <a href={BOOK_A_CALL_URL} target="_blank" rel="noreferrer">
-          Book a call
-        </a>
-      </LinkButton>
+      <a href={BOOK_A_CALL_URL} target="_blank" rel="noreferrer" className={root({ class: 'text-label-xs' })}>
+        Book a call
+        <RiArrowRightSLine className={icon()} aria-hidden />
+      </a>
     </>
   );
 }
