@@ -3,4 +3,6 @@ import { NovuMCP } from "./server/NovuMCP";
 
 export { NovuMCP };
 
-export default createApp((request, env, ctx) => NovuMCP.serve("/").fetch(request, env, ctx));
+const mcpHandler = NovuMCP.serve("/");
+
+export default createApp((request, env, ctx) => mcpHandler.fetch(request, env, ctx));

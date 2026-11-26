@@ -175,6 +175,24 @@ describe("the MCP server's OAuth", () => {
 			});
 		});
 
+		it("hands the session the token Clerk verified when the scheme isn't capitalized", async () => {
+			routes[CLERK_VERIFY_URL] = () => json(clerkToken([`${ORIGIN}/`]));
+
+			const response = await app().fetch(
+				mcpRequest(undefined, {
+					headers: {
+						Authorization: "bearer  oat_valid",
+						"Content-Type": "application/json",
+					},
+				}),
+				OAUTH_ENV,
+				ctx,
+			);
+
+			expect(response.status).toBe(200);
+			expect((ctx as unknown as { props: { token: unknown } }).props.token).toBe("oat_valid");
+		});
+
 		it("accepts a token whose audience is the origin without the trailing slash", async () => {
 			routes[CLERK_VERIFY_URL] = () => json(clerkToken([ORIGIN]));
 
@@ -285,6 +303,17 @@ describe("the MCP server's OAuth", () => {
 
 			expect(prm.status).toBe(404);
 			expect(asMetadata.status).toBe(404);
+		});
+
+		it("still answers the CORS preflight on the discovery endpoints", async () => {
+			const response = await app().fetch(
+				new Request(PRM_URL, { method: "OPTIONS" }),
+				API_KEY_ONLY_ENV,
+				ctx,
+			);
+
+			expect(response.status).toBe(204);
+			expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
 		});
 
 		it("treats every token as an API key", async () => {
