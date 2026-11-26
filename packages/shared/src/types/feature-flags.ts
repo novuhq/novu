@@ -377,8 +377,10 @@ export enum FeatureFlagsKeysEnum {
   IS_LEGACY_SELECTOR_BUTTON_VISIBLE = 'IS_LEGACY_SELECTOR_BUTTON_VISIBLE',
   /**
    * Shows the redesigned Integration Store (tabs, new cards, the manage drawer, connection tests) in place of the
-   * previous one, on the same routes. Create the boolean in LaunchDarkly for cloud, or set
-   * `VITE_IS_INTEGRATION_STORE_V_2_ENABLED=true` when self-hosted. Default off.
+   * previous one, on the same routes, and has the API return saved secrets masked to dashboard members instead of
+   * decrypted. Create the boolean in LaunchDarkly for cloud. Self-hosted, set both
+   * `VITE_IS_INTEGRATION_STORE_V_2_ENABLED=true` (dashboard) and `IS_INTEGRATION_STORE_V_2_ENABLED=true` (API).
+   * Default off.
    */
   IS_INTEGRATION_STORE_V_2_ENABLED = 'IS_INTEGRATION_STORE_V_2_ENABLED',
 }

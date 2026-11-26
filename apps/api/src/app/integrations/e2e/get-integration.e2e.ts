@@ -2,8 +2,11 @@ import { EnvironmentRepository, IntegrationEntity } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum, maskSecret, SmsProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { withIntegrationStoreV2Flag } from './integration-store-v2-flag';
 
 describe('Get Integrations - /integrations (GET) #novu-v2', () => {
+  withIntegrationStoreV2Flag(true);
+
   let session: UserSession;
   const envRepository = new EnvironmentRepository();
 

@@ -24,8 +24,11 @@ import {
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { withIntegrationStoreV2Flag } from './integration-store-v2-flag';
 
 describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () => {
+  withIntegrationStoreV2Flag(true);
+
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
   const envRepository = new EnvironmentRepository();

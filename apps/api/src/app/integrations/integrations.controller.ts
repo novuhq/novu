@@ -29,7 +29,7 @@ import {
   PinoLogger,
   RequirePermissions,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository, IntegrationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, type IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import {
   ApiAuthSchemeEnum,
   ApiServiceLevelEnum,
@@ -204,19 +204,19 @@ export class IntegrationsController {
   @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async listIntegrations(@UserSession() user: UserSessionData): Promise<IntegrationResponseDto[]> {
-    const canAccessCredentials = await this.canUserAccessCredentials(user);
+    const credentialsView = await this.getCredentialsView(user);
 
     const integrations = await this.getIntegrationsUsecase.execute(
       GetIntegrationsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        returnCredentials: canAccessCredentials,
+        returnCredentials: credentialsView !== 'none',
         scopeToEnvironment: isEnvironmentScopedListScheme(user.scheme),
       })
     );
 
-    return integrations.map(canAccessCredentials ? withDecryptedSecretsMasked : withoutConfigurationSecrets);
+    return integrations.map((integration) => presentDecrypted(credentialsView, integration));
   }
 
   @Get('/active')
@@ -235,19 +235,19 @@ export class IntegrationsController {
   @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async getActiveIntegrations(@UserSession() user: UserSessionData): Promise<IntegrationResponseDto[]> {
-    const canAccessCredentials = await this.canUserAccessCredentials(user);
+    const credentialsView = await this.getCredentialsView(user);
 
     const integrations = await this.getActiveIntegrationsUsecase.execute(
       GetActiveIntegrationsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        returnCredentials: canAccessCredentials,
+        returnCredentials: credentialsView !== 'none',
         scopeToEnvironment: isEnvironmentScopedListScheme(user.scheme),
       })
     );
 
-    return integrations.map(canAccessCredentials ? withDecryptedSecretsMasked : withoutConfigurationSecrets);
+    return integrations.map((integration) => presentDecrypted(credentialsView, integration));
   }
 
   @Get('/webhook/provider/:providerOrIntegrationId/status')
@@ -297,7 +297,7 @@ export class IntegrationsController {
     try {
       assertEnvironmentScopedAccess(user.scheme, user.environmentId, body._environmentId);
 
-      const canAccessCredentials = await this.canUserAccessCredentials(user);
+      const credentialsView = await this.getCredentialsView(user);
       const integration = await this.createIntegrationUsecase.execute(
         CreateIntegrationCommand.create({
           userId: user._id,
@@ -310,7 +310,7 @@ export class IntegrationsController {
           kind: body.kind,
           credentials: body.credentials,
           // Only callers who may see an integration's credentials may copy its secrets.
-          secretsSourceIntegrationId: canAccessCredentials ? body.secretsSourceIntegrationId : undefined,
+          secretsSourceIntegrationId: credentialsView !== 'none' ? body.secretsSourceIntegrationId : undefined,
           active: body.active ?? false,
           check: body.check ?? false,
           conditions: body.conditions,
@@ -319,13 +319,7 @@ export class IntegrationsController {
         })
       );
 
-      if (canAccessCredentials) {
-        return withStoredSecretsMasked(integration);
-      }
-
-      const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
-
-      return withoutConfigurationSecrets(integrationWithoutCredentials as IntegrationResponseDto);
+      return presentStored(credentialsView, integration);
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -356,7 +350,7 @@ export class IntegrationsController {
     try {
       assertEnvironmentScopedAccess(user.scheme, user.environmentId, body._environmentId);
 
-      const canAccessCredentials = await this.canUserAccessCredentials(user);
+      const credentialsView = await this.getCredentialsView(user);
       const integration = await this.updateIntegrationUsecase.execute(
         UpdateIntegrationCommand.create({
           userId: user._id,
@@ -376,13 +370,7 @@ export class IntegrationsController {
         })
       );
 
-      if (canAccessCredentials) {
-        return withStoredSecretsMasked(integration);
-      }
-
-      const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
-
-      return withoutConfigurationSecrets(integrationWithoutCredentials as IntegrationResponseDto);
+      return presentStored(credentialsView, integration);
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -424,10 +412,11 @@ export class IntegrationsController {
     }
 
     // The usecase works on the decrypted integration, so its secrets are masked or dropped here.
-    const canAccessCredentials = await this.canUserAccessCredentials(user);
-    const integration = canAccessCredentials
-      ? withDecryptedSecretsMasked(result.integration)
-      : withoutConfigurationSecrets({ ...result.integration, credentials: {} });
+    const credentialsView = await this.getCredentialsView(user);
+    const integration = presentDecrypted(credentialsView, {
+      ...result.integration,
+      credentials: credentialsView === 'none' ? {} : result.integration.credentials,
+    });
 
     return { ...result, integration };
   }
@@ -454,7 +443,7 @@ export class IntegrationsController {
     @UserSession() user: UserSessionData,
     @Param('integrationId') integrationId: string
   ): Promise<IntegrationResponseDto> {
-    const canAccessCredentials = await this.canUserAccessCredentials(user);
+    const credentialsView = await this.getCredentialsView(user);
     const integration = await this.setIntegrationAsPrimaryUsecase.execute(
       SetIntegrationAsPrimaryCommand.create({
         userId: user._id,
@@ -465,13 +454,7 @@ export class IntegrationsController {
       })
     );
 
-    if (canAccessCredentials) {
-      return withStoredSecretsMasked(integration);
-    }
-
-    const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
-
-    return withoutConfigurationSecrets(integrationWithoutCredentials as IntegrationResponseDto);
+    return presentStored(credentialsView, integration);
   }
 
   @Delete('/:integrationId')
@@ -1278,6 +1261,26 @@ export class IntegrationsController {
     return restored.apiToken;
   }
 
+  /**
+   * How this caller sees stored secrets: not at all, masked (the redesigned integration store), or in full (the
+   * previous store, which edits the decrypted values). Masking follows `IS_INTEGRATION_STORE_V_2_ENABLED` so the
+   * store that reads the response is the one that understands it.
+   */
+  private async getCredentialsView(user: UserSessionData): Promise<CredentialsView> {
+    if (!(await this.canUserAccessCredentials(user))) {
+      return 'none';
+    }
+
+    const isIntegrationStoreV2Enabled = await this.featureFlagsService.getFlag({
+      organization: { _id: user.organizationId },
+      user: { _id: user._id },
+      key: FeatureFlagsKeysEnum.IS_INTEGRATION_STORE_V_2_ENABLED,
+      defaultValue: false,
+    });
+
+    return isIntegrationStoreV2Enabled ? 'masked' : 'full';
+  }
+
   private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {
     /*
      * API-key, keyless, OAuth, and internal (service) auth must never receive decrypted provider credentials,
@@ -1319,6 +1322,28 @@ export class IntegrationsController {
 
     return user.permissions.includes(PermissionsEnum.INTEGRATION_WRITE);
   }
+}
+
+type CredentialsView = 'none' | 'masked' | 'full';
+
+type PresentableIntegration = { providerId: string; credentials?: object; configurations?: object };
+
+/** An integration whose credentials are already decrypted (the list usecases, auto-configure), as the caller sees it. */
+function presentDecrypted<T extends PresentableIntegration>(view: CredentialsView, integration: T): T {
+  if (view === 'masked') return withDecryptedSecretsMasked(integration);
+  if (view === 'full') return integration;
+
+  return withoutConfigurationSecrets(integration);
+}
+
+/** An integration as the repository returns it, with its credentials still encrypted, as the caller sees it. */
+function presentStored(view: CredentialsView, integration: IntegrationEntity): IntegrationResponseDto {
+  if (view === 'masked') return withStoredSecretsMasked(integration) as IntegrationResponseDto;
+  if (view === 'full') return GetDecryptedIntegrations.getDecryptedCredentials(integration) as IntegrationResponseDto;
+
+  const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
+
+  return withoutConfigurationSecrets(integrationWithoutCredentials as IntegrationResponseDto);
 }
 
 /** What a caller that may not see credentials gets back: settings without the inbound webhook signing key. */
