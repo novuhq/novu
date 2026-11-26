@@ -137,9 +137,8 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
             </PanelContent>
           </Panel>
           <p className="text-foreground-400 text-xs">
-            Senders who are not subscribers are always denied. Equals also compares the type. On{' '}
-            <code>subscriber.data</code>, <code>true</code> and <code>false</code> match booleans and other values match
-            text only, so a number stored as <code>5</code> never equals <code>5</code> typed here.
+            Senders who are not subscribers are always denied. On <code>subscriber.data</code>, equals matches text and
+            true/false. To compare a stored number, use greater than or less than.
           </p>
         </div>
       </Form>
