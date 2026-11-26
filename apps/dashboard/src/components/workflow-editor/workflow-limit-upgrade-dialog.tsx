@@ -67,6 +67,28 @@ export function WorkflowLimitUpgradeDialog({ error, onClose, action = 'create' }
     );
   }
 
+  if (error.limitSource === 'system') {
+    return (
+      <PlanLimitUpgradeDialog
+        open
+        onOpenChange={handleOpenChange}
+        title="You've reached your workflow limit"
+        description={
+          <>
+            Your organization can have up to{' '}
+            <span className="font-medium">
+              {error.limit} {workflowsLabel}
+            </span>
+            . Reach out to the Novu team to increase this limit, or delete a workflow you no longer use.
+          </>
+        }
+        primaryCta="contact-support"
+        telemetrySource="workflows-system-limit-dialog"
+        utmCampaign="workflows_system_limit"
+      />
+    );
+  }
+
   return (
     <PlanLimitUpgradeDialog
       open
