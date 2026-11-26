@@ -96,6 +96,18 @@ export function useCopilotWebChat(): CopilotWebChatContextValue {
 }
 
 /**
+ * The open issues of the thread's newest workflow review, counted by step. Kept apart from the chat context so the
+ * canvas nodes that show them only re-render when the counts change.
+ */
+export const CopilotStepIssuesContext = createContext<ReadonlyMap<string, number>>(new Map());
+
+export function useCopilotStepIssueCount(stepId: string | undefined): number {
+  const counts = useContext(CopilotStepIssuesContext);
+
+  return stepId ? (counts.get(stepId) ?? 0) : 0;
+}
+
+/**
  * Registers the current page's workflow/step and its new-chat suggestions with the Copilot, and the callback that
  * refreshes the page after the agent edits the workflow. No-ops outside a `CopilotWebChatProvider`.
  */

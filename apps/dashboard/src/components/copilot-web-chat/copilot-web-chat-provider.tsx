@@ -2,7 +2,7 @@ import type { AgentEventEnvelope } from '@novu/js';
 import { useWebChat } from '@novu/react';
 import { COPILOT_TRY_AGAIN_READY_EVENT, CopilotReviewActionEnum } from '@novu/shared';
 import { type ComponentProps, memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useCopilotConnectContext } from '@/components/connect/copilot-connect-context';
 import { CopilotConnectProvider } from '@/components/connect/copilot-connect-provider';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
@@ -12,9 +12,11 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { registerCopilotEntry } from './copilot-entry-store';
+import { type CopilotHandoff, clearCopilotHandoff, readCopilotHandoff } from './copilot-handoff';
 import {
   CopilotRegisterContext,
   CopilotSidebarControlContext,
+  CopilotStepIssuesContext,
   type CopilotSurface,
   CopilotWebChatContext,
   type CopilotWebChatContextValue,
@@ -23,7 +25,9 @@ import {
   buildCopilotMetadata,
   type CopilotCardAction,
   type CopilotPageContext,
+  countCopilotIssuesByStep,
   getFailedSend,
+  getOpenCopilotIssues,
   getUserMessageText,
   hasPendingReplyGap,
   isCopilotReviewActionId,
@@ -171,6 +175,13 @@ export function CopilotWebChatProvider({
     () => ({ isGenerating: isBusy, isRevealPending, registerSidebar }),
     [isBusy, isRevealPending, registerSidebar]
   );
+  // Recomputed on every streamed message, but only a change in the counts hands the canvas a new map.
+  const messages = connected?.chat?.messages;
+  const stepIssuesKey = useMemo(
+    () => JSON.stringify(countCopilotIssuesByStep(getOpenCopilotIssues(messages ?? []))),
+    [messages]
+  );
+  const stepIssues = useMemo(() => new Map<string, number>(JSON.parse(stepIssuesKey)), [stepIssuesKey]);
 
   const value = useMemo<CopilotWebChatContextValue>(
     () => ({
@@ -217,21 +228,23 @@ export function CopilotWebChatProvider({
   return (
     <CopilotRegisterContext.Provider value={registerPageContext}>
       <CopilotSidebarControlContext.Provider value={sidebarControl}>
-        <CopilotWebChatContext.Provider value={value}>
-          {children}
-          {surface && (
-            <CopilotConnectProvider>
-              <CopilotWebChatBridge
-                key={conversationScope}
-                shell={bridgeShell}
-                surface={surface}
-                conversationScope={conversationScope}
-                onConnected={setConnected}
-                onMountedChange={setIsBridgeMounted}
-              />
-            </CopilotConnectProvider>
-          )}
-        </CopilotWebChatContext.Provider>
+        <CopilotStepIssuesContext.Provider value={stepIssues}>
+          <CopilotWebChatContext.Provider value={value}>
+            {children}
+            {surface && (
+              <CopilotConnectProvider>
+                <CopilotWebChatBridge
+                  key={conversationScope}
+                  shell={bridgeShell}
+                  surface={surface}
+                  conversationScope={conversationScope}
+                  onConnected={setConnected}
+                  onMountedChange={setIsBridgeMounted}
+                />
+              </CopilotConnectProvider>
+            )}
+          </CopilotWebChatContext.Provider>
+        </CopilotStepIssuesContext.Provider>
       </CopilotSidebarControlContext.Provider>
     </CopilotRegisterContext.Provider>
   );
@@ -263,6 +276,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   const readyPromptLookupRef = useRef(0);
   const [readyPrompt, setReadyPrompt] = useState<string>();
   const navigate = useNavigate();
+  const location = useLocation();
   const isOpenRef = useRef(isOpen);
   isOpenRef.current = isOpen;
   const pageContextRef = useRef(pageContext);
@@ -347,7 +361,13 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   );
 
   const onEvent = useCopilotRefetch(onRefetchRef, handleRunEvent, handleWorkflowDeleted);
-  const [resumeConversationId, setResumeConversationId] = useState(() => readStoredConversationId(conversationScope));
+  // A Copilot link or an "Ask Copilot" row action that navigated here hands over its chat and composer text.
+  const arrivalRef = useRef<CopilotHandoff | undefined>(undefined);
+  const [resumeConversationId, setResumeConversationId] = useState(() => {
+    arrivalRef.current = readCopilotHandoff();
+
+    return arrivalRef.current?.conversationId ?? readStoredConversationId(conversationScope);
+  });
   const chat = useWebChat({ agentId: NOVU_COPILOT_AGENT_ID, conversationId: resumeConversationId, onEvent });
   const chatRef = useRef(chat);
   chatRef.current = chat;
@@ -359,6 +379,24 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   useEffect(() => {
     if (chat.conversationId) writeStoredConversationId(conversationScope, chat.conversationId);
   }, [conversationScope, chat.conversationId]);
+
+  useEffect(() => {
+    const arrival = arrivalRef.current;
+    if (!arrival) return;
+
+    arrivalRef.current = undefined;
+    clearCopilotHandoff(arrival);
+    open({ prefill: arrival.prefill });
+  }, [open]);
+
+  // A link to another page of this thread keeps this Copilot mounted, so no other one takes the handoff it left.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs on every navigation, which `location.key` names
+  useEffect(() => {
+    const pending = readCopilotHandoff();
+    if (pending?.conversationId && pending.conversationId === chatRef.current.conversationId) {
+      clearCopilotHandoff(pending);
+    }
+  }, [location.key]);
 
   // A stored conversation that fails to load stays selected: the error notice offers Retry (reload history), and
   // New chat drops it. Abandoning it here would let a transient error replace the saved thread.

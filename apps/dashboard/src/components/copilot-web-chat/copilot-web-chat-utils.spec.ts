@@ -1,16 +1,27 @@
 import type { AgentCardChild, AgentMessage } from '@novu/js';
-import { CopilotPageEnum, CopilotReviewActionEnum, CopilotViewingResourceEnum } from '@novu/shared';
+import {
+  buildCopilotFixActionId,
+  COPILOT_ASK_ACTION_ID,
+  CopilotAnswerToolEnum,
+  CopilotPageEnum,
+  CopilotReviewActionEnum,
+  CopilotViewingResourceEnum,
+} from '@novu/shared';
 import { describe, expect, it, vi } from 'vitest';
 import {
   buildAssistantBlocks,
   buildCopilotMetadata,
+  countCopilotIssuesByStep,
   getCopilotContextLabel,
+  getCopilotLinkKind,
   getCopilotTypingLabel,
+  getOpenCopilotIssues,
   getOpenReviewActions,
+  getReviewCardSourceMessageId,
   getTryAgainPrompt,
-  isDashboardLink,
   loadTryAgainPrompt,
   orderStoppedTurns,
+  readCopilotIssueRows,
 } from './copilot-web-chat-utils';
 
 function userMessage(id: string, text: string): AgentMessage {
@@ -127,6 +138,23 @@ describe('getOpenReviewActions (click state)', () => {
 
   it('returns nothing once the answer card, which has no review buttons, is the newest card', () => {
     expect(getOpenReviewActions([...messages, noteCardMessage('card_note')])).toEqual({});
+  });
+
+  it("keeps the review buttons open under a later answer's next steps", () => {
+    const nextSteps = cardMessageWith('card_next_steps', [
+      {
+        type: 'actions',
+        children: [
+          { type: 'button', id: COPILOT_ASK_ACTION_ID, label: 'Test it', value: 'Test the workflow' },
+          { type: 'link-button', label: 'Open Activity', url: 'https://dashboard.novu.co/env/e1/activity' },
+        ],
+      },
+    ]);
+
+    const thread = [...messages, userMessage('msg_2', 'Why?'), nextSteps];
+
+    expect(getOpenReviewActions(thread).keep).toEqual(reviewAction('card_review', KEEP));
+    expect(getReviewCardSourceMessageId(thread)).toBe('card_review');
   });
 
   it('offers a card again after the agent only answered in plain text', () => {
@@ -294,6 +322,100 @@ describe('buildAssistantBlocks (Powered by footer)', () => {
     expect(buildAssistantBlocks(assistantMessage('act_1', text))).toEqual([
       { kind: 'text', key: 'act_1:0', text, streaming: false },
     ]);
+  });
+});
+
+describe('buildAssistantBlocks (answer tools)', () => {
+  it('drops the calls that only put buttons under the reply, and keeps the tools around them in one group', () => {
+    const toolPart = (toolUseId: string, toolName: string) =>
+      ({ type: 'tool', toolUseId, toolName, input: {}, state: 'output-available' }) as const;
+    const message: AgentMessage = {
+      ...assistantMessage('act_1', ''),
+      parts: [
+        toolPart('t1', 'get_workflow_runs'),
+        toolPart('t2', CopilotAnswerToolEnum.SHOW_NEXT_STEPS),
+        toolPart('t3', `novu__${CopilotAnswerToolEnum.REPORT_WORKFLOW_ISSUES}`),
+        toolPart('t4', 'get_workflow_run'),
+      ],
+    };
+
+    const blocks = buildAssistantBlocks(message);
+
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].kind === 'tools' && blocks[0].rows.map((row) => row.id)).toEqual(['t1', 't4']);
+  });
+});
+
+function issueSection(title: string, fix: string, step?: { stepId: string; name: string }): AgentCardChild {
+  return {
+    type: 'section',
+    children: [
+      ...(step
+        ? [{ type: 'fields' as const, children: [{ type: 'field' as const, label: 'Step', value: step.name }] }]
+        : []),
+      { type: 'text', content: title },
+      {
+        type: 'actions',
+        children: [{ type: 'button', id: buildCopilotFixActionId(step?.stepId), label: 'Fix', value: fix }],
+      },
+    ],
+  };
+}
+
+const EMAIL_STEP = { stepId: 'email-step', name: 'Email Step' };
+const INBOX_STEP = { stepId: 'in-app', name: 'Inbox' };
+
+describe('readCopilotIssueRows', () => {
+  it('reads one row per section that holds a Fix button', () => {
+    const card = {
+      type: 'card' as const,
+      title: '3 issues',
+      children: [
+        issueSection('Placeholder subject', 'Write a real subject', EMAIL_STEP),
+        issueSection('No description', 'Add a description'),
+        { type: 'section' as const, children: [{ type: 'text' as const, content: 'Not an issue' }] },
+        { type: 'actions' as const, children: [reviewButton(KEEP)] },
+      ],
+    };
+
+    expect(readCopilotIssueRows(card)).toEqual([
+      { stepId: 'email-step', stepName: 'Email Step', title: 'Placeholder subject', fix: 'Write a real subject' },
+      { stepName: undefined, title: 'No description', fix: 'Add a description' },
+    ]);
+  });
+});
+
+describe('getOpenCopilotIssues', () => {
+  const review = cardMessageWith('card_review_issues', [
+    issueSection('Placeholder subject', 'Write a real subject', EMAIL_STEP),
+    issueSection('Hardcoded URL', 'Take the URL from the payload', INBOX_STEP),
+    issueSection('No condition', 'Only send the email if the in-app message was not seen', EMAIL_STEP),
+  ]);
+
+  it('counts the open issues of the newest review by step', () => {
+    const issues = getOpenCopilotIssues([userMessage('msg_1', 'Audit this workflow'), review]);
+
+    expect(countCopilotIssuesByStep(issues)).toEqual([
+      ['email-step', 2],
+      ['in-app', 1],
+    ]);
+  });
+
+  it('closes an issue once its fix was sent, as a Fix click sends it', () => {
+    const issues = getOpenCopilotIssues([
+      review,
+      userMessage('msg_2', 'Write a real subject'),
+      assistantMessage('act_2', 'Done.'),
+    ]);
+
+    expect(issues.map((issue) => issue.title)).toEqual(['Hardcoded URL', 'No condition']);
+  });
+
+  it('reads the newest review only, and nothing without one', () => {
+    const newer = cardMessageWith('card_review_2', [issueSection('Empty body', 'Write the body', INBOX_STEP)]);
+
+    expect(getOpenCopilotIssues([review, userMessage('msg_2', 'Audit it again'), newer])).toHaveLength(1);
+    expect(getOpenCopilotIssues([userMessage('msg_1', 'Hi'), reviewCardMessage('card_review')])).toEqual([]);
   });
 });
 
@@ -526,18 +648,27 @@ describe('getCopilotContextLabel', () => {
   });
 });
 
-describe('isDashboardLink', () => {
+describe('getCopilotLinkKind', () => {
   const origin = 'https://dashboard.novu.co';
 
-  it('accepts links on the dashboard origin', () => {
-    expect(isDashboardLink(`${origin}/env/dev_env_1/activity/workflow-runs?activityItemId=run_1`, origin)).toBe(true);
-    expect(isDashboardLink('/env/dev_env_1/activity/requests', origin)).toBe(true);
+  it('opens links on the dashboard origin in place', () => {
+    expect(getCopilotLinkKind(`${origin}/env/dev_env_1/activity/workflow-runs?activityItemId=run_1`, origin)).toBe(
+      'dashboard'
+    );
+    expect(getCopilotLinkKind('/env/dev_env_1/activity/requests', origin)).toBe('dashboard');
   });
 
-  it('rejects other origins and invalid links', () => {
-    expect(isDashboardLink('https://docs.novu.co/platform', origin)).toBe(false);
-    expect(isDashboardLink('https://dashboard.novu.co.evil.com/env', origin)).toBe(false);
-    expect(isDashboardLink('javascript:alert(1)', origin)).toBe(false);
-    expect(isDashboardLink('http://[invalid', origin)).toBe(false);
+  it('asks before opening another site', () => {
+    expect(getCopilotLinkKind('https://docs.novu.co/platform', origin)).toBe('external');
+    expect(getCopilotLinkKind('https://dashboard.novu.co.evil.com/env', origin)).toBe('external');
+  });
+
+  it('keeps mail, phone, script and broken links as plain text', () => {
+    expect(getCopilotLinkKind('mailto:naveen@novu.co', origin)).toBe('text');
+    expect(getCopilotLinkKind('tel:+15550100', origin)).toBe('text');
+    expect(getCopilotLinkKind('javascript:alert(1)', origin)).toBe('text');
+    expect(getCopilotLinkKind('streamdown:incomplete-link', origin)).toBe('text');
+    expect(getCopilotLinkKind('http://[invalid', origin)).toBe('text');
+    expect(getCopilotLinkKind(undefined, origin)).toBe('text');
   });
 });

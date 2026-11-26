@@ -1,9 +1,11 @@
 import type { AgentCardChild, AgentCardElement, AgentCardPart, AgentMessage, AgentToolPart } from '@novu/js';
 import {
   AiWorkflowToolsEnum,
+  CopilotAnswerToolEnum,
   type CopilotPageEnum,
   CopilotReviewActionEnum,
   type CopilotViewing,
+  parseCopilotFixActionId,
   serializeCopilotViewing,
 } from '@novu/shared';
 import type { FC, SVGProps } from 'react';
@@ -40,6 +42,8 @@ function normalizeToolName(toolName: string): string {
 export function isWorkflowWriteTool(toolName: string): boolean {
   return WORKFLOW_WRITE_TOOL_NAMES.has(normalizeToolName(toolName));
 }
+
+const ANSWER_TOOL_NAMES: ReadonlySet<string> = new Set(Object.values(CopilotAnswerToolEnum));
 
 const REVIEW_ACTION_IDS: ReadonlySet<string> = new Set(Object.values(CopilotReviewActionEnum));
 
@@ -246,8 +250,9 @@ export type AssistantBlock =
   | { kind: 'card'; key: string; card: AgentCardElement; sourceMessageId: string };
 
 /**
- * Groups consecutive tool parts into one block and drops parts this UI does not render, including the "Powered by
- * Novu" footer the API appends to replies (it is in the saved text, so restored threads carry it too).
+ * Groups consecutive tool parts into one block and drops parts this UI does not render: the "Powered by Novu" footer
+ * the API appends to replies (it is in the saved text, so restored threads carry it too), and the calls that only
+ * put buttons under the reply, whose card shows instead.
  */
 export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
   const blocks: AssistantBlock[] = [];
@@ -262,6 +267,8 @@ export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
     } else if (part.type === 'thinking') {
       blocks.push({ kind: 'thinking', key, text: part.text, streaming: part.state === 'streaming' });
     } else if (part.type === 'tool') {
+      if (ANSWER_TOOL_NAMES.has(normalizeToolName(part.toolName))) return;
+
       const row = toolPartToRow(part, message.stopped);
       const last = blocks[blocks.length - 1];
 
@@ -275,26 +282,109 @@ export function buildAssistantBlocks(message: AgentMessage): AssistantBlock[] {
   return blocks;
 }
 
-function getLastCardPart(messages: readonly AgentMessage[]): AgentCardPart | undefined {
+type CardActionChild = Extract<AgentCardChild, { type: 'actions' }>['children'][number];
+type CardButtonChild = Extract<AgentCardChild, { type: 'button' }>;
+type CardLinkButtonChild = Extract<CardActionChild, { type: 'link-button' }>;
+
+function isCardButton(child: AgentCardChild | CardActionChild): child is CardButtonChild | CardLinkButtonChild {
+  return child.type === 'button' || child.type === 'link-button';
+}
+
+/** The buttons the card renderer draws: in `actions`, in a `section`, or bare. */
+function listCardButtons(children: readonly AgentCardChild[]): Array<CardButtonChild | CardLinkButtonChild> {
+  return children.flatMap((child) => {
+    if (child.type === 'actions') return child.children.filter(isCardButton);
+    if (child.type === 'section') return listCardButtons(child.children);
+
+    return isCardButton(child) ? [child] : [];
+  });
+}
+
+/**
+ * Whether a card takes part in the review: it holds the Keep / Revert / Try again buttons, or it is the buttonless
+ * note that answered a click. A card of next steps or of a review's issues leaves the review buttons above it open.
+ */
+function isReviewCard(card: AgentCardElement): boolean {
+  const buttons = listCardButtons(card.children);
+
+  return (
+    buttons.length === 0 || buttons.some((button) => button.type === 'button' && isCopilotReviewActionId(button.id))
+  );
+}
+
+function getLastReviewCardPart(messages: readonly AgentMessage[]): AgentCardPart | undefined {
   for (let messageIndex = messages.length - 1; messageIndex >= 0; messageIndex--) {
     const parts = messages[messageIndex].parts;
 
     for (let partIndex = parts.length - 1; partIndex >= 0; partIndex--) {
       const part = parts[partIndex];
-      if (part.type === 'card') return part;
+      if (part.type === 'card' && isReviewCard(part.card)) return part;
     }
   }
 
   return undefined;
 }
 
-/** The `sourceMessageId` of the newest card in the thread; review buttons are only offered on that card. */
-export function getLastCardSourceMessageId(messages: readonly AgentMessage[]): string | undefined {
-  return getLastCardPart(messages)?.sourceMessageId;
+/** The `sourceMessageId` of the newest review card in the thread; review buttons are only offered on that card. */
+export function getReviewCardSourceMessageId(messages: readonly AgentMessage[]): string | undefined {
+  return getLastReviewCardPart(messages)?.sourceMessageId;
 }
 
-type CardActionChild = Extract<AgentCardChild, { type: 'actions' }>['children'][number];
-type CardButtonChild = Extract<AgentCardChild, { type: 'button' }>;
+/** One issue of a workflow review: a row with the step it is on and a Fix button that sends `fix`. */
+export type CopilotIssueRow = { stepId?: string; stepName?: string; title: string; fix: string };
+
+/** The issues a review card lists, one per section that holds a Fix button; none for any other card. */
+export function readCopilotIssueRows(card: AgentCardElement): CopilotIssueRow[] {
+  return card.children.flatMap((child): CopilotIssueRow[] => {
+    if (child.type !== 'section') return [];
+
+    const fixButton = listCardButtons(child.children).find(
+      (button): button is CardButtonChild =>
+        button.type === 'button' && parseCopilotFixActionId(button.id) !== undefined && !!button.value
+    );
+    const title = child.children.find((item) => item.type === 'text');
+    if (!fixButton?.value || title?.type !== 'text') return [];
+
+    const fields = child.children.flatMap((item) => (item.type === 'fields' ? item.children : []));
+    const stepName = fields.find((field) => field.label === 'Step')?.value;
+
+    return [{ ...parseCopilotFixActionId(fixButton.id), stepName, title: title.content, fix: fixButton.value }];
+  });
+}
+
+/**
+ * The issues of the thread's newest workflow review that are still open: the user hasn't sent an issue's fix (a
+ * click on its Fix button sends it as is) since the review was posted.
+ */
+export function getOpenCopilotIssues(messages: readonly AgentMessage[]): CopilotIssueRow[] {
+  for (let messageIndex = messages.length - 1; messageIndex >= 0; messageIndex--) {
+    const rows = messages[messageIndex].parts.flatMap((part) =>
+      part.type === 'card' ? readCopilotIssueRows(part.card) : []
+    );
+    if (rows.length === 0) continue;
+
+    const sentSince = new Set(
+      messages
+        .slice(messageIndex + 1)
+        .filter((message) => message.role === 'user')
+        .map(getUserMessageText)
+    );
+
+    return rows.filter((row) => !sentSince.has(row.fix));
+  }
+
+  return [];
+}
+
+/** How many open issues each step has, as `[stepId, count]` pairs in step order of first mention. */
+export function countCopilotIssuesByStep(rows: readonly CopilotIssueRow[]): Array<[string, number]> {
+  const counts = new Map<string, number>();
+  for (const { stepId } of rows) {
+    if (stepId) counts.set(stepId, (counts.get(stepId) ?? 0) + 1);
+  }
+
+  return [...counts];
+}
 
 function isEnabledReviewButton(child: AgentCardChild | CardActionChild): child is CardButtonChild {
   return child.type === 'button' && isCopilotReviewActionId(child.id) && !child.disabled;
@@ -322,7 +412,7 @@ export function getOpenReviewActions(
   messages: readonly AgentMessage[],
   pendingReviewMessageId?: string
 ): OpenReviewActions {
-  const card = getLastCardPart(messages);
+  const card = getLastReviewCardPart(messages);
 
   if (!card || card.sourceMessageId === pendingReviewMessageId) return {};
 
@@ -500,11 +590,28 @@ export function getUserMessageText(message: AgentMessage): string {
     .trim();
 }
 
-/** Links into the dashboard itself, such as the Copilot's Activity links, open without the external-link prompt. */
-export function isDashboardLink(url: string, origin: string): boolean {
+export type CopilotLinkKind = 'dashboard' | 'external' | 'text';
+
+/**
+ * How the Copilot shows a link in its reply: a dashboard page opens in place and keeps the chat, another site asks
+ * first, and anything else stays plain text, such as an email address the markdown turned into a mail link.
+ */
+export function getCopilotLinkKind(href: string | undefined, origin: string): CopilotLinkKind {
+  if (!href) return 'text';
+
+  let url: URL;
   try {
-    return new URL(url, origin).origin === origin;
+    url = new URL(href, origin);
   } catch {
-    return false;
+    return 'text';
   }
+
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return 'text';
+
+  return url.origin === origin ? 'dashboard' : 'external';
+}
+
+/** A click that asks the browser for another tab or window keeps the browser's behaviour. */
+export function isModifiedClick(event: Pick<MouseEvent, 'button' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey'>) {
+  return event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
 }

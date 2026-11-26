@@ -5,6 +5,8 @@ import { ComponentProps, ComponentType, KeyboardEventHandler, useCallback, useSt
 import { RiInsertRowTop, RiPlayCircleLine } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
 import { Link } from 'react-router-dom';
+import { useCopilotStepIssueCount } from '@/components/copilot-web-chat/copilot-web-chat-context';
+import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { useConditionsCount } from '@/hooks/use-conditions-count';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { StepTypeEnum } from '@/utils/enums';
@@ -12,7 +14,7 @@ import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { AddStepMenu } from './add-step-menu';
 import { AnimationStepWrapper } from './animation-step-wrapper';
-import { NODE_WIDTH, Node, NodeBody, NodeError, NodeHeader, NodeIcon, NodeName } from './base-node';
+import { NODE_WIDTH, Node, NodeBody, NodeError, NodeHeader, NodeIcon, type NodeIconProps, NodeName } from './base-node';
 import { ConditionBadge } from './condition-badge';
 import { useCanvasContext } from './drag-context';
 import { WorkflowNodeActionBar } from './workflow-node-action-bar';
@@ -22,6 +24,7 @@ export type NodeData = {
   content?: string;
   error?: string;
   name?: string;
+  stepId?: string;
   stepSlug?: Slug;
   controlValues?: Record<string, unknown>;
   isPending?: boolean;
@@ -67,7 +70,7 @@ const StepNodeIcon = ({
   }
 
   return (
-    <NodeIcon variant={color as any}>
+    <NodeIcon variant={color as NodeIconProps['variant']}>
       <Icon />
     </NodeIcon>
   );
@@ -108,11 +111,27 @@ type StepNodeProps = ComponentProps<typeof Node> & {
   type?: StepTypeEnum;
 };
 
+/** The issues the Copilot's newest review found on a step and the user hasn't asked it to fix yet. */
+const CopilotIssueBadge = ({ count }: { count: number }) => {
+  const label = `${count} ${count === 1 ? 'issue' : 'issues'}`;
+
+  return (
+    <span
+      title={`The Copilot found ${label} on this step`}
+      className="absolute right-6 top-1 z-10 flex -translate-y-1/2 items-center gap-0.5 rounded-full bg-bg-white px-1.5 text-[10px] font-medium leading-4 text-feature-base ring-1 ring-inset ring-feature-base/30"
+    >
+      <BroomSparkle className="size-3" />
+      {label}
+    </span>
+  );
+};
+
 const StepNode = (props: StepNodeProps) => {
   const [isRemoving, setIsRemoving] = useState(false);
   const { id, className, data, type, ...rest } = props;
   const [isHovered, setIsHovered] = useState(false);
   const conditionsCount = useConditionsCount(data.controlValues?.skip as RQBJsonLogic);
+  const copilotIssueCount = useCopilotStepIssueCount(data.stepId);
   const {
     isReadOnly,
     areConditionsClickable,
@@ -198,6 +217,7 @@ const StepNode = (props: StepNodeProps) => {
           {rest.children}
         </Node>
       </AnimationStepWrapper>
+      {copilotIssueCount > 0 && <CopilotIssueBadge count={copilotIssueCount} />}
       {hasConditions && (
         <ConditionBadge
           isReadOnly={!areConditionsClickable}

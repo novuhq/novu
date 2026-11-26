@@ -153,6 +153,7 @@ export const createNode = ({
   name,
   content,
   index,
+  stepId,
   stepSlug,
   error,
   controlValues,
@@ -165,6 +166,7 @@ export const createNode = ({
   name: string;
   content: string;
   index: number;
+  stepId?: string;
   stepSlug?: Slug;
   error: string;
   controlValues: Record<string, unknown>;
@@ -181,6 +183,7 @@ export const createNode = ({
       name,
       content,
       index,
+      stepId,
       stepSlug,
       error,
       controlValues,
@@ -214,6 +217,7 @@ export const mapStepToNode = ({
     name: step.name,
     content: content ?? '',
     index,
+    stepId: step.stepId,
     stepSlug: step.slug,
     error: error?.message ?? '',
     controlValues: step.controls.values,
