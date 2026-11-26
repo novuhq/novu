@@ -26,6 +26,8 @@ import { useCopilotWebChat } from './copilot-web-chat-context';
 
 // The list holds every agent's chats with this subscriber; the Copilot's are picked out of each page.
 const PAGE_SIZE = 50;
+// Pages loaded on their own while none holds a Copilot chat; past that, "Load older chats" goes on.
+const MAX_LOOKUP_PAGES = 5;
 
 const SCOPES: ReadonlyArray<{ value: CopilotHistoryScope; label: string }> = [
   { value: 'all', label: 'All' },
@@ -167,6 +169,14 @@ function HistorySection({ label, children }: { label: string; children: ReactNod
   );
 }
 
+/** Why the list has no rows: nothing matches the search, no Copilot chat is loaded yet, or none is from this page. */
+function getEmptyListMessage(query: string, hasLoadedChats: boolean): string {
+  if (query) return `No chats match “${query}”`;
+  if (!hasLoadedChats) return 'No chats found yet';
+
+  return 'No chats on this page yet';
+}
+
 function CenteredStatus({ children }: { children: ReactNode }) {
   return <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 text-center">{children}</div>;
 }
@@ -215,10 +225,21 @@ export function CopilotHistoryPanel() {
   );
   const now = new Date();
   const sections = getHistorySections(items, { query, scope, context: pageContext, now });
+  const hasNoChats = items.length === 0 && !hasNextPage;
+  // A page can hold only other agents' chats, so an empty one is not the end of the list.
+  const isLookingForChats =
+    items.length === 0 &&
+    hasNextPage &&
+    (data?.pages.length ?? 0) < MAX_LOOKUP_PAGES &&
+    !conversationsQuery.isFetchNextPageError;
 
   useEffect(() => {
     searchRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    if (isLookingForChats && !isFetchingNextPage) void fetchNextPage();
+  }, [isLookingForChats, isFetchingNextPage, fetchNextPage]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const isTyping =
@@ -269,7 +290,7 @@ export function CopilotHistoryPanel() {
       );
     }
 
-    if (conversationsQuery.isPending) {
+    if (conversationsQuery.isPending || isLookingForChats) {
       return (
         <CenteredStatus>
           <CopilotThinkingIndicator label="Loading chats…" />
@@ -292,7 +313,7 @@ export function CopilotHistoryPanel() {
       );
     }
 
-    if (items.length === 0) {
+    if (hasNoChats) {
       return (
         <div className="flex flex-1 flex-col justify-center overflow-y-auto px-2 pb-3">
           <CopilotEmptyHero title="No chats yet" body="Ask from any page. Your chats show up here." />
@@ -300,13 +321,11 @@ export function CopilotHistoryPanel() {
       );
     }
 
-    const trimmedQuery = query.trim();
-
     return (
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
         {sections.length === 0 && (
           <p className="px-2 pt-6 text-center text-xs leading-4 text-text-soft">
-            {trimmedQuery ? `No chats match “${trimmedQuery}”` : 'No chats on this page yet'}
+            {getEmptyListMessage(query.trim(), items.length > 0)}
           </p>
         )}
         {sections.map((section) => (
@@ -364,7 +383,7 @@ export function CopilotHistoryPanel() {
           disabled={!isAvailable || !!chat?.isRunning}
           onClick={startNewConversation}
         >
-          {conversationsQuery.isSuccess && items.length === 0 ? 'Start a chat' : 'New chat'}
+          {conversationsQuery.isSuccess && hasNoChats ? 'Start a chat' : 'New chat'}
         </Button>
         <span className="ml-auto text-[11px] leading-4 text-text-soft">Chats are private to you</span>
       </div>
