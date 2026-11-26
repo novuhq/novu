@@ -279,9 +279,24 @@ function Thread() {
     ? `${lastMessage.id}:${lastMessage.status}:${JSON.stringify(lastMessage.parts).length}`
     : '';
   const pagination = chat?.pagination;
+  const resumeLookupRef = useRef(0);
+  const conversationId = chat?.conversationId;
 
-  // A turn without its prompt is the oldest one loaded, and its prompt is on an older page.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new conversation retires the Resume lookups of the last one
+  useEffect(() => {
+    resumeLookupRef.current++;
+  }, [conversationId]);
+  useEffect(
+    () => () => {
+      resumeLookupRef.current++;
+    },
+    []
+  );
+
+  // A turn without its prompt is the oldest one loaded, and its prompt is on an older page. A New chat while it loads
+  // (another conversation, or this thread unmounted) owes no resend: `sendMessage` would send into the new chat.
   const resume = async (prompt: AgentMessage | undefined, stoppedMessageId: string) => {
+    const lookup = resumeLookupRef.current;
     let stoppedPrompt = prompt && getUserMessageText(prompt);
     if (!prompt && pagination) {
       stoppedPrompt = await loadStoppedPrompt({
@@ -291,6 +306,7 @@ function Thread() {
         stoppedMessageId,
       });
     }
+    if (lookup !== resumeLookupRef.current) return;
 
     await sendMessage(buildResumePrompt(stoppedPrompt));
   };
