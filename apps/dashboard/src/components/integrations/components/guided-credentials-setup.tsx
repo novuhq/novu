@@ -8,18 +8,17 @@ import {
 } from '@novu/shared';
 import { type ClipboardEvent, useId, useState } from 'react';
 import type { Control, UseFormSetValue } from 'react-hook-form';
-import { RiInformationFill } from 'react-icons/ri';
+import { RiCheckLine, RiFileCopyLine, RiInformationFill } from 'react-icons/ri';
 import { SetupButton, SetupStep, SetupStepperRail } from '@/components/agents/setup-guide-primitives';
 import { FormControl, FormField, FormItem } from '@/components/primitives/form/form';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import type { IntegrationFormData } from '../types';
 import { ApnsEnvironmentField, ApnsKeyPaste, ApnsKeyUpload } from './apns-key-fields';
+import { AwsAccessKeyUpload, AwsRegionField } from './aws-access-key-fields';
 import { CredentialSection } from './credential-section';
-import {
-  isLikelyResendCredentialsBlock,
-  parseResendCredentials,
-  type ResendCredentialField,
-} from './parse-resend-credentials';
+import { isLikelyAwsCredentialsBlock, parseAwsCredentials } from './parse-aws-credentials';
+import { isLikelyResendCredentialsBlock, parseResendCredentials } from './parse-resend-credentials';
 import { type ProviderSetupMode, SegmentedControl } from './provider-setup-layout';
 import { ServiceAccountPaste, ServiceAccountUpload } from './service-account-fields';
 import { ACTIVITY_TRACKING_ENABLER, configurationToCredential, type GuidedSetupProviderId } from './utils/helpers';
@@ -36,6 +35,8 @@ type CredentialsGuide = {
     description: (keyName: string) => string;
     buttonLabel: string;
     url: string;
+    /** Text the user needs in the provider, such as a permissions policy, behind a copy button. */
+    copyable?: { label: string; value: string };
   };
   /** Step 2's title; "Enter your credentials" when left out. */
   credentialsTitle?: string;
@@ -45,7 +46,9 @@ type CredentialsGuide = {
    * fills `fileKeys`; the guide's other fields follow it.
    */
   fileUpload?: {
-    kind: 'serviceAccount' | 'apnsKey';
+    kind: 'serviceAccount' | 'apnsKey' | 'awsAccessKey';
+    /** The provider has this one way to set up, without the Quick setup / Manual switch: the upload types too. */
+    isOnlyMode?: boolean;
     title: string;
     description: string;
     fileKeys: CredentialsKeyEnum[];
@@ -55,6 +58,8 @@ type CredentialsGuide = {
     description: string;
     switchLabel: string;
     switchDescription: string;
+    /** Credentials only tracking needs: Quick setup shows them here once the switch is on, not in step 2. */
+    quickSetupFields?: CredentialsKeyEnum[];
   };
   /** The credential fields in the order the guide shows them; the rest follow. */
   fieldOrder?: CredentialsKeyEnum[];
@@ -62,9 +67,47 @@ type CredentialsGuide = {
   fieldOverrides?: Partial<Record<string, Partial<IConfigCredential>>>;
   /** Short lists of choices shown as a segmented control instead of a dropdown. */
   segmentedFields?: CredentialsKeyEnum[];
-  /** Fills in the fields from a pasted block of environment variables. */
-  readsPastedEnv?: boolean;
+  /** Fills in the fields from a pasted block, such as environment variables or a key file's contents. */
+  pasted?: PastedCredentials;
 };
+
+type PastedCredentials = {
+  /** True for a block worth reading; a bare value is left for the field it was pasted into. */
+  isBlock: (text: string) => boolean;
+  parse: (text: string) => Partial<Record<string, string>>;
+  /** The fields a block can fill, in the order they are named back to the user. */
+  labels: Partial<Record<CredentialsKeyEnum, string>>;
+};
+
+const RESEND_PASTED: PastedCredentials = {
+  isBlock: isLikelyResendCredentialsBlock,
+  parse: parseResendCredentials,
+  labels: {
+    [CredentialsKeyEnum.ApiKey]: 'API Key',
+    [CredentialsKeyEnum.From]: 'From email address',
+    [CredentialsKeyEnum.SenderName]: 'Sender name',
+  },
+};
+
+const AWS_PASTED: PastedCredentials = {
+  isBlock: isLikelyAwsCredentialsBlock,
+  parse: parseAwsCredentials,
+  labels: {
+    [CredentialsKeyEnum.ApiKey]: 'Access key ID',
+    [CredentialsKeyEnum.SecretKey]: 'Secret access key',
+    [CredentialsKeyEnum.Region]: 'Region',
+  },
+};
+
+/** What the IAM user Novu sends with may do: send email, and nothing else in the account. */
+const SES_SEND_POLICY = JSON.stringify(
+  {
+    Version: '2012-10-17',
+    Statement: [{ Effect: 'Allow', Action: ['ses:SendEmail', 'ses:SendRawEmail'], Resource: '*' }],
+  },
+  null,
+  2
+);
 
 const SENDER_OVERRIDES: Partial<Record<string, Partial<IConfigCredential>>> = {
   [CredentialsKeyEnum.From]: { placeholder: 'hello@acme.com', description: undefined },
@@ -92,7 +135,7 @@ const GUIDES: Record<GuidedSetupProviderId, CredentialsGuide> = {
       switchDescription: 'Shows delivery events sent by the provider’s webhook.',
     },
     fieldOverrides: SENDER_OVERRIDES,
-    readsPastedEnv: true,
+    pasted: RESEND_PASTED,
   },
   [EmailProviderIdEnum.SendGrid]: {
     sourceStep: dedicatedApiKeyStep('SendGrid', 'Mail Send', 'https://app.sendgrid.com/settings/api_keys'),
@@ -115,6 +158,47 @@ const GUIDES: Record<GuidedSetupProviderId, CredentialsGuide> = {
       [CredentialsKeyEnum.IpPoolName]: { placeholder: 'transactional' },
     },
     segmentedFields: [CredentialsKeyEnum.Region],
+  },
+  [EmailProviderIdEnum.SES]: {
+    sourceStep: {
+      title: 'Create an IAM user for Novu',
+      description: (keyName) =>
+        `In IAM, create a user named “${keyName}” and attach the send-only policy as an inline policy. Then, under Security credentials, create an access key and download the .csv file.`,
+      buttonLabel: 'Open AWS IAM',
+      url: 'https://console.aws.amazon.com/iam/home#/users/create',
+      copyable: { label: 'Copy send-only policy', value: SES_SEND_POLICY },
+    },
+    credentialsDescription: 'The From address must be an identity verified in SES in the region you choose.',
+    fileUpload: {
+      kind: 'awsAccessKey',
+      isOnlyMode: true,
+      title: 'Add the access key',
+      description:
+        'Drop the .csv file AWS downloaded; Novu reads it in your browser. The From address must be an identity verified in SES in the region you choose. A new SES account is in the sandbox and sends only to verified addresses.',
+      fileKeys: [CredentialsKeyEnum.ApiKey, CredentialsKeyEnum.SecretKey],
+    },
+    tracking: {
+      description:
+        'SES reports delivery through a configuration set and an SNS topic. After you connect, Novu gives you a webhook URL to subscribe the topic to. Delivered, opened, clicked and bounced then show in the Activity Feed.',
+      switchLabel: 'Email Activity Tracking',
+      switchDescription: 'Shows delivery events sent through your SNS topic.',
+      quickSetupFields: [CredentialsKeyEnum.ConfigurationSetName],
+    },
+    fieldOrder: [
+      CredentialsKeyEnum.ApiKey,
+      CredentialsKeyEnum.SecretKey,
+      CredentialsKeyEnum.Region,
+      CredentialsKeyEnum.From,
+      CredentialsKeyEnum.SenderName,
+      CredentialsKeyEnum.ConfigurationSetName,
+    ],
+    fieldOverrides: {
+      ...SENDER_OVERRIDES,
+      [CredentialsKeyEnum.ApiKey]: { placeholder: 'AKIA…' },
+      [CredentialsKeyEnum.Region]: { placeholder: 'us-east-1' },
+      [CredentialsKeyEnum.ConfigurationSetName]: { placeholder: 'novu-tracking' },
+    },
+    pasted: AWS_PASTED,
   },
   [SmsProviderIdEnum.Twilio]: {
     sourceStep: {
@@ -193,13 +277,6 @@ const GUIDES: Record<GuidedSetupProviderId, CredentialsGuide> = {
   },
 };
 
-const PASTED_FIELD_LABELS: Record<ResendCredentialField, string> = {
-  [CredentialsKeyEnum.ApiKey]: 'API Key',
-  [CredentialsKeyEnum.From]: 'From email address',
-  [CredentialsKeyEnum.SenderName]: 'Sender name',
-};
-const PASTED_FIELD_ORDER = Object.keys(PASTED_FIELD_LABELS) as ResendCredentialField[];
-
 function formatList(items: string[]): string {
   if (items.length <= 1) return items.join('');
 
@@ -251,16 +328,19 @@ export function GuidedCredentialsSetup({
   isReadOnly,
 }: GuidedCredentialsSetupProps) {
   const guide = GUIDES[providerId];
-  const [foundFields, setFoundFields] = useState<ResendCredentialField[]>([]);
+  const { pasted } = guide;
+  const [foundFields, setFoundFields] = useState<CredentialsKeyEnum[]>([]);
 
   const handlePaste = (event: ClipboardEvent<HTMLDivElement>) => {
-    if (isReadOnly || !guide.readsPastedEnv) return;
+    if (isReadOnly || !pasted) return;
 
     const text = event.clipboardData.getData('text/plain');
-    if (!isLikelyResendCredentialsBlock(text)) return;
+    if (!pasted.isBlock(text)) return;
 
-    const parsed = parseResendCredentials(text);
-    const found = PASTED_FIELD_ORDER.filter((key) => parsed[key] !== undefined);
+    const parsed = pasted.parse(text);
+    const found = Object.values(CredentialsKeyEnum).filter(
+      (key) => pasted.labels[key] !== undefined && parsed[key] !== undefined
+    );
     if (found.length === 0) return;
 
     // Keeps the whole block out of the field that happened to have focus.
@@ -275,18 +355,40 @@ export function GuidedCredentialsSetup({
     setFoundFields(found);
   };
 
+  const foundNote = pasted && foundFields.length > 0 && (
+    <p className="text-paragraph-xs text-text-sub flex items-center gap-1" aria-live="polite">
+      <RiInformationFill className="text-text-soft size-4 shrink-0" />
+      Found {formatList(foundFields.flatMap((key) => pasted.labels[key] ?? []))}
+    </p>
+  );
+
   const trackingGroup =
     guide.tracking && isTrackingAvailable
       ? provider.configurations?.find((group) => group.groupType === 'inboundWebhook')
       : undefined;
   const signingKeyConfig = trackingGroup?.configurations.find((config) => config.key === SIGNING_KEY);
   const { fileUpload } = guide;
+  const isQuickSetup = !!fileUpload && (setupMode === 'quick' || !!fileUpload.isOnlyMode);
   const shownCredentials = orderCredentials(credentials, guide.fieldOrder).map((credential) => ({
     ...credential,
     ...guide.fieldOverrides?.[credential.key],
   }));
 
+  // Quick setup moves the credentials only tracking needs into the tracking step; without that step they stay put.
+  const trackingFields =
+    isQuickSetup && trackingGroup
+      ? shownCredentials.filter((credential) =>
+          guide.tracking?.quickSetupFields?.includes(credential.key as CredentialsKeyEnum)
+        )
+      : [];
+
   const renderField = (credential: IConfigCredential) => {
+    if (isQuickSetup && fileUpload.kind === 'awsAccessKey' && credential.key === CredentialsKeyEnum.Region) {
+      return (
+        <AwsRegionField key={credential.key} control={control} label={credential.displayName} isReadOnly={isReadOnly} />
+      );
+    }
+
     if (fileUpload?.kind === 'serviceAccount' && credential.key === CredentialsKeyEnum.ServiceAccount) {
       return (
         <ServiceAccountPaste
@@ -329,17 +431,32 @@ export function GuidedCredentialsSetup({
         status="current"
         title={guide.sourceStep.title}
         description={guide.sourceStep.description(`Novu – ${environmentName ?? 'Development'}`)}
-        extraContent={<SetupButton href={guide.sourceStep.url}>{guide.sourceStep.buttonLabel}</SetupButton>}
+        extraContent={
+          <div className="flex flex-wrap gap-2">
+            <SetupButton href={guide.sourceStep.url}>{guide.sourceStep.buttonLabel}</SetupButton>
+            {guide.sourceStep.copyable && <CopyTextButton {...guide.sourceStep.copyable} />}
+          </div>
+        }
       />
-      {fileUpload && setupMode === 'quick' ? (
+      {isQuickSetup ? (
         <SetupStep
           index={2}
           status="current"
           title={fileUpload.title}
           description={fileUpload.description}
           extraContent={
-            <div className="flex flex-col gap-3">
-              {fileUpload.kind === 'apnsKey' ? (
+            <div className="flex flex-col gap-3" onPasteCapture={handlePaste}>
+              {fileUpload.kind === 'awsAccessKey' ? (
+                <AwsAccessKeyUpload
+                  control={control}
+                  setValue={setValue}
+                  keyIdCredential={shownCredentials.find((credential) => credential.key === CredentialsKeyEnum.ApiKey)}
+                  secretCredential={shownCredentials.find(
+                    (credential) => credential.key === CredentialsKeyEnum.SecretKey
+                  )}
+                  isReadOnly={isReadOnly}
+                />
+              ) : fileUpload.kind === 'apnsKey' ? (
                 <ApnsKeyUpload
                   control={control}
                   setValue={setValue}
@@ -350,8 +467,13 @@ export function GuidedCredentialsSetup({
                 <ServiceAccountUpload control={control} setValue={setValue} isReadOnly={isReadOnly} />
               )}
               {shownCredentials
-                .filter((credential) => !fileUpload.fileKeys.includes(credential.key as CredentialsKeyEnum))
+                .filter(
+                  (credential) =>
+                    !fileUpload.fileKeys.includes(credential.key as CredentialsKeyEnum) &&
+                    !trackingFields.some((field) => field.key === credential.key)
+                )
                 .map(renderField)}
+              {foundNote}
             </div>
           }
         />
@@ -364,12 +486,7 @@ export function GuidedCredentialsSetup({
           extraContent={
             <div className="flex flex-col gap-3" onPasteCapture={handlePaste}>
               {shownCredentials.map(renderField)}
-              {foundFields.length > 0 && (
-                <p className="text-paragraph-xs text-text-sub flex items-center gap-1" aria-live="polite">
-                  <RiInformationFill className="text-text-soft size-4 shrink-0" />
-                  Found {formatList(foundFields.map((key) => PASTED_FIELD_LABELS[key]))}
-                </p>
-              )}
+              {foundNote}
             </div>
           }
         />
@@ -388,6 +505,15 @@ export function GuidedCredentialsSetup({
                 description={guide.tracking.switchDescription}
                 isReadOnly={isReadOnly}
               />
+              {isTrackingEnabled &&
+                trackingFields.map((credential) => (
+                  <CredentialSection
+                    key={credential.key}
+                    credential={credential}
+                    control={control}
+                    isReadOnly={isReadOnly}
+                  />
+                ))}
               {isTrackingEnabled && signingKeyConfig && (
                 <CredentialSection
                   name="configurations"
@@ -450,6 +576,34 @@ function ChoiceField({
         </FormItem>
       )}
     />
+  );
+}
+
+/** Copies text the user pastes into the provider, and says so for a moment. */
+function CopyTextButton({ label, value }: { label: string; value: string }) {
+  const [isCopied, setIsCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+    } catch {
+      showErrorToast('Couldn’t copy. Copy it from the docs instead.');
+
+      return;
+    }
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 1500);
+  };
+
+  return (
+    <SetupButton
+      onClick={() => void copy()}
+      leadingIcon={
+        isCopied ? <RiCheckLine className="size-3 shrink-0" /> : <RiFileCopyLine className="size-3 shrink-0" />
+      }
+    >
+      <span aria-live="polite">{isCopied ? 'Copied' : label}</span>
+    </SetupButton>
   );
 }
 
