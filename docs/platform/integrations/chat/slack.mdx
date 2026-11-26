@@ -361,7 +361,7 @@ After a workspace is connected, you or users decide where in Slack to send the m
 <Tabs>
   <Tab title="Slack channel">
 
-This is the typical flow for sending notifications to public or private channels.
+This is the typical flow for sending notifications to public channels, private channels, or group DMs. All three use the `slack_channel` endpoint type with the conversation's ID as `channelId`.
 
 <Steps>
   <Step title="Get the channel ID">
@@ -371,6 +371,8 @@ This is the typical flow for sending notifications to public or private channels
     ```
 
 To learn more about using [Slack conversations API](https://docs.slack.dev/apis/web-api/using-the-conversations-api) to either get public or private channels, refer Slack documentation.
+
+`conversations.list` returns public channels by default. Pass `types=private_channel` to list private channels. Listing group DMs needs `types=mpim` and the `mpim:read` scope, which is not in the recommended scopes. You can also read the ID from Slack in a browser: open the conversation and take the last path segment of the URL.
   </Step>
 
 <Step title="Create the endpoint">
@@ -696,6 +698,19 @@ You don’t need to collect `channelId` yourself in this mode, Slack’s native 
 
 </Tab>
 </Tabs>
+
+### Shared channels and group DMs
+
+A `slack_channel` endpoint always belongs to a subscriber. To post to a destination that is not tied to one person, use one of these setups:
+
+- **Dedicated subscriber:** create a subscriber for the destination, for example `team-alerts`, and give it a `slack_channel` endpoint. Trigger the workflow to that subscriber to post in the channel or group DM.
+- **Extra endpoint on a user:** add a `slack_channel` endpoint to a subscriber that already has a `slack_user` endpoint. The Chat step then sends to both the DM and the channel.
+
+A Chat step delivers to every Slack endpoint that matches the subscriber and context. To post only to the group, trigger a subscriber that has only the `slack_channel` endpoint.
+
+<Note>
+The Slack app can post to public channels without joining them because of the `chat:write.public` scope. For private channels and group DMs, add the app to the conversation first, or Slack rejects the message.
+</Note>
 
 ## Send notifications
 
