@@ -13,6 +13,7 @@ import { SetupButton, SetupStep, SetupStepperRail } from '@/components/agents/se
 import { FormControl, FormField, FormItem } from '@/components/primitives/form/form';
 import { Switch } from '@/components/primitives/switch';
 import type { IntegrationFormData } from '../types';
+import { ApnsEnvironmentField, ApnsKeyPaste, ApnsKeyUpload } from './apns-key-fields';
 import { CredentialSection } from './credential-section';
 import {
   isLikelyResendCredentialsBlock,
@@ -39,8 +40,16 @@ type CredentialsGuide = {
   /** Step 2's title; "Enter your credentials" when left out. */
   credentialsTitle?: string;
   credentialsDescription: string;
-  /** Quick setup's step 2, for providers whose credentials come as a file: upload it instead of pasting it. */
-  fileUpload?: { title: string; description: string };
+  /**
+   * Quick setup's step 2, for providers whose credentials come as a file: upload it instead of pasting it. The file
+   * fills `fileKeys`; the guide's other fields follow it.
+   */
+  fileUpload?: {
+    kind: 'serviceAccount' | 'apnsKey';
+    title: string;
+    description: string;
+    fileKeys: CredentialsKeyEnum[];
+  };
   /** Step 3, for providers whose delivery webhook Novu can track. */
   tracking?: {
     description: string;
@@ -135,14 +144,51 @@ const GUIDES: Record<GuidedSetupProviderId, CredentialsGuide> = {
     credentialsTitle: 'Paste the service account JSON',
     credentialsDescription: 'Paste the entire file, including the private key.',
     fileUpload: {
+      kind: 'serviceAccount',
       title: 'Upload the JSON file',
       description: 'Drop the file here. Novu reads the project from it.',
+      fileKeys: [CredentialsKeyEnum.ServiceAccount],
     },
     tracking: {
       description:
         'Every push carries __nvMessageId. After you connect, send delivered and opened events from your app with the Environment ID and Integration ID shown on the integration, and they show in the Activity Feed.',
       switchLabel: 'Push Activity Tracking',
       switchDescription: 'Receive push events to track delivery and opens.',
+    },
+  },
+  [PushProviderIdEnum.APNS]: {
+    sourceStep: {
+      title: 'Create an APNs auth key',
+      description: () =>
+        'In Apple Developer, open Keys and create a key with Apple Push Notifications service. Apple lets you download it once.',
+      buttonLabel: 'Open Apple Developer',
+      url: 'https://developer.apple.com/account/resources/authkeys/list',
+    },
+    credentialsDescription: 'Paste the contents of the .p8 file, including the BEGIN and END lines.',
+    fileUpload: {
+      kind: 'apnsKey',
+      title: 'Upload the .p8 key',
+      description: 'Novu reads the Key ID from the file name. Add your Team ID and the app’s Bundle ID.',
+      fileKeys: [CredentialsKeyEnum.SecretKey, CredentialsKeyEnum.ApiKey],
+    },
+    tracking: {
+      description:
+        'Every push carries __nvMessageId. After you connect, send delivered and opened events from your app with the Environment ID and Integration ID shown on the integration, and they show in the Activity Feed.',
+      switchLabel: 'Push Activity Tracking',
+      switchDescription: 'Receive push events to track delivery and opens.',
+    },
+    fieldOrder: [
+      CredentialsKeyEnum.SecretKey,
+      CredentialsKeyEnum.ApiKey,
+      CredentialsKeyEnum.ProjectName,
+      CredentialsKeyEnum.ApplicationId,
+      CredentialsKeyEnum.Secure,
+    ],
+    fieldOverrides: {
+      [CredentialsKeyEnum.ApiKey]: { placeholder: '7KQ2M4X9PL' },
+      [CredentialsKeyEnum.ProjectName]: { placeholder: 'A1B2C3D4E5' },
+      [CredentialsKeyEnum.ApplicationId]: { placeholder: 'com.acme.app' },
+      [CredentialsKeyEnum.Secure]: { displayName: 'Environment' },
     },
   },
 };
@@ -234,6 +280,47 @@ export function GuidedCredentialsSetup({
       ? provider.configurations?.find((group) => group.groupType === 'inboundWebhook')
       : undefined;
   const signingKeyConfig = trackingGroup?.configurations.find((config) => config.key === SIGNING_KEY);
+  const { fileUpload } = guide;
+  const shownCredentials = orderCredentials(credentials, guide.fieldOrder).map((credential) => ({
+    ...credential,
+    ...guide.fieldOverrides?.[credential.key],
+  }));
+
+  const renderField = (credential: IConfigCredential) => {
+    if (fileUpload?.kind === 'serviceAccount' && credential.key === CredentialsKeyEnum.ServiceAccount) {
+      return (
+        <ServiceAccountPaste
+          key={credential.key}
+          control={control}
+          label={credential.displayName}
+          isReadOnly={isReadOnly}
+        />
+      );
+    }
+
+    if (fileUpload?.kind === 'apnsKey' && credential.key === CredentialsKeyEnum.SecretKey) {
+      return (
+        <ApnsKeyPaste key={credential.key} control={control} label={credential.displayName} isReadOnly={isReadOnly} />
+      );
+    }
+
+    if (fileUpload?.kind === 'apnsKey' && credential.key === CredentialsKeyEnum.Secure) {
+      return (
+        <ApnsEnvironmentField
+          key={credential.key}
+          control={control}
+          label={credential.displayName}
+          isReadOnly={isReadOnly}
+        />
+      );
+    }
+
+    return guide.segmentedFields?.includes(credential.key as CredentialsKeyEnum) ? (
+      <ChoiceField key={credential.key} credential={credential} control={control} isReadOnly={isReadOnly} />
+    ) : (
+      <CredentialSection key={credential.key} credential={credential} control={control} isReadOnly={isReadOnly} />
+    );
+  };
 
   return (
     <SetupStepperRail className="-ml-3 pb-4">
@@ -244,13 +331,29 @@ export function GuidedCredentialsSetup({
         description={guide.sourceStep.description(`Novu – ${environmentName ?? 'Development'}`)}
         extraContent={<SetupButton href={guide.sourceStep.url}>{guide.sourceStep.buttonLabel}</SetupButton>}
       />
-      {guide.fileUpload && setupMode === 'quick' ? (
+      {fileUpload && setupMode === 'quick' ? (
         <SetupStep
           index={2}
           status="current"
-          title={guide.fileUpload.title}
-          description={guide.fileUpload.description}
-          extraContent={<ServiceAccountUpload control={control} setValue={setValue} isReadOnly={isReadOnly} />}
+          title={fileUpload.title}
+          description={fileUpload.description}
+          extraContent={
+            <div className="flex flex-col gap-3">
+              {fileUpload.kind === 'apnsKey' ? (
+                <ApnsKeyUpload
+                  control={control}
+                  setValue={setValue}
+                  keyIdCredential={shownCredentials.find((credential) => credential.key === CredentialsKeyEnum.ApiKey)}
+                  isReadOnly={isReadOnly}
+                />
+              ) : (
+                <ServiceAccountUpload control={control} setValue={setValue} isReadOnly={isReadOnly} />
+              )}
+              {shownCredentials
+                .filter((credential) => !fileUpload.fileKeys.includes(credential.key as CredentialsKeyEnum))
+                .map(renderField)}
+            </div>
+          }
         />
       ) : (
         <SetupStep
@@ -260,31 +363,7 @@ export function GuidedCredentialsSetup({
           description={guide.credentialsDescription}
           extraContent={
             <div className="flex flex-col gap-3" onPasteCapture={handlePaste}>
-              {orderCredentials(credentials, guide.fieldOrder).map((credential) => {
-                const shown = { ...credential, ...guide.fieldOverrides?.[credential.key] };
-
-                if (guide.fileUpload && credential.key === CredentialsKeyEnum.ServiceAccount) {
-                  return (
-                    <ServiceAccountPaste
-                      key={credential.key}
-                      control={control}
-                      label={shown.displayName}
-                      isReadOnly={isReadOnly}
-                    />
-                  );
-                }
-
-                return guide.segmentedFields?.includes(credential.key as CredentialsKeyEnum) ? (
-                  <ChoiceField key={credential.key} credential={shown} control={control} isReadOnly={isReadOnly} />
-                ) : (
-                  <CredentialSection
-                    key={credential.key}
-                    credential={shown}
-                    control={control}
-                    isReadOnly={isReadOnly}
-                  />
-                );
-              })}
+              {shownCredentials.map(renderField)}
               {foundFields.length > 0 && (
                 <p className="text-paragraph-xs text-text-sub flex items-center gap-1" aria-live="polite">
                   <RiInformationFill className="text-text-soft size-4 shrink-0" />

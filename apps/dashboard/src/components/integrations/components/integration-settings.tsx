@@ -139,8 +139,19 @@ type IntegrationConfigurationProps = {
 };
 
 const SUBSCRIBERS_DOCS_URL = 'https://docs.novu.co/platform/concepts/subscribers';
-/** How a subscriber's FCM device tokens are set, in the Firebase integration docs. */
-const PUSH_DEVICE_TOKENS_DOCS_URL = 'https://docs.novu.co/platform/integrations/push/fcm';
+/** How a subscriber's device tokens are set, in each push provider's integration docs. */
+const PUSH_DEVICE_TOKENS_DOCS: Partial<Record<string, { url: string; tokenName: string; appName: string }>> = {
+  [PushProviderIdEnum.FCM]: {
+    url: 'https://docs.novu.co/platform/integrations/push/fcm',
+    tokenName: 'FCM',
+    appName: 'app',
+  },
+  [PushProviderIdEnum.APNS]: {
+    url: 'https://docs.novu.co/platform/integrations/push/apns',
+    tokenName: 'APNs',
+    appName: 'iOS app',
+  },
+};
 const TEAMS_CONNECT_DOCS_URL = 'https://docs.novu.co/platform/integrations/chat/ms-teams-connect';
 const SLACK_CONNECT_DOCS_URL = 'https://docs.novu.co/platform/integrations/chat/slack';
 /** The TelegramConnectButton section of the Telegram integration docs: how subscribers link their chat. */
@@ -149,6 +160,7 @@ const TELEGRAM_CONNECT_DOCS_URL =
 
 function getSetupDuration(providerId: string, mode: ProviderSetupMode) {
   if (providerId === ChatProviderIdEnum.Telegram) return '~1 min';
+  if (providerId === PushProviderIdEnum.APNS) return '~3 min';
   if (isGuidedSetupProvider(providerId)) return '~2 min';
   if (providerId === ChatProviderIdEnum.MsTeams) return mode === 'quick' ? '~4 min' : '~15 min';
   if (mode === 'quick') return '~2 min';
@@ -314,8 +326,9 @@ export function IntegrationSettings({
   const [selectedSetupMode, setSetupMode] = useState<ProviderSetupMode>('quick');
   // Only providers with a Quick setup have the two modes; the rest set up one way.
   const hasQuickSetup = !!slackQuickSetup || !!whatsAppQuickSetup || !!msTeamsQuickSetup;
-  // Firebase's two modes both run in the browser: Quick setup uploads the service account file, Manual pastes it.
-  const hasLocalSetupModes = usesSetupLayout && provider.id === PushProviderIdEnum.FCM;
+  // Firebase's and APNs' two modes both run in the browser: Quick setup uploads the key file, Manual pastes it.
+  const hasLocalSetupModes =
+    usesSetupLayout && (provider.id === PushProviderIdEnum.FCM || provider.id === PushProviderIdEnum.APNS);
   // A number connected by Embedded Signup runs on Novu's Meta app. Credentials typed in Manual would be saved
   // onto that same integration and still resolve to Novu's app, so the mode stays on Quick setup from then on.
   const isSetupModeLocked = !!whatsAppQuickSetup?.isConnected;
@@ -587,6 +600,7 @@ export function IntegrationSettings({
     const isWhatsApp = provider.id === ChatProviderIdEnum.WhatsAppBusiness;
     const isMsTeams = provider.id === ChatProviderIdEnum.MsTeams;
     const guidedSetupProviderId = isGuidedSetupProvider(provider.id) ? provider.id : undefined;
+    const pushDeviceTokens = guidedSetupProviderId ? PUSH_DEVICE_TOKENS_DOCS[provider.id] : undefined;
 
     const generalSettings = (
       <GeneralSettings
@@ -644,16 +658,12 @@ export function IntegrationSettings({
             onModeChange={hasSetupModeSwitch ? setSetupMode : undefined}
             footer={
               <>
-                {guidedSetupProviderId && provider.channel === ChannelTypeEnum.PUSH ? (
+                {pushDeviceTokens ? (
                   <SetupTip>
-                    Register each subscriber’s FCM <code className="font-code">deviceTokens</code> from your app so Novu
-                    can reach their devices.{' '}
-                    <a
-                      href={PUSH_DEVICE_TOKENS_DOCS_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline"
-                    >
+                    Register each subscriber’s {pushDeviceTokens.tokenName}{' '}
+                    <code className="font-code">deviceTokens</code> from your {pushDeviceTokens.appName} so Novu can
+                    reach their devices.{' '}
+                    <a href={pushDeviceTokens.url} target="_blank" rel="noopener noreferrer" className="underline">
                       Read docs
                     </a>
                     .

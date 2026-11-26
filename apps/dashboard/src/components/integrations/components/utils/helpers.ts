@@ -123,6 +123,7 @@ const GUIDED_SETUP_PROVIDERS = [
   EmailProviderIdEnum.SendGrid,
   SmsProviderIdEnum.Twilio,
   PushProviderIdEnum.FCM,
+  PushProviderIdEnum.APNS,
 ] as const;
 export type GuidedSetupProviderId = (typeof GUIDED_SETUP_PROVIDERS)[number];
 
