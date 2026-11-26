@@ -7,6 +7,7 @@ import {
   CredentialsKeyEnum,
   EmailProviderIdEnum,
   IConfigCredential,
+  PushProviderIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
 
@@ -121,6 +122,7 @@ const GUIDED_SETUP_PROVIDERS = [
   EmailProviderIdEnum.Resend,
   EmailProviderIdEnum.SendGrid,
   SmsProviderIdEnum.Twilio,
+  PushProviderIdEnum.FCM,
 ] as const;
 export type GuidedSetupProviderId = (typeof GUIDED_SETUP_PROVIDERS)[number];
 
@@ -128,7 +130,10 @@ export function isGuidedSetupProvider(providerId?: string): providerId is Guided
   return GUIDED_SETUP_PROVIDERS.some((id) => id === providerId);
 }
 
-/** Guided providers whose setup has the activity tracking step: Novu adds or offers their delivery webhook. */
+/**
+ * Guided email providers whose tracking switch starts on: Novu adds or offers their delivery webhook after create.
+ * Push tracking needs work in the user's app, so it starts off and nothing runs after create.
+ */
 export function hasGuidedActivityTracking(providerId?: string) {
   return providerId === EmailProviderIdEnum.Resend || providerId === EmailProviderIdEnum.SendGrid;
 }
