@@ -4,6 +4,7 @@ import { CreateOrganization } from './create-organization/create-organization.us
 import { SyncExternalOrganization } from './create-organization/sync-external-organization/sync-external-organization.usecase';
 import { BrandRetrievalService } from './enrich-organization-brand/brand-retrieval.service';
 import { EnrichOrganizationBrand } from './enrich-organization-brand/enrich-organization-brand.usecase';
+import { GetCopilotSettings } from './get-copilot-settings/get-copilot-settings.usecase';
 import { GetMyOrganization } from './get-my-organization/get-my-organization.usecase';
 import { GetOrganization } from './get-organization/get-organization.usecase';
 import { GetOrganizationSettings } from './get-organization-settings/get-organization-settings.usecase';
@@ -14,6 +15,7 @@ import { GetMembers } from './membership/get-members/get-members.usecase';
 import { RemoveMember } from './membership/remove-member/remove-member.usecase';
 import { RenameOrganization } from './rename-organization/rename-organization.usecase';
 import { UpdateBrandingDetails } from './update-branding-details/update-branding-details.usecase';
+import { UpdateCopilotSettings } from './update-copilot-settings/update-copilot-settings.usecase';
 import { UpdateOrganizationSettings } from './update-organization-settings/update-organization-settings.usecase';
 
 // TODO: move ee.organization.controller.ts to EE package
@@ -60,5 +62,7 @@ export const USE_CASES = [
   RenameOrganization,
   GetOrganizationSettings,
   UpdateOrganizationSettings,
+  GetCopilotSettings,
+  UpdateCopilotSettings,
   ...getEnterpriseUsecases(),
 ];

@@ -140,6 +140,17 @@ const organizationSchema = new Schema<OrganizationDBModel>(
       type: usageLimitsSchema,
       required: false,
     },
+    copilotSettings: {
+      type: new Schema(
+        {
+          dashboardEnabled: Schema.Types.Boolean,
+          slackEnabled: Schema.Types.Boolean,
+          editsEnabled: Schema.Types.Boolean,
+        },
+        { _id: false }
+      ),
+      required: false,
+    },
   },
   schemaOptions
 );

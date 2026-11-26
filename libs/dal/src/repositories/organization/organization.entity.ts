@@ -1,6 +1,7 @@
 import {
   ApiServiceLevelEnum,
   IBrandEnrichment,
+  IOrganizationCopilotSettings,
   IOrganizationEntity,
   IOrganizationUsageLimits,
   OnboardingWorkflowsStatus,
@@ -43,6 +44,9 @@ export class OrganizationEntity implements IOrganizationEntity {
 
   /** Workflow-run usage limit and usage alert settings; absent until the organization changes them. */
   usageLimits?: IOrganizationUsageLimits;
+
+  /** Novu Copilot switches; each is on until an admin turns it off. */
+  copilotSettings?: IOrganizationCopilotSettings;
 
   createdAt: string;
 

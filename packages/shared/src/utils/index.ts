@@ -7,6 +7,7 @@ export * from './checkIsResponseError';
 export * from './connect-embed-prompt';
 export * from './connect-subscriber-id';
 export * from './connect-web-chat-dashboard-url';
+export * from './copilot-settings';
 export * from './dashboard-web-chat-subscriber';
 export * from './data-filter';
 export * from './env';

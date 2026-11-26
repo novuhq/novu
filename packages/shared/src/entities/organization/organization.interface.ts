@@ -54,6 +54,19 @@ export interface IOrganizationUsageLimits {
   alerts: IUsageAlertSettings;
 }
 
+/**
+ * Organization-wide Novu Copilot switches, set by an admin in Organization settings. A switch that was never set is
+ * on; read them through `resolveCopilotSettings`.
+ */
+export interface IOrganizationCopilotSettings {
+  /** Members can ask Copilot on dashboard pages; it acts with each member's own role. */
+  dashboardEnabled?: boolean;
+  /** Members can @mention the Novu Copilot in Slack channels where the app is installed. */
+  slackEnabled?: boolean;
+  /** Copilot may change workflows, integrations and subscribers in Development; off, it only answers. */
+  editsEnabled?: boolean;
+}
+
 export interface IOrganizationEntity {
   _id: string;
   name: string;
@@ -80,6 +93,7 @@ export interface IOrganizationEntity {
   /** Lifecycle of AI-generated onboarding workflow templates (snapshots). */
   onboardingWorkflowsStatus?: OnboardingWorkflowsStatus;
   usageLimits?: IOrganizationUsageLimits;
+  copilotSettings?: IOrganizationCopilotSettings;
   createdAt: string;
   updatedAt: string;
   externalId?: string;
