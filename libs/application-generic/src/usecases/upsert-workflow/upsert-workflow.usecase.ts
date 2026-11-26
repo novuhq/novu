@@ -31,6 +31,7 @@ import { WorkflowResponseDto } from '../../dtos/workflow/workflow-response.dto';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { ChatControlType, EmailControlType } from '../../schemas/control';
 import { AnalyticsService } from '../../services';
+import { ResourceValidatorService } from '../../services/resource-validator.service';
 import {
   computeWorkflowStatus,
   isSupportedProviderOverrideId,
@@ -109,7 +110,8 @@ export class UpsertWorkflowUseCase {
     private getLayoutUseCase: GetLayoutUseCase,
     private analyticsService: AnalyticsService,
     private logger: PinoLogger,
-    private sendWebhookMessage: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage,
+    private resourceValidatorService: ResourceValidatorService
   ) {}
 
   @InstrumentUsecase()
@@ -131,6 +133,14 @@ export class UpsertWorkflowUseCase {
 
     if (existingWorkflow) {
       this.mixpanelTrack(resolvedCommand, 'Workflow Update - [API]');
+
+      const isActivating = !existingWorkflow.active && (resolvedCommand.workflowDto.active ?? true);
+      if (isActivating) {
+        await this.resourceValidatorService.validateActiveWorkflowLimit(
+          existingWorkflow._environmentId,
+          existingWorkflow._id
+        );
+      }
 
       upsertedWorkflow = await this.updateWorkflowV0Usecase.execute(
         UpdateWorkflowCommandV0.create({

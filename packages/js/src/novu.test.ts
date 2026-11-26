@@ -32,6 +32,7 @@ vi.mock('socket.io-client', () => {
   const mockIOFn = vi.fn(() => ({
     on: vi.fn(),
     disconnect: vi.fn(),
+    io: { on: vi.fn(), opts: {} },
   }));
   return {
     __esModule: true,

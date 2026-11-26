@@ -13,7 +13,7 @@ import { HOST_LABELS, type HostVia } from './onboarding';
 export type AgentHost = {
   /** Missing from an API from before hosts were told apart, which had one entry for each way in. */
   id?: HostId;
-  /** The way it came in last: the `agentinbox` CLI, or the hosted MCP server. */
+  /** The way it came in last: the `agentinbox` CLI, the hosted MCP server, or Agent Inbox's plugin in its gateway. */
   via: HostVia;
   /** When it first came in, on any computer: it used a code, or checked the inbox. */
   connectedAt: string;

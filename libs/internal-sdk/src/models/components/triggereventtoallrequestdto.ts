@@ -86,7 +86,7 @@ export type TriggerEventToAllRequestDtoOverrides = {
    */
   layoutIdentifier?: string | undefined;
   /**
-   * Severity of the workflow
+   * Override the severity of the workflow
    */
   severity?: SeverityLevelEnum | undefined;
   additionalProperties?: { [k: string]: { [k: string]: any } } | undefined;
@@ -140,6 +140,10 @@ export type TriggerEventToAllRequestDto = {
    * This could be used to override provider specific configurations
    */
   overrides?: TriggerEventToAllRequestDtoOverrides | undefined;
+  /**
+   * Override the workflow-assigned agent for this trigger using the public agent identifier. Omit to use the workflow default; pass null to disable agent routing for this execution.
+   */
+  agentId?: string | null | undefined;
   /**
    * A unique identifier for this transaction, we will generated a UUID if not provided.
    */
@@ -337,6 +341,7 @@ export type TriggerEventToAllRequestDto$Outbound = {
   name: string;
   payload: { [k: string]: any };
   overrides?: TriggerEventToAllRequestDtoOverrides$Outbound | undefined;
+  agentId?: string | null | undefined;
   transactionId?: string | undefined;
   actor?: SubscriberPayloadDto$Outbound | string | undefined;
   tenant?: string | TenantPayloadDto$Outbound | undefined;
@@ -355,6 +360,7 @@ export const TriggerEventToAllRequestDto$outboundSchema: z.ZodType<
   payload: z.record(z.any()),
   overrides: z.lazy(() => TriggerEventToAllRequestDtoOverrides$outboundSchema)
     .optional(),
+  agentId: z.nullable(z.string()).optional(),
   transactionId: z.string().optional(),
   actor: z.union([SubscriberPayloadDto$outboundSchema, z.string()]).optional(),
   tenant: z.union([z.string(), TenantPayloadDto$outboundSchema]).optional(),

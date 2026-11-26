@@ -40,14 +40,14 @@ const schemaDefinition = {
   expires_at: { type: CHDateTime64(3, 'UTC') },
 
   // Step run metadata
-  step_run_type: { type: CHString('') }, // default value is empty string
+  step_run_type: { type: CHLowCardinality(CHString(), '') }, // default value is empty string
 
   // Workflow run metadata
   workflow_run_identifier: { type: CHString('') }, // default value is empty string
   workflow_id: { type: CHString('') }, // Maps to NotificationTemplateEntity._id
 
   // Provider metadata
-  provider_id: { type: CHString('') },
+  provider_id: { type: CHLowCardinality(CHString(), '') },
 
   // Workflow run columns (14 new columns)
   workflow_name: { type: CHString('') },
@@ -59,9 +59,9 @@ const schemaDefinition = {
   topics: { type: CHString('') }, // JSON array of topics
   is_digest: { type: CHBoolean(false) },
   digested_workflow_run_id: { type: CHString('') }, // Reference to parent digest if this is a digested notification
-  delivery_lifecycle_status: { type: CHLowCardinality(CHString('')) },
-  delivery_lifecycle_detail: { type: CHLowCardinality(CHString('')) },
-  severity: { type: CHLowCardinality(CHString('')) },
+  delivery_lifecycle_status: { type: CHLowCardinality(CHString(), '') },
+  delivery_lifecycle_detail: { type: CHLowCardinality(CHString(), '') },
+  severity: { type: CHLowCardinality(CHString(), '') },
   critical: { type: CHBoolean(false) },
   context_keys: { type: CHArray(CHString(), []) },
 };
@@ -79,7 +79,9 @@ export const TTL: keyof typeof schemaDefinition = 'expires_at';
 const clickhouseSchemaOptions = {
   table_name: TABLE_NAME,
   engine: 'MergeTree',
-  order_by: `(${ORDER_BY.join(', ')})` as keyof typeof schemaDefinition,
+  // The table's sort key, as the migrations create it; ORDER_BY lists the columns a query may sort by.
+  order_by:
+    '(organization_id, environment_id, entity_type, toDate(created_at), entity_id)' as keyof typeof schemaDefinition,
   additional_options: ['PARTITION BY toYYYYMM(created_at)', `TTL toDateTime(${TTL})`],
 };
 
@@ -167,6 +169,8 @@ export type EventType =
   | 'chat_agent_no_eligible_channels'
   | 'chat_agent_channels_fallback'
   | 'chat_agent_platform_thread_persist_failed'
+  | 'chat_files_sent'
+  | 'chat_files_not_sent'
   | 'msteams_bot_not_installed'
   | 'msteams_channel_not_found'
   | 'msteams_user_not_found'

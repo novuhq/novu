@@ -57,7 +57,7 @@ const schemaDefinition = {
 
   delivery_lifecycle_status: { type: CHString('') },
   delivery_lifecycle_detail: { type: CHString('') },
-  severity: { type: CHLowCardinality(CHString(SeverityLevelEnum.NONE)) }, // severity of the workflow run
+  severity: { type: CHLowCardinality(CHString(), SeverityLevelEnum.NONE) }, // severity of the workflow run
   critical: { type: CHBoolean(false) }, // critical flag of the workflow run
 
   context_keys: { type: CHArray(CHString(), []) }, // Array of context keys (type:identifier)
@@ -70,7 +70,7 @@ export const TTL: keyof typeof schemaDefinition = 'expires_at';
 const clickhouseSchemaOptions = {
   table_name: TABLE_NAME,
   engine: 'ReplacingMergeTree(updated_at)',
-  order_by: `(${ORDER_BY.join(', ')})` as any,
+  order_by: `(${ORDER_BY.join(', ')})` as keyof typeof schemaDefinition,
   additional_options: ['PARTITION BY toYYYYMM(created_at)', `TTL toDateTime(${TTL})`],
 };
 

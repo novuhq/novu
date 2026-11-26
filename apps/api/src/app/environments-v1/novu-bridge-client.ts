@@ -10,6 +10,7 @@ import { PostActionEnum, type Workflow } from '@novu/framework/internal';
 import { Client, NovuHandler, NovuRequestHandler } from '@novu/framework/nest';
 import { EnvironmentTypeEnum } from '@novu/shared';
 import type { Request, Response } from 'express';
+import { getBridgeSecretKeysCacheKey } from './bridge-secret-keys-cache';
 import { ConstructFrameworkWorkflow, ConstructFrameworkWorkflowCommand } from './usecases/construct-framework-workflow';
 
 /*
@@ -66,29 +67,29 @@ export class NovuBridgeClient {
       workflows.push(programmaticallyConstructedWorkflow);
     }
 
-    const cacheKey = `bridge-secret-key:${environmentId}`;
+    const cacheKey = getBridgeSecretKeysCacheKey(environmentId);
     const storeName = InMemoryLRUCacheStore.VALIDATOR;
 
-    let secretKey: string;
+    let secretKeys: string[];
     try {
       const resolved = await this.inMemoryLRUCacheService.get(
         storeName,
         cacheKey,
         () =>
-          this.getDecryptedSecretKey.execute(
+          this.getDecryptedSecretKey.executeAll(
             GetDecryptedSecretKeyCommand.create({
               environmentId,
             })
           ),
         {
           environmentId,
-          cacheVariant: 'bridge-secret-key',
+          cacheVariant: 'bridge-secret-keys',
         }
       );
 
-      if (typeof resolved !== 'string' || !resolved.trim()) {
+      if (!isSecretKeyList(resolved)) {
         this.logger.error(
-          `Bridge secret key missing or invalid after cache lookup (store=${storeName}, cacheKey=${cacheKey}, environmentId=${environmentId})`
+          `Bridge secret keys missing or invalid after cache lookup (store=${storeName}, cacheKey=${cacheKey}, environmentId=${environmentId})`
         );
         res.status(500).json({
           error: 'Failed to resolve environment secret key',
@@ -98,7 +99,7 @@ export class NovuBridgeClient {
         return;
       }
 
-      secretKey = resolved;
+      secretKeys = resolved;
     } catch (error) {
       if (error instanceof NotFoundException) {
         this.logger.warn(
@@ -127,7 +128,12 @@ export class NovuBridgeClient {
     const novuRequestHandler = new NovuRequestHandler({
       frameworkName,
       workflows,
-      client: new Client({ secretKey, strictAuthentication: true, verbose: false }),
+      client: new Client({
+        secretKey: secretKeys[0],
+        secretKeys,
+        strictAuthentication: true,
+        verbose: false,
+      }),
       handler: this.novuHandler.handler,
     });
 
@@ -138,4 +144,10 @@ export class NovuBridgeClient {
 
     await bridgeHandler(req, res);
   }
+}
+
+function isSecretKeyList(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) && value.length > 0 && value.every((key) => typeof key === 'string' && key.trim().length > 0)
+  );
 }

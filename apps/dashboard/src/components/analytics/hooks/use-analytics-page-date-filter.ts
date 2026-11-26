@@ -5,7 +5,7 @@ import {
   type GetSubscriptionDto,
   getFeatureForTierAsNumber,
 } from '@novu/shared';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { IS_CLOUD, IS_SELF_HOSTED } from '../../../config';
 import { useNumericFeatureFlag } from '../../../hooks/use-feature-flag';
 
@@ -69,17 +69,22 @@ function buildDateFilterOptions({
   });
 }
 
-function getDefaultDateRange({
+export function getDefaultDateRange({
   subscription,
   organization,
   maxDateAnalyticsMs,
+  preferredDateRange,
 }: {
   subscription: GetSubscriptionDto | null | undefined;
   organization: OrganizationLike | null | undefined;
   maxDateAnalyticsMs?: number;
+  /** The period the URL asks for; used when it is one of the options and the plan allows it. */
+  preferredDateRange?: string;
 }): string {
+  const isKnownOption = HOME_PAGE_DATE_RANGE_OPTIONS.some((option) => option.value === preferredDateRange);
+
   if (!organization || !subscription) {
-    return '30d';
+    return preferredDateRange && isKnownOption ? preferredDateRange : '30d';
   }
 
   const availableFilters = buildDateFilterOptions({
@@ -87,6 +92,11 @@ function getDefaultDateRange({
     apiServiceLevel: subscription.apiServiceLevel,
     maxDateAnalyticsMs,
   });
+
+  const preferredOption = availableFilters.find((option) => option.value === preferredDateRange);
+  if (preferredOption && !preferredOption.disabled) {
+    return preferredOption.value;
+  }
 
   // Find the maximum available date range up to 30 days, excluding "Coming soon" options
   // Priority order: 30d -> 7d -> 24h (largest available that's not "Coming soon")
@@ -123,9 +133,16 @@ type UseHomepageDateFilterParams = {
   organization: OrganizationLike | null | undefined;
   subscription: GetSubscriptionDto | null | undefined;
   upgradeCtaIcon?: React.ComponentType<{ className?: string }>;
+  /** The period the page's URL asks for. */
+  preferredDateRange?: string;
 };
 
-export function useHomepageDateFilter({ organization, subscription, upgradeCtaIcon }: UseHomepageDateFilterParams) {
+export function useHomepageDateFilter({
+  organization,
+  subscription,
+  upgradeCtaIcon,
+  preferredDateRange,
+}: UseHomepageDateFilterParams) {
   // Get the max date analytics feature flag value (in days, convert to milliseconds)
   // This feature flag controls the maximum date range available for analytics
   // If set to 7, only options <= 7 days will be enabled, others will show "Coming soon"
@@ -133,16 +150,11 @@ export function useHomepageDateFilter({ organization, subscription, upgradeCtaIc
   const maxDateAnalyticsDays = useNumericFeatureFlag(FeatureFlagsKeysEnum.MAX_DATE_ANALYTICS_ENABLED_NUMBER, 0);
   const maxDateAnalyticsMs = maxDateAnalyticsDays > 0 ? maxDateAnalyticsDays * 24 * 60 * 60 * 1000 : 0;
 
-  const defaultDateRange = useMemo(
-    () => getDefaultDateRange({ organization, subscription, maxDateAnalyticsMs }),
-    [organization, subscription, maxDateAnalyticsMs]
+  // The page picks a period by writing it to the URL, so the URL's period, when the plan allows it, is the selection.
+  const selectedDateRange = useMemo(
+    () => getDefaultDateRange({ organization, subscription, maxDateAnalyticsMs, preferredDateRange }),
+    [organization, subscription, maxDateAnalyticsMs, preferredDateRange]
   );
-
-  const [selectedDateRange, setSelectedDateRange] = useState<string>(defaultDateRange);
-
-  useEffect(() => {
-    setSelectedDateRange(defaultDateRange);
-  }, [defaultDateRange]);
 
   const dateFilterOptions = useMemo(() => {
     const missingSubscription = !subscription && IS_CLOUD;
@@ -170,7 +182,6 @@ export function useHomepageDateFilter({ organization, subscription, upgradeCtaIc
 
   return {
     selectedDateRange,
-    setSelectedDateRange,
     dateFilterOptions,
     chartsDateRange,
     selectedPeriodLabel,

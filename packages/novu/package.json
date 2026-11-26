@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "2.21.4",
+  "version": "2.21.5",
   "description": "Novu CLI. Run Novu Studio and sync workflows with Novu Cloud",
   "main": "src/index.js",
   "publishConfig": {
@@ -111,7 +111,7 @@
     "uuid": "^11.1.1",
     "validate-npm-package-name": "3.0.0",
     "ws": "^8.17.1",
-    "zod": "^3.25.0",
+    "zod": "^4.6.6",
     "zod-to-json-schema": "^3.25.1"
   },
   "nx": {

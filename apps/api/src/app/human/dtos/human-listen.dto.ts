@@ -175,6 +175,13 @@ export class ListenMessageSenderDto {
 
   @ApiProperty({ description: 'Whether it is the operator.' })
   isOperator: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'True for a contact the operator gave full access on agentinbox.md: their messages start the host with ' +
+      'everything the operator’s get, and the host asks them, not the operator. Absent for everyone else.',
+  })
+  fullAccess?: boolean;
 }
 
 /** What a person picked or wrote in answer to a card. */

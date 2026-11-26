@@ -55,7 +55,7 @@ function acquire(command: string): void {
   if (!take(command)) throw taken(lockHolder());
 }
 
-export async function withLock<T>(command: 'bake' | 'apply', work: () => Promise<T>): Promise<T> {
+export async function withLock<T>(command: 'bake' | 'apply' | 'flag', work: () => Promise<T>): Promise<T> {
   acquire(command);
   try {
     return await work();

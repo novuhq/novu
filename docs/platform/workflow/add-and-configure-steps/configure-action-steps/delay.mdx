@@ -134,7 +134,7 @@ The same Monday-only schedule with the toggle off skips the following email, SMS
 
 Novu waits once, until the start of the next enabled window. It does not step through each closed day. A delay that ends Friday at 6:00 PM resumes Monday at 9:00 AM. A delay that ends Monday at 10:01 AM, when the only window is Monday 9:00 AM–10:00 AM, resumes the following Monday at 9:00 AM.
 
-The duration you configure on the Delay step follows your [plan limit](/platform/developer/limits): 1 day on Free, 7 days on Pro, and 30 days on Team. Enterprise limits are custom. The wait until the next window is separate from that duration, on every plan. The Friday evening example above still resumes Monday morning on the Free plan.
+The duration you configure on the Delay step follows your [plan limit](/platform/developer/limits): 24 hours on Free, 7 days on Pro, and 90 days on Team. Enterprise limits are custom. The wait until the next window is separate from that duration, on every plan. The Friday evening example above still resumes Monday morning on the Free plan.
 
 If the schedule is on and no day has an open window, there is no later slot to wait for. The delay ends, and email, SMS, push, and chat steps are skipped.
 

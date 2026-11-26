@@ -20,7 +20,7 @@ test('home serves readable agent documentation and links to Sapien', async ({ pa
   await expect(page.locator('#contacts')).toContainText('agentinbox contact list --limit 20 --after <cursor>');
   await page.getByRole('link', { name: 'agentinbox.md/sapien' }).click();
   await expect(page).toHaveURL(/\/sapien$/);
-  await page.getByRole('navigation', { name: 'Header navigation' }).getByRole('link', { name: 'for robots' }).click();
+  await page.getByRole('navigation', { name: 'Footer navigation' }).getByRole('link', { name: 'for robots' }).click();
   await expect(page).toHaveURL(/\/$/);
   expect(errors).toEqual([]);
 });

@@ -7,7 +7,7 @@ Inbox accounts with their dashboard, and the Agent Inbox API (`/api`).
 | Route             | What it is                                                                                  |
 | ----------------- | ------------------------------------------------------------------------------------------- |
 | `/`               | The page for agents ("for robots"): the CLI on one page of light paper, from install to exit codes and flags, beside a dithered robot arm. People go on to `/sapien`. A person who is already signed in is sent straight to the inbox. See [the ADR](../../packages/agentinbox/docs/adr/0002-agentinbox-md-root-is-the-page-for-agents.md). |
-| `/sapien`         | The page for people: what Agent Inbox does, with the setup command, a prompt to copy, and a "Visit Dashboard" link into the inbox. A person who is already signed in is sent straight to the inbox. |
+| `/sapien`         | The page for people: what Agent Inbox does, with the setup command, a prompt to copy, and a "dashboard" link into the inbox. A person who is already signed in is sent straight to the inbox. |
 | `/pricing`        | Hobby, Pro ($10/month), and Enterprise; the feature comparison, conversation-counting rules and pricing FAQ. Uses the landing templates' design. See [pricing](docs/pricing.md). |
 | `/index.md`, `/llms.txt` | `/` as Markdown, made from the same data, and the index that points language models to it, to `/agents.md` and to each host's page. |
 | `/[host]`, `/[host].md` | A page for each host Agent Inbox has steps for (`/claude-code`, `/codex`, `/chatgpt`, …), and the same as Markdown for agents (`/claude-code.md`, rewritten to `/claude-code/index.md`). Each opens with what to tell the agent, then the same steps as the dashboard's host picker, with "sign in to get your code" where the dashboard has the code. Built from the host list in `src/lib/hosts.ts`; any other address at that level is not found. |
@@ -52,6 +52,37 @@ Both pages show the CLI's commands as text written by hand. When a command, flag
 `/sapien` has its own black, text and surface colours (`--color-sapien-*` in `src/styles/globals.css`) and its own
 faces, Inter and IvyPresto (`src/lib/sapien-fonts.ts`); `/` styles itself in `src/styles/home.css` with Geist Mono.
 Neither changes how the dashboard looks. The dither effect on `/` is vendored (`src/vendor/interactive-dither`, MIT).
+
+### Header and footer
+
+`/sapien`, `/use-cases`, `/pricing` and the channel and agent pages share one header and one footer (Figma file
+"Human.md", section `1632:32002`), in `src/components/sapien/site-*.tsx`. What they link to is one list,
+`src/data/site-navigation.ts`.
+
+- The header stays at the top of the window. From 1024px it is a row: the channels menu, use cases, pricing, then
+  GitHub, the dashboard and the demo booking. Below that the Menu button opens a panel the height of the window
+  (Figma section `1694:9934`): channels, use cases and pricing as one list, and the row's buttons at its foot.
+  Channels opens in place: each channel a link to its page, with its agents under it, one to a line.
+- The channels menu opens under the pointer and closes when it leaves; a click or the keyboard opens it until Escape,
+  a second click, a click elsewhere, or the focus moving on. Pointing at a channel, or focusing it, shows the agents
+  to connect there. A finger can't point first, so its first tap on a channel shows the agents and its next tap opens
+  the channel. A pointer that crosses a channel on its way to the agents keeps the agents it was heading for.
+- The agents under each channel are the ones the design lists (`CHANNEL_MENU`): each links to that agent's page on
+  the channel, and the channel's own page lists the rest. The panel has room for five.
+- The header covers the top of the window, so what the browser scrolls to, a section or a focused control, keeps
+  51px clear of it (`scroll-margin-top` in `globals.css`), and `SiteHeaderFocus` moves a control that takes the focus
+  under the header out from under it. This is not the page's `scroll-padding`: with that, focusing a control in the
+  header itself scrolls the page.
+- The footer has the package, the page for agents and the source. The Novu mark beside "built by novu" is not in
+  this design; it stays from the earlier one. It is one row wherever that fits, from about 610px; narrower, the
+  copyright moves under the row, and under about 415px the buttons move under the logo. Figma draws it at 1920px.
+- The icons are Figma's own files (`public/images/navigation/`), drawn at the size each file gives. The agents'
+  logos are fetched where the row shows, or when a phone opens a channel's agents.
+- The menus need JavaScript. Without it the row still links to use cases, pricing, GitHub, the dashboard and the
+  demo booking, and the Menu button below 1024px opens nothing.
+
+`tests/navigation/` covers the row's and the menu's places at 1920px against the design, the pointer, the keyboard,
+touch, the small-screen menu and its agents, the footer's rows, and where the page scrolls to under the header.
 
 ## Onboarding
 
@@ -143,7 +174,10 @@ and the MCP server only speak these paths, so a self-hosted or local setup point
   `Idempotency-Key`, `If-None-Match`, `If-Modified-Since`, `Novu-Application-Identifier`, `Novu-Analytics-Source` and
   `Agent-Inbox-Via`. This site's cookies never reach the API, and the API's `Set-Cookie` never reaches the browser.
 - The caller's IP address goes on as `X-Forwarded-For`, taken from the `x-forwarded-for` Vercel sets, so the API's
-  per-IP limits (keyless setups, one-time codes) count each caller, not this site.
+  per-IP limits (keyless setups, one-time codes) count each caller, not this site. On Novu Cloud the API reads the
+  caller from Cloudflare, which sees this site, so with `AGENT_INBOX_DASHBOARD_API_SECRET` set the IP also goes on as
+  `X-Agent-Inbox-Client-IP`, signed in `X-Agent-Inbox-Client-IP-Signature` (`src/lib/client-ip-signature.ts`). The
+  API takes a signature for five minutes.
 - The longest call is the inbox's long-poll, which the API holds for up to 25 seconds; the route may run for 60.
 
 ## Configuration

@@ -6,6 +6,9 @@ export const BAKED = `${DATA}/.baked.json`;
 export const APPLIED = `${DATA}/.applied.json`;
 export const APPLYING = `${DATA}/.applying.json`;
 export const MIGRATED = `${DATA}/.migrated`;
+export const FLAGS = `${DATA}/flags.json`;
+// The flags the API, worker and dashboard last restarted with; `box flag` restarts them until it matches FLAGS.
+export const FLAGS_APPLIED = `${DATA}/.flags-applied.json`;
 export const RUN = `${DATA}/run`;
 export const LOCK = `${RUN}/box.lock`;
 export const PC_SOCKET = `${RUN}/process-compose.sock`;

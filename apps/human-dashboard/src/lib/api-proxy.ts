@@ -3,6 +3,11 @@ import 'server-only';
 import type { NextRequest } from 'next/server';
 
 import { PROXY_ROUTES } from './api-proxy-routes';
+import {
+  AGENT_INBOX_CLIENT_IP_HEADER,
+  AGENT_INBOX_CLIENT_IP_SIGNATURE_HEADER,
+  signClientIp,
+} from './client-ip-signature';
 import { RELAY_AGENT_IDENTIFIER } from './human-agent-api';
 import { API_PROXY_PATH, resolveNovuApiUrl } from './novu-api';
 
@@ -166,6 +171,13 @@ function forwardedHeaders(request: NextRequest): Headers {
   const clientIp = readClientIp(request);
   if (clientIp) {
     headers.set('x-forwarded-for', clientIp);
+
+    // On Novu Cloud the API reads the caller from Cloudflare, which sees this site, so it takes the signed one.
+    const secret = process.env.AGENT_INBOX_DASHBOARD_API_SECRET;
+    if (secret) {
+      headers.set(AGENT_INBOX_CLIENT_IP_HEADER, clientIp);
+      headers.set(AGENT_INBOX_CLIENT_IP_SIGNATURE_HEADER, signClientIp(clientIp, secret));
+    }
   }
 
   return headers;

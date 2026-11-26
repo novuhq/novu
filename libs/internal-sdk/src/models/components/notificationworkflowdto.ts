@@ -37,7 +37,7 @@ export type NotificationWorkflowDto = {
    */
   data?: { [k: string]: any } | undefined;
   /**
-   * Severity of the workflow
+   * Override the severity of the workflow
    */
   severity: SeverityLevelEnum;
 };

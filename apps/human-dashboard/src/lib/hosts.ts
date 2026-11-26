@@ -11,8 +11,10 @@ export { HOST_IDS, type HostId, isHostId } from './host-ids';
  *
  * A host that runs commands connects with the CLI, and may also connect through a plugin or the MCP server in
  * its own config. The setup box opens on that second way when signing in there connects the host (a plugin, or
- * the MCP server); Hermes and the hosts with only the CLI open on the commands. A chat app can't run commands,
- * so it only signs in to the hosted MCP server.
+ * the MCP server); the hosts with only the CLI open on the commands. Hermes and OpenClaw have a plugin of
+ * Agent Inbox's own (`plugin`), which their gateways load and which connects with the one-time code: the box
+ * offers it first, then the MCP server, and leaves their CLI out, though it still connects them. A chat app
+ * can't run commands, so it only signs in to the hosted MCP server.
  *
  * The steps follow each host's own docs as of October 2026 (`docsUrl`). Hosts rename their settings often:
  * check a host's steps against its docs when someone says they don't match.
@@ -97,6 +99,32 @@ export type HostAlternative = {
     }
 );
 
+/**
+ * Agent Inbox's own plugin for a host with a gateway (Hermes, OpenClaw): the gateway keeps the agent listening, so
+ * a message to the agent reaches the host within seconds and its answer goes back, with no `listen` beside it. It
+ * connects with the one-time code, as the CLI does, and needs no browser on the computer the host runs on.
+ */
+export type HostPlugin = {
+  /** Installs the plugin and turns it on, in a terminal on the computer the host runs on. */
+  install: string;
+  /**
+   * The install as an agent runs it, when that differs: nobody is at its terminal to answer what the host asks while
+   * it installs. A person runs `install` and answers.
+   */
+  agentInstall?: string;
+  /**
+   * Connects it to the agent with the code. `--yes` asks nothing, since the commands are pasted together and a
+   * question would take the next one as its answer; at the operator's own terminal it also turns listening on.
+   */
+  setup: (details: { handle: string; code: string; apiUrl?: string }) => string;
+  /** Restarts the gateway, which loads the plugin and starts listening. */
+  restart: string;
+  /** The plugin's repository, for agents (and people) that want to read it. */
+  url: string;
+  /** More for an agent that reads the host's Markdown. */
+  agentNotes?: readonly string[];
+};
+
 type HostBase = {
   id: HostId;
   /** As people see it: "Claude Code", "Grok Bot". */
@@ -127,6 +155,8 @@ export type CommandHost = HostBase & {
    */
   listenStarts?: true;
   alternative?: HostAlternative;
+  /** Agent Inbox's own plugin for the host's gateway, which the setup box offers first. */
+  plugin?: HostPlugin;
 };
 
 export type ChatApp = HostBase & {
@@ -191,6 +221,20 @@ export function opencodeMcpConfig(mcpUrl: string): string {
 /** What goes into `~/.hermes/config.yaml` by hand: the server as a remote one, which Hermes signs in to with OAuth. */
 export function hermesMcpConfig(mcpUrl: string): string {
   return ['mcp_servers:', `  ${MCP_SERVER_NAME}:`, `    url: ${JSON.stringify(mcpUrl)}`, '    auth: oauth'].join('\n');
+}
+
+/** The MCP server in OpenClaw's own config (`~/.openclaw/openclaw.json`), as its docs write it. */
+export function openclawMcpConfig(mcpUrl: string): string {
+  return JSON.stringify(
+    { mcp: { servers: { [MCP_SERVER_NAME]: { url: mcpUrl, transport: 'streamable-http', auth: 'oauth' } } } },
+    null,
+    2
+  );
+}
+
+/** The API a setup command names, when the dashboard knows it: a code only works on the API that made it. */
+function apiUrlFlag(apiUrl: string | undefined): string {
+  return apiUrl ? ` --api-url ${apiUrl}` : '';
 }
 
 /** The MCP server's address, to paste into a chat app. */
@@ -304,6 +348,18 @@ export const HOSTS: readonly Host[] = [
     skillsAgent: 'hermes-agent',
     afterCommands: 'Then start a new Hermes session with /reset, so it loads the skills.',
     docsUrl: 'https://hermes-agent.nousresearch.com/docs/user-guide/features/skills',
+    plugin: {
+      // From Hermes's plugin catalog: the commit its maintainers reviewed, as the catalog pins it.
+      install: 'hermes plugins install agentinbox --enable',
+      setup: ({ handle, code, apiUrl }) =>
+        `hermes agentinbox setup ${handle} --code ${code} --yes${apiUrlFlag(apiUrl)}`,
+      restart: 'hermes gateway restart',
+      url: 'https://github.com/agentinboxhq/hermes-plugin',
+      agentNotes: [
+        'Hermes doesn’t restart its gateway from inside it, so when you run in Hermes’s gateway, ask your operator to run `hermes gateway restart` in their terminal.',
+        'Without `--yes`, or when an agent runs it, `hermes agentinbox setup` doesn’t turn listening on by itself: when the gateway starts, your operator gets an Allow and Deny message on their channel first.',
+      ],
+    },
     alternative: {
       kind: 'mcp-config',
       title: 'Or add the MCP server to Hermes',
@@ -333,6 +389,42 @@ export const HOSTS: readonly Host[] = [
     // Its skills go to ~/.openclaw/skills (`-g`), where its agents find them.
     skillsAgent: 'openclaw',
     docsUrl: 'https://docs.openclaw.ai/tools/skills',
+    plugin: {
+      // From ClawHub, which OpenClaw trusts: an npm or git source asks before it installs, and a question would
+      // take the next pasted line as its answer.
+      install: 'openclaw plugins install clawhub:@agentinbox/openclaw',
+      // OpenClaw asks the person at the terminal to agree to what the plugin may do; an agent has nobody there to
+      // answer, so its install agrees ahead.
+      agentInstall: 'openclaw plugins install clawhub:@agentinbox/openclaw --accept-capabilities',
+      setup: ({ handle, code, apiUrl }) =>
+        `openclaw agentinbox setup ${handle} --code ${code} --yes${apiUrlFlag(apiUrl)}`,
+      restart: 'openclaw gateway restart',
+      url: 'https://github.com/agentinboxhq/openclaw-plugin',
+      agentNotes: [
+        '`--accept-capabilities` agrees to what the plugin may do without showing it: OpenClaw asks otherwise, and nobody is at your terminal to answer. Leave it out when your operator runs the install.',
+        'Without `--yes`, or when an agent runs it, `openclaw agentinbox setup` doesn’t turn listening on by itself: when the gateway starts, your operator gets an Allow and Deny message on their channel first.',
+      ],
+    },
+    alternative: {
+      kind: 'mcp-config',
+      title: 'Or add the MCP server to OpenClaw',
+      // `add` saves the server without connecting, as it needs a sign-in first; `login` signs in in the browser.
+      addCommand: {
+        text: 'Run these on the computer OpenClaw runs on.',
+        line: (mcpUrl) =>
+          `openclaw mcp add ${MCP_SERVER_NAME} --url ${mcpUrl} --transport streamable-http --auth oauth`,
+      },
+      text: `Or add this to ~/.openclaw/openclaw.json, then run openclaw mcp login ${MCP_SERVER_NAME}.`,
+      file: '~/.openclaw/openclaw.json',
+      config: openclawMcpConfig,
+      signIn: 'Then sign in to Agent Inbox in the browser.',
+      signInCommand: `openclaw mcp login ${MCP_SERVER_NAME}`,
+      afterSignIn: 'Then restart the gateway with openclaw gateway restart, so its agents get the tools.',
+      agentNotes: [
+        '`openclaw mcp login` waits for the sign-in in a browser, so your operator runs it in their own terminal: give them the commands rather than running them yourself.',
+        'OpenClaw’s own docs for MCP servers: https://docs.openclaw.ai/tools/mcp',
+      ],
+    },
   },
   { id: 'general', name: 'General', group: 'commands', runsIn: 'project', icon: null },
   {
@@ -494,8 +586,8 @@ export function listenLead(host: CommandHost, handle?: string): string {
 }
 
 /**
- * The hosts that sign in through the hosted MCP server on one of their tabs: the chat apps, and the coding agents
- * and Hermes through their plugin or MCP config. The server tells each apart by the app that signed in
+ * The hosts that sign in through the hosted MCP server on one of their tabs: the chat apps, the coding agents
+ * through their plugin or MCP config, and Hermes and OpenClaw through their MCP config. The server tells each apart by the app that signed in
  * (`hostOfClientName`, and for Grok Bot `signInAppHost`, in `apps/agent-inbox-mcp`). What the dashboard's
  * `connectedTools` lists, and so the hosts the picker can tick as soon as they sign in.
  */
@@ -505,6 +597,7 @@ const SIGNED_IN_HOST_IDS = [
   'opencode',
   'cursor',
   'hermes',
+  'openclaw',
   'claude',
   'chatgpt',
   'grok',

@@ -3,10 +3,7 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
 import { ClosedEnum } from "../../types/enums.js";
-import { Result as SafeParseResult } from "../../types/fp.js";
-import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 /**
  * Editor type of the layout.
@@ -32,21 +29,9 @@ export type EmailControlsDto = {
 };
 
 /** @internal */
-export const EditorType$inboundSchema: z.ZodNativeEnum<typeof EditorType> = z
+export const EditorType$outboundSchema: z.ZodNativeEnum<typeof EditorType> = z
   .nativeEnum(EditorType);
-/** @internal */
-export const EditorType$outboundSchema: z.ZodNativeEnum<typeof EditorType> =
-  EditorType$inboundSchema;
 
-/** @internal */
-export const EmailControlsDto$inboundSchema: z.ZodType<
-  EmailControlsDto,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  body: z.string(),
-  editorType: EditorType$inboundSchema,
-});
 /** @internal */
 export type EmailControlsDto$Outbound = {
   body: string;
@@ -68,14 +53,5 @@ export function emailControlsDtoToJSON(
 ): string {
   return JSON.stringify(
     EmailControlsDto$outboundSchema.parse(emailControlsDto),
-  );
-}
-export function emailControlsDtoFromJSON(
-  jsonString: string,
-): SafeParseResult<EmailControlsDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => EmailControlsDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'EmailControlsDto' from JSON`,
   );
 }

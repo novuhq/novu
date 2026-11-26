@@ -45,6 +45,7 @@ export function buildSubscribersNotificationsUnseenCountQuery(
     queryKey: queryKeySubscribersNotificationsUnseenCount(
       request.subscriberId,
       {
+        feedId: request.feedId,
         seen: request.seen,
         limit: request.limit,
         idempotencyKey: request.idempotencyKey,
@@ -76,6 +77,7 @@ export function buildSubscribersNotificationsUnseenCountQuery(
 export function queryKeySubscribersNotificationsUnseenCount(
   subscriberId: string,
   parameters: {
+    feedId?: Array<string> | undefined;
     seen?: boolean | undefined;
     limit?: number | undefined;
     idempotencyKey?: string | undefined;

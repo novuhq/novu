@@ -1,7 +1,7 @@
 {
   "name": "@novu/dashboard",
   "private": true,
-  "version": "3.20.0",
+  "version": "3.21.0",
   "type": "module",
   "portless": {
     "name": "dashboard.novu"
@@ -9,7 +9,6 @@
   "scripts": {
     "start": "vite",
     "start:portless": "node ../../scripts/portless-dev-env.mjs pnpm exec portless run vite",
-    "start:test": "vite --mode test",
     "start:static:build": "http-server dist -p 4201 --proxy http://127.0.0.1:4201?",
     "dev": "pnpm start",
     "build": "NODE_OPTIONS='--max-old-space-size=8192' vite build",
@@ -22,13 +21,6 @@
     "check:fix": "biome check --write .",
     "preview": "vite preview",
     "test": "VITE_CLERK_PUBLISHABLE_KEY=pk_test_unit vitest run --dir src",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:debug": "playwright test --debug",
-    "test:e2e:install": "playwright install --with-deps",
-    "test:e2e:codegen": "playwright codegen",
-    "test:e2e:show-report": "npx playwright show-report",
-    "test:e2e:merge-report": "playwright merge-reports --reporter html",
     "typecheck": "NODE_OPTIONS='--max-old-space-size=6144' tsc -b",
     "typecheck:spec": "NODE_OPTIONS='--max-old-space-size=6144' tsc --noEmit -p tsconfig.spec.json"
   },
@@ -165,15 +157,9 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
-    "@clerk/backend": "^3.4.11",
     "@clerk/shared": "^4.23.0",
-    "@clerk/testing": "^2.0.31",
-    "@faker-js/faker": "^10.5.0",
     "@hookform/devtools": "^4.3.0",
-    "@novu/dal": "workspace:*",
     "@novu/ee-auth": "workspace:*",
-    "@novu/testing": "workspace:*",
-    "@playwright/test": "^1.55.1",
     "@sentry/vite-plugin": "5.4.0",
     "@tiptap/core": "^2.11.5",
     "@types/json-schema": "^7.0.15",
@@ -189,8 +175,6 @@
     "@types/uuid": "^8.3.4",
     "@vitejs/plugin-react": "^6.1.2",
     "cross-fetch": "^4.0.0",
-    "dotenv": "^16.6.1",
-    "express": "^4.21.0",
     "globals": "^15.9.0",
     "http-proxy-middleware": "^3.0.7",
     "http-server": "^0.13.0",

@@ -100,5 +100,5 @@ export function queryKeyChannelEndpointsList(
     idempotencyKey?: string | undefined;
   },
 ): QueryKey {
-  return ["@novu/api", "Channel Endpoints", "list", parameters];
+  return ["@novu/api", "ChannelEndpoints", "list", parameters];
 }

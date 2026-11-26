@@ -28,6 +28,14 @@ describe('verifyNovuSignature', () => {
     expect(verifyNovuSignature(header, `${body} `, SECRET, { now: () => now })).toBe(false);
   });
 
+  it('accepts a later v1 signed with this secret when an earlier v1 used another key', () => {
+    const other = sign(body, now, 'original-secret-key');
+    const current = sign(body, now);
+    const currentSignature = current.split(',')[1];
+
+    expect(verifyNovuSignature(`${other},${currentSignature}`, body, SECRET, { now: () => now })).toBe(true);
+  });
+
   it('rejects a wrong secret', () => {
     const header = sign(body, now, 'other-secret');
     expect(verifyNovuSignature(header, body, SECRET, { now: () => now })).toBe(false);

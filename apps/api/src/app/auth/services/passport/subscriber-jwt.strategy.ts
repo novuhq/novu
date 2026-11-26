@@ -35,6 +35,7 @@ export class JwtSubscriberStrategy extends PassportStrategy(Strategy, 'subscribe
       environmentId: subscriber._environmentId,
       contextKeys: payload.contextKeys,
       scheme: ApiAuthSchemeEnum.BEARER,
+      authMethod: payload.authMethod,
     };
   }
 }

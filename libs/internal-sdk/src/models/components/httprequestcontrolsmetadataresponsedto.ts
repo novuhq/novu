@@ -3,14 +3,63 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
-  HttpRequestControlDto,
-  HttpRequestControlDto$inboundSchema,
-} from "./httprequestcontroldto.js";
+  HttpMethodEnum,
+  HttpMethodEnum$inboundSchema,
+} from "./httpmethodenum.js";
+import {
+  HttpRequestKeyValuePairDto,
+  HttpRequestKeyValuePairDto$inboundSchema,
+} from "./httprequestkeyvaluepairdto.js";
 import { UiSchema, UiSchema$inboundSchema } from "./uischema.js";
+
+/**
+ * Request body as a raw JSON string. Key-value arrays are supported for legacy workflows.
+ */
+export type HttpRequestControlsMetadataResponseDtoBody =
+  | string
+  | Array<HttpRequestKeyValuePairDto>;
+
+/**
+ * Control values specific to HTTP Request step
+ */
+export type HttpRequestControlsMetadataResponseDtoValues = {
+  /**
+   * HTTP method
+   */
+  method: HttpMethodEnum;
+  /**
+   * Target URL for the HTTP request
+   */
+  url: string;
+  /**
+   * Request headers as key-value pairs
+   */
+  headers?: Array<HttpRequestKeyValuePairDto> | undefined;
+  /**
+   * Request body as a raw JSON string. Key-value arrays are supported for legacy workflows.
+   */
+  body?: string | Array<HttpRequestKeyValuePairDto> | undefined;
+  /**
+   * JSON schema to validate response body against
+   */
+  responseBodySchema?: { [k: string]: any } | undefined;
+  /**
+   * Whether to enforce response body schema validation
+   */
+  enforceSchemaValidation?: boolean | undefined;
+  /**
+   * Whether to continue workflow execution on failure
+   */
+  continueOnFailure?: boolean | undefined;
+  additionalProperties?: { [k: string]: any } | undefined;
+};
 
 export type HttpRequestControlsMetadataResponseDto = {
   /**
@@ -24,8 +73,68 @@ export type HttpRequestControlsMetadataResponseDto = {
   /**
    * Control values specific to HTTP Request step
    */
-  values: HttpRequestControlDto;
+  values?: HttpRequestControlsMetadataResponseDtoValues | undefined;
 };
+
+/** @internal */
+export const HttpRequestControlsMetadataResponseDtoBody$inboundSchema:
+  z.ZodType<HttpRequestControlsMetadataResponseDtoBody, z.ZodTypeDef, unknown> =
+    z.union([z.string(), z.array(HttpRequestKeyValuePairDto$inboundSchema)]);
+
+export function httpRequestControlsMetadataResponseDtoBodyFromJSON(
+  jsonString: string,
+): SafeParseResult<
+  HttpRequestControlsMetadataResponseDtoBody,
+  SDKValidationError
+> {
+  return safeParse(
+    jsonString,
+    (x) =>
+      HttpRequestControlsMetadataResponseDtoBody$inboundSchema.parse(
+        JSON.parse(x),
+      ),
+    `Failed to parse 'HttpRequestControlsMetadataResponseDtoBody' from JSON`,
+  );
+}
+
+/** @internal */
+export const HttpRequestControlsMetadataResponseDtoValues$inboundSchema:
+  z.ZodType<
+    HttpRequestControlsMetadataResponseDtoValues,
+    z.ZodTypeDef,
+    unknown
+  > = collectExtraKeys$(
+    z.object({
+      method: HttpMethodEnum$inboundSchema,
+      url: z.string(),
+      headers: z.array(HttpRequestKeyValuePairDto$inboundSchema).optional(),
+      body: z.union([
+        z.string(),
+        z.array(HttpRequestKeyValuePairDto$inboundSchema),
+      ]).optional(),
+      responseBodySchema: z.record(z.any()).optional(),
+      enforceSchemaValidation: z.boolean().optional(),
+      continueOnFailure: z.boolean().optional(),
+    }).catchall(z.any()),
+    "additionalProperties",
+    true,
+  );
+
+export function httpRequestControlsMetadataResponseDtoValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<
+  HttpRequestControlsMetadataResponseDtoValues,
+  SDKValidationError
+> {
+  return safeParse(
+    jsonString,
+    (x) =>
+      HttpRequestControlsMetadataResponseDtoValues$inboundSchema.parse(
+        JSON.parse(x),
+      ),
+    `Failed to parse 'HttpRequestControlsMetadataResponseDtoValues' from JSON`,
+  );
+}
 
 /** @internal */
 export const HttpRequestControlsMetadataResponseDto$inboundSchema: z.ZodType<
@@ -35,7 +144,9 @@ export const HttpRequestControlsMetadataResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: HttpRequestControlDto$inboundSchema,
+  values: z.lazy(() =>
+    HttpRequestControlsMetadataResponseDtoValues$inboundSchema
+  ).optional(),
 });
 
 export function httpRequestControlsMetadataResponseDtoFromJSON(

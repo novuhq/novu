@@ -10,15 +10,20 @@ describe('HumanListenAccessService', () => {
   function setup({
     operatorId = 'ada' as string | null,
     allowed = [] as string[],
+    withFullAccess = [] as string[],
     subscribers = [] as Array<{ subscriberId: string; firstName?: string; lastName?: string; data?: object }>,
   } = {}) {
     const humanOperator = { findForAgent: sinon.stub().resolves(operatorId) };
     const humanContactRepository = {
-      findListenToSubscriberIds: sinon.stub().resolves(allowed),
+      findListenedTo: sinon
+        .stub()
+        .resolves(allowed.map((subscriberId) => ({ subscriberId, fullAccess: withFullAccess.includes(subscriberId) }))),
       find: sinon
         .stub()
         .callsFake(async (query: { subscriberId: { $in: string[] } }) =>
-          allowed.filter((id) => query.subscriberId.$in.includes(id)).map((subscriberId) => ({ subscriberId }))
+          allowed
+            .filter((id) => query.subscriberId.$in.includes(id))
+            .map((subscriberId) => ({ subscriberId, fullAccess: withFullAccess.includes(subscriberId) }))
         ),
     };
     const subscriberRepository = {
@@ -88,6 +93,29 @@ describe('HumanListenAccessService', () => {
     expect((await service.whichAreListenedTo(scope, agent, [])).size).to.equal(0);
   });
 
+  it('marks the contacts with full access, never the operator, whose access is always full', async () => {
+    const { service } = setup({
+      allowed: ['bob', 'carol'],
+      withFullAccess: ['bob', 'ada'],
+      subscribers: [
+        { subscriberId: 'ada', firstName: 'Ada' },
+        { subscriberId: 'bob', firstName: 'Bob' },
+        { subscriberId: 'carol', firstName: 'Carol' },
+      ],
+    });
+
+    expect([...(await service.whoIsListenedTo(scope, agent)).values()]).to.deep.equal([
+      { id: 'ada', name: 'Ada', isOperator: true },
+      { id: 'bob', name: 'Bob', isOperator: false, fullAccess: true },
+      { id: 'carol', name: 'Carol', isOperator: false },
+    ]);
+    expect((await service.whichAreListenedTo(scope, agent, ['bob'])).get('bob')).to.include({ fullAccess: true });
+    expect(await service.switchesOf(scope, agent, 'bob')).to.deep.equal({ listenTo: true, fullAccess: true });
+    expect(await service.switchesOf(scope, agent, 'carol')).to.deep.equal({ listenTo: true, fullAccess: false });
+    expect(await service.switchesOf(scope, agent, 'ada')).to.deep.equal({ listenTo: true, fullAccess: true });
+    expect(await service.switchesOf(scope, agent, 'dave')).to.deep.equal({ listenTo: false, fullAccess: false });
+  });
+
   it('reads the operator and the switches of the agent asked about, in its own environment', async () => {
     const { service, humanOperator, humanContactRepository, subscriberRepository } = setup({
       subscribers: [{ subscriberId: 'ada' }],
@@ -96,7 +124,7 @@ describe('HumanListenAccessService', () => {
     await service.whoIsListenedTo(scope, agent);
 
     expect(humanOperator.findForAgent.firstCall.args[0]).to.deep.equal({ ...scope, agentId: 'relay1' });
-    expect(humanContactRepository.findListenToSubscriberIds.firstCall.args).to.deep.equal(['env1', 'relay1']);
+    expect(humanContactRepository.findListenedTo.firstCall.args).to.deep.equal(['env1', 'relay1']);
     expect(subscriberRepository.find.firstCall.args[0]).to.deep.include({
       _environmentId: 'env1',
       _organizationId: 'org1',

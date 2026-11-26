@@ -16,10 +16,16 @@ import {
   type AssistantBlock,
   buildAssistantBlocks,
   getUserMessageText,
+  isDashboardLink,
   summarizeToolGroup,
   type ToolChange,
   type ToolRow,
 } from './copilot-web-chat-utils';
+
+const LINK_SAFETY = {
+  enabled: true,
+  onLinkCheck: (url: string) => isDashboardLink(url, window.location.origin),
+};
 
 const CHANGE_STYLES: Record<ToolChange, string> = {
   Added: 'bg-success-base/10 text-success-base',
@@ -199,7 +205,7 @@ export function CopilotAssistantMessage({ message }: { message: AgentMessage }) 
               key={block.key}
               className="text-xs leading-4 text-text-strong [&_ol]:list-outside [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:mb-2 [&_ul]:list-outside [&_ul]:list-disc [&_ul]:pl-4"
             >
-              <MessageResponse>{block.text}</MessageResponse>
+              <MessageResponse linkSafety={LINK_SAFETY}>{block.text}</MessageResponse>
               {block.streaming && (
                 <span aria-hidden className="inline-block h-3.5 w-[7px] animate-pulse bg-text-strong align-middle" />
               )}

@@ -307,6 +307,239 @@ When the same field is set in more than one place, Novu merges the objects in th
 
 A higher layer replaces the same field. Fields it leaves unset keep the value from the layer below. Arrays replace as a whole. Trigger overrides are keyed by provider id, so `overrides.providers.slack` applies to every Slack integration that sends the step. See [provider override scopes](/platform/integrations/trigger-overrides#provider-override-scopes).
 
+## File attachments
+
+Chat steps can send files, such as PDFs or CSVs, with Slack and Microsoft Teams messages. Pass the files in the trigger's `payload.attachments`, the same field [email steps use](/platform/integrations/email#sending-attachments), and add `chat` to each file's `channels` list.
+
+| Field      | Type                 | Description                                                                                                  |
+| ---------- | -------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `file`     | `Buffer` \| `string` | The file contents, as a `Buffer` or a pure base64 string without a `data:<mime>;base64,` prefix.            |
+| `name`     | `string`             | The file name, including its extension (for example `report.csv`).                                          |
+| `mime`     | `string`             | The MIME type of the file (for example `text/csv`).                                                          |
+| `channels` | `string[]`           | The channels that send the file: `chat`, `email`, or both. Chat steps send only files that list `chat`.      |
+
+Files without `channels` go to email steps only. Novu doesn't post them to chat, so a file meant for one subscriber's email doesn't reach a shared Slack or Teams channel. A file whose `channels` list leaves out `email` isn't emailed.
+
+<Tabs>
+  <Tab title="Node.js">
+```typescript
+import fs from 'node:fs';
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: '<NOVU_SECRET_KEY>' });
+
+await novu.trigger({
+  workflowId: 'workflowId',
+  to: { subscriberId: 'subscriberId' },
+  payload: {
+    attachments: [
+      {
+        file: fs.readFileSync(__dirname + '/data/report.csv'),
+        name: 'report.csv',
+        mime: 'text/csv',
+        channels: ['chat'],
+      },
+      {
+        // base64 format, sent with both email and chat steps
+        file: 'ZGF0ZSxhbW91bnQKMjAyNi0xMS0wMSwxMjAK',
+        name: 'summary.csv',
+        mime: 'text/csv',
+        channels: ['email', 'chat'],
+      },
+    ],
+  },
+});
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import os
+import novu_py
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    novu.trigger(trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+        workflow_id="workflowId",
+        to={"subscriber_id": "subscriberId"},
+        payload={
+            "attachments": [
+                {
+                    "file": "ZGF0ZSxhbW91bnQKMjAyNi0xMS0wMSwxMjAK",
+                    "name": "report.csv",
+                    "mime": "text/csv",
+                    "channels": ["chat"],
+                },
+            ],
+        },
+    ))
+```
+  </Tab>
+  <Tab title="Go">
+```go
+import (
+    "context"
+    "os"
+
+    novugo "github.com/novuhq/novu-go"
+    "github.com/novuhq/novu-go/models/components"
+)
+
+s := novugo.New(novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")))
+
+_, err := s.Trigger(context.Background(), components.TriggerEventRequestDto{
+    WorkflowID: "workflowId",
+    To: components.CreateToSubscriberPayloadDto(components.SubscriberPayloadDto{
+        SubscriberID: "subscriberId",
+    }),
+    Payload: map[string]any{
+        "attachments": []map[string]any{
+            {
+                "file":     "ZGF0ZSxhbW91bnQKMjAyNi0xMS0wMSwxMjAK",
+                "name":     "report.csv",
+                "mime":     "text/csv",
+                "channels": []string{"chat"},
+            },
+        },
+    },
+}, nil)
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+use novu;
+use novu\Models\Components;
+
+$sdk = novu\Novu::builder()
+    ->setSecurity('<NOVU_SECRET_KEY>')
+    ->build();
+
+$sdk->trigger(
+    triggerEventRequestDto: new Components\TriggerEventRequestDto(
+        workflowId: 'workflowId',
+        to: new Components\SubscriberPayloadDto(subscriberId: 'subscriberId'),
+        payload: [
+            'attachments' => [
+                [
+                    'file' => 'ZGF0ZSxhbW91bnQKMjAyNi0xMS0wMSwxMjAK',
+                    'name' => 'report.csv',
+                    'mime' => 'text/csv',
+                    'channels' => ['chat'],
+                ],
+            ],
+        ],
+    ),
+);
+```
+  </Tab>
+  <Tab title=".NET">
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: "<NOVU_SECRET_KEY>");
+
+await sdk.TriggerAsync(triggerEventRequestDto: new TriggerEventRequestDto() {
+    WorkflowId = "workflowId",
+    To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto() {
+        SubscriberId = "subscriberId",
+    }),
+    Payload = new Dictionary<string, object>() {
+        { "attachments", new List<Dictionary<string, object>>() {
+            new Dictionary<string, object>() {
+                { "file", "ZGF0ZSxhbW91bnQKMjAyNi0xMS0wMSwxMjAK" },
+                { "name", "report.csv" },
+                { "mime", "text/csv" },
+                { "channels", new List<string>() { "chat" } },
+            },
+        } },
+    },
+});
+```
+  </Tab>
+  <Tab title="Java">
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+import java.util.List;
+import java.util.Map;
+
+Novu novu = Novu.builder()
+    .secretKey("<NOVU_SECRET_KEY>")
+    .build();
+
+novu.trigger()
+    .body(TriggerEventRequestDto.builder()
+        .workflowId("workflowId")
+        .to(To2.of(SubscriberPayloadDto.builder()
+            .subscriberId("subscriberId")
+            .build()))
+        .payload(Map.of(
+            "attachments", List.of(
+                Map.of(
+                    "file", "ZGF0ZSxhbW91bnQKMjAyNi0xMS0wMSwxMjAK",
+                    "name", "report.csv",
+                    "mime", "text/csv",
+                    "channels", List.of("chat")))))
+        .build())
+    .call();
+```
+  </Tab>
+  <Tab title="cURL">
+Use https://eu.api.novu.co/v1/events/trigger api endpoint for the EU region.
+```bash
+curl -L -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Content-Type: application/json' \
+-H 'Accept: application/json' \
+-H 'Authorization: ApiKey <SECRET_KEY>' \
+--data-raw '{
+    "name": "workflow_trigger_identifier",
+    "to": [{ "subscriberId": "subscriber_id" }],
+    "payload": {
+        "attachments": [
+            {
+                "file": "ZGF0ZSxhbW91bnQKMjAyNi0xMS0wMSwxMjAK",
+                "name": "report.csv",
+                "mime": "text/csv",
+                "channels": ["chat"]
+            }
+        ]
+    }
+}'
+```
+  </Tab>
+</Tabs>
+
+### Where the files appear
+
+Novu sends the message first, then the files, to the same place:
+
+| Provider        | Destination                                    | How the files are sent                                                                                                   |
+| --------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Slack           | Channel or direct message (Slack app connection) | Uploaded to Slack and posted right below the message, in the same channel, direct message, or thread.                  |
+| Microsoft Teams | Channel (Teams bot)                            | Stored in the channel's SharePoint folder and posted as a file card in a reply under the message.                        |
+| Microsoft Teams | Direct message (Teams bot)                     | Stored in the recipient's OneDrive, in the **Microsoft Teams Chat Files** folder, and posted as a file card in the chat. |
+
+Each provider needs a permission to store files. Slack needs the `files:write` scope; see [Slack file attachments](/platform/integrations/chat/slack#file-attachments). Microsoft Teams needs the Microsoft Graph permission `Files.ReadWrite.All`; see [Microsoft Teams file attachments](/platform/integrations/chat/ms-teams#file-attachments).
+
+Incoming webhooks, for Slack and for Teams, can't carry files. Other chat providers don't receive files yet. In both cases, Novu still sends the message and skips the files.
+
+### Check the result
+
+The message is sent even when its files can't be. The step's activity log shows one entry for the files:
+
+- **Chat files sent**: every file was delivered.
+- **Chat files not sent**: at least one file was skipped or failed. The entry lists each file with the reason, such as a missing permission.
+
+Files count toward the trigger request size, like email attachments. See [Payload limits](/api-reference/payload-limits#attachment-size-limit).
+
+### Other ways to share files
+
+- **Link to the file.** Host the file yourself, for example behind a signed URL, and add the URL to the message as a link or a link button.
+- **Show images by URL.** Use the **Image** block in the [block editor](/platform/integrations/chat/writing-chat-template#supported-blocks), or the `Image` element in a [Framework card](/framework/typescript/steps/chat#rich-card). The URL must be absolute and reachable by the chat provider.
+
+Some providers accept media in their own message format, such as WhatsApp `image` and `document` messages. You can send those fields with a [provider content override](#provider-content-overrides) or a [trigger override](/platform/integrations/trigger-overrides). What is possible depends on the provider's API, so check the provider's page.
+
 ## Supported providers
 
 Here are the chat providers that are currently supported by Novu. Select any provider to see its detailed setup guide.

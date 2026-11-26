@@ -16,6 +16,7 @@ import {
 export const SubscriberChannelDtoProviderId = {
   Slack: "slack",
   Discord: "discord",
+  GoogleChat: "google-chat",
   Msteams: "msteams",
   WebexMessaging: "webex-messaging",
   Mattermost: "mattermost",
@@ -30,6 +31,8 @@ export const SubscriberChannelDtoProviderId = {
   NovuSlack: "novu-slack",
   Telegram: "telegram",
   Sendblue: "sendblue",
+  PhotonImessage: "photon-imessage",
+  NovuWebChat: "novu-web-chat",
   Fcm: "fcm",
   Apns: "apns",
   Expo: "expo",

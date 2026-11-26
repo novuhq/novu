@@ -3,9 +3,6 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
-import { Result as SafeParseResult } from "../../types/fp.js";
-import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type CustomControlDto = {
   /**
@@ -14,14 +11,6 @@ export type CustomControlDto = {
   custom?: { [k: string]: any } | undefined;
 };
 
-/** @internal */
-export const CustomControlDto$inboundSchema: z.ZodType<
-  CustomControlDto,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  custom: z.record(z.any()).optional(),
-});
 /** @internal */
 export type CustomControlDto$Outbound = {
   custom?: { [k: string]: any } | undefined;
@@ -41,14 +30,5 @@ export function customControlDtoToJSON(
 ): string {
   return JSON.stringify(
     CustomControlDto$outboundSchema.parse(customControlDto),
-  );
-}
-export function customControlDtoFromJSON(
-  jsonString: string,
-): SafeParseResult<CustomControlDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => CustomControlDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'CustomControlDto' from JSON`,
   );
 }

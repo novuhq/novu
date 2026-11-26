@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { FindSubscribersParams } from "../types/index";
 import { NovuApiUtils } from "../utils/api";
+import { maskSubscriberCredentials } from "../utils/subscriber-credentials";
 import type { ToolAccessors } from "../utils/tool-accessors";
 import { ToolFactory } from "../utils/tool-factory";
 import { ValidationUtils } from "../utils/validation";
@@ -51,6 +52,8 @@ export function registerSubscriberTools(server: McpServer, accessors: ToolAccess
 				{
 					body,
 					endpoint: `/v2/subscribers${queryString}`,
+					formatSuccess: (data) =>
+						`Successfully created subscriber ${input.subscriberId}:\n\n${maskedJson(data)}`,
 					identifier: input.subscriberId,
 					method: "POST",
 					successMessage: "created subscriber",
@@ -71,6 +74,8 @@ export function registerSubscriberTools(server: McpServer, accessors: ToolAccess
 		"fetched subscriber",
 		"subscriberId",
 		"The subscriberId of the subscriber to retrieve",
+		(data, subscriberId) =>
+			`Successfully fetched subscriber ${subscriberId}:\n\n${maskedJson(data)}`,
 	);
 
 	ToolFactory.createTool(server, accessors, {
@@ -83,6 +88,8 @@ export function registerSubscriberTools(server: McpServer, accessors: ToolAccess
 				{
 					body,
 					endpoint: `/v2/subscribers/${encodeURIComponent(subscriberId)}`,
+					formatSuccess: (data) =>
+						`Successfully updated subscriber ${subscriberId}:\n\n${maskedJson(data)}`,
 					identifier: subscriberId,
 					method: "PATCH",
 					successMessage: "updated subscriber",
@@ -135,7 +142,7 @@ export function registerSubscriberTools(server: McpServer, accessors: ToolAccess
 			},
 			formatSuccess: (data, _input, endpoint) => {
 				const queryString = endpoint.split("?")[1] ?? "";
-				return `Successfully found subscribers with query (${queryString}):\n\n${JSON.stringify(data, null, 2)}`;
+				return `Successfully found subscribers with query (${queryString}):\n\n${maskedJson(data)}`;
 			},
 			validate: (input) =>
 				ValidationUtils.validateAtLeastOneParam(input, [
@@ -146,4 +153,9 @@ export function registerSubscriberTools(server: McpServer, accessors: ToolAccess
 				]),
 		},
 	);
+}
+
+/** Subscriber responses carry push tokens and chat webhook URLs; MCP clients get them masked. */
+function maskedJson(data: unknown): string {
+	return JSON.stringify(maskSubscriberCredentials(data), null, 2);
 }

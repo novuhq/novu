@@ -1,5 +1,6 @@
 import { createECDH, createHash, createPrivateKey, createPublicKey, hkdfSync, KeyObject } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
+import { ContextPayload, EnvironmentId, ISubscriberPayload, SubscriberId } from '@novu/shared';
 import jwt, { JwtPayload, TokenExpiredError } from 'jsonwebtoken';
 
 type TokenTyp = `novu-${string}-${string}+jwt`;
@@ -11,11 +12,49 @@ interface TokenKindSpec {
 
 export const TOKEN_KINDS = {
   subscriberLogin: { typ: 'novu-subscriber-login+jwt', maxLifetimeSeconds: 60 * 60 },
+  subscriberTopicGrant: { typ: 'novu-subscriber-topic-grant+jwt', maxLifetimeSeconds: 60 },
 } as const satisfies Record<string, TokenKindSpec>;
 
 export type TokenKind = keyof typeof TOKEN_KINDS;
 
-export type TokenVerification = { ok: true; claims: JwtPayload } | { ok: false; reason: 'expired' | 'invalid' };
+export enum SubscriberTokenScopeEnum {
+  CHANNELS_SHARED = 'channels:shared',
+}
+
+export type SubscriberLoginProfile = Omit<ISubscriberPayload, 'channels'>;
+
+export type SubscriberLoginClaims = {
+  iss: EnvironmentId;
+  aud: 'novu';
+  sub: SubscriberId;
+  context?: ContextPayload;
+  subscriber?: SubscriberLoginProfile;
+  scope: SubscriberTokenScopeEnum[];
+  jti: string;
+};
+
+export type SubscriberTopicGrantClaims = {
+  iss: EnvironmentId;
+  aud: 'novu';
+  sub: SubscriberId;
+  topic: string;
+  jti: string;
+};
+
+type TokenClaims = {
+  subscriberLogin: SubscriberLoginClaims;
+  subscriberTopicGrant: SubscriberTopicGrantClaims;
+};
+
+export type TokenVerification =
+  | { ok: true; claims: JwtPayload }
+  | { ok: false; reason: 'expired'; claims: JwtPayload }
+  | { ok: false; reason: 'invalid' };
+
+export interface SignedToken {
+  token: string;
+  expiresAt: Date;
+}
 
 interface SigningKey {
   kid: string;
@@ -104,20 +143,24 @@ function loadKeys(configured: string | undefined, jwtSecret: string): TokenKeys 
 export class NovuTokens {
   private readonly keys = loadKeys(process.env.NOVU_TOKEN_SIGNING_KEYS, `${process.env.JWT_SECRET}`);
 
-  sign(kind: TokenKind, claims: Record<string, unknown>, expiresInSeconds: number): string {
+  sign<K extends TokenKind>(kind: K, claims: TokenClaims[K], expiresInSeconds: number): SignedToken {
     const { typ, maxLifetimeSeconds } = TOKEN_KINDS[kind];
     if (!(expiresInSeconds > 0 && expiresInSeconds <= maxLifetimeSeconds)) {
       throw new Error(`A ${kind} token must expire within 1 to ${maxLifetimeSeconds} seconds.`);
     }
 
-    const { iat: _iat, exp: _exp, nbf: _nbf, ...payload } = claims;
+    const received: Record<string, unknown> = claims;
+    const { iat: _iat, exp: _exp, nbf: _nbf, ...payload } = received;
     const { kid, privateKey } = this.keys.signing;
 
-    return jwt.sign(payload, privateKey, {
+    const iat = Math.floor(Date.now() / 1000);
+    const exp = iat + expiresInSeconds;
+    const token = jwt.sign({ ...payload, iat, exp }, privateKey, {
       algorithm: ALGORITHM,
       header: { alg: ALGORITHM, typ, kid },
-      expiresIn: expiresInSeconds,
     });
+
+    return { token, expiresAt: new Date(exp * 1000) };
   }
 
   verify(kind: TokenKind, token: string): TokenVerification {
@@ -132,7 +175,16 @@ export class NovuTokens {
     try {
       claims = jwt.verify(token, publicKey, { algorithms: [ALGORITHM] }) as JwtPayload;
     } catch (error) {
-      return { ok: false, reason: error instanceof TokenExpiredError ? 'expired' : 'invalid' };
+      if (!(error instanceof TokenExpiredError)) {
+        return INVALID;
+      }
+
+      const expiredClaims = jwt.verify(token, publicKey, {
+        algorithms: [ALGORITHM],
+        ignoreExpiration: true,
+      }) as JwtPayload;
+
+      return { ok: false, reason: 'expired', claims: expiredClaims };
     }
 
     const nowSeconds = Math.floor(Date.now() / 1000);

@@ -1,6 +1,6 @@
 {
   "name": "@novu/inbound-mail",
-  "version": "3.20.0",
+  "version": "3.21.0",
   "description": "",
   "author": "",
   "private": true,
@@ -36,7 +36,7 @@
     "languagedetect": "^1.1.1",
     "lodash": "^4.17.23",
     "mailparser": "^3.9.3",
-    "newrelic": "13.19.2",
+    "newrelic": "14.13.0",
     "pino": "^8.17.2",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.5",

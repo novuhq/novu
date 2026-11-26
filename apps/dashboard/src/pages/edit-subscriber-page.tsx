@@ -1,6 +1,9 @@
-import { PermissionsEnum } from '@novu/shared';
+import { CopilotPageEnum, PermissionsEnum } from '@novu/shared';
 import { useParams } from 'react-router-dom';
+import { useRegisterCopilotPageView } from '@/components/copilot-web-chat';
 import { SubscriberTabs } from '@/components/subscribers/subscriber-tabs';
+import { buildSubscriberPageView } from '@/components/subscribers/subscribers-copilot';
+import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { useHasPermission } from '@/hooks/use-has-permission';
 
 export function EditSubscriberPage() {
@@ -12,5 +15,16 @@ export function EditSubscriberPage() {
     return null;
   }
 
-  return <SubscriberTabs subscriberId={subscriberId} readOnly={isReadOnly} />;
+  return <EditSubscriber subscriberId={subscriberId} readOnly={isReadOnly} />;
+}
+
+function EditSubscriber({ subscriberId, readOnly }: { subscriberId: string; readOnly: boolean }) {
+  // The drawer's overview tab runs the same query, so this adds no request.
+  const { data: subscriber, isError } = useFetchSubscriber({ subscriberId });
+  useRegisterCopilotPageView(
+    CopilotPageEnum.SUBSCRIBERS,
+    buildSubscriberPageView(subscriberId, { subscriber, isError })
+  );
+
+  return <SubscriberTabs subscriberId={subscriberId} readOnly={readOnly} />;
 }

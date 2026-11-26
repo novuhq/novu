@@ -598,7 +598,12 @@ function senderOf(
 
   const name = person?.name ?? row.senderName?.trim();
 
-  return { id: person?.id ?? row.senderId, ...(name ? { name } : {}), isOperator: person?.isOperator ?? false };
+  return {
+    id: person?.id ?? row.senderId,
+    ...(name ? { name } : {}),
+    isOperator: person?.isOperator ?? false,
+    ...(person?.fullAccess ? { fullAccess: true } : {}),
+  };
 }
 
 /** The answer an answer row records, as `HumanInteractionActivityRecorder` writes it. */

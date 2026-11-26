@@ -3,14 +3,73 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
+import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-import {
-  DelayControlDto,
-  DelayControlDto$inboundSchema,
-} from "./delaycontroldto.js";
 import { UiSchema, UiSchema$inboundSchema } from "./uischema.js";
+
+/**
+ * Type of the delay. Currently only 'regular' is supported by the schema.
+ */
+export const DelayControlsMetadataResponseDtoType = {
+  Regular: "regular",
+  Timed: "timed",
+} as const;
+/**
+ * Type of the delay. Currently only 'regular' is supported by the schema.
+ */
+export type DelayControlsMetadataResponseDtoType = ClosedEnum<
+  typeof DelayControlsMetadataResponseDtoType
+>;
+
+/**
+ * Unit of time for the delay amount.
+ */
+export const DelayControlsMetadataResponseDtoUnit = {
+  Seconds: "seconds",
+  Minutes: "minutes",
+  Hours: "hours",
+  Days: "days",
+  Weeks: "weeks",
+  Months: "months",
+} as const;
+/**
+ * Unit of time for the delay amount.
+ */
+export type DelayControlsMetadataResponseDtoUnit = ClosedEnum<
+  typeof DelayControlsMetadataResponseDtoUnit
+>;
+
+/**
+ * Control values specific to Delay
+ */
+export type DelayControlsMetadataResponseDtoValues = {
+  /**
+   * JSONLogic filter conditions for conditionally skipping the step execution. Supports complex logical operations with AND, OR, and comparison operators. See https://jsonlogic.com/ for full typing reference.
+   */
+  skip?: { [k: string]: any } | undefined;
+  /**
+   * Type of the delay. Currently only 'regular' is supported by the schema.
+   */
+  type: DelayControlsMetadataResponseDtoType;
+  /**
+   * Amount of time to delay.
+   */
+  amount?: number | undefined;
+  /**
+   * Unit of time for the delay amount.
+   */
+  unit?: DelayControlsMetadataResponseDtoUnit | undefined;
+  /**
+   * Cron expression for the delay. Min length 1.
+   */
+  cron?: string | undefined;
+  additionalProperties?: { [k: string]: any } | undefined;
+};
 
 export type DelayControlsMetadataResponseDto = {
   /**
@@ -24,8 +83,48 @@ export type DelayControlsMetadataResponseDto = {
   /**
    * Control values specific to Delay
    */
-  values: DelayControlDto;
+  values?: DelayControlsMetadataResponseDtoValues | undefined;
 };
+
+/** @internal */
+export const DelayControlsMetadataResponseDtoType$inboundSchema:
+  z.ZodNativeEnum<typeof DelayControlsMetadataResponseDtoType> = z.nativeEnum(
+    DelayControlsMetadataResponseDtoType,
+  );
+
+/** @internal */
+export const DelayControlsMetadataResponseDtoUnit$inboundSchema:
+  z.ZodNativeEnum<typeof DelayControlsMetadataResponseDtoUnit> = z.nativeEnum(
+    DelayControlsMetadataResponseDtoUnit,
+  );
+
+/** @internal */
+export const DelayControlsMetadataResponseDtoValues$inboundSchema: z.ZodType<
+  DelayControlsMetadataResponseDtoValues,
+  z.ZodTypeDef,
+  unknown
+> = collectExtraKeys$(
+  z.object({
+    skip: z.record(z.any()).optional(),
+    type: DelayControlsMetadataResponseDtoType$inboundSchema.default("regular"),
+    amount: z.number().optional(),
+    unit: DelayControlsMetadataResponseDtoUnit$inboundSchema.optional(),
+    cron: z.string().optional(),
+  }).catchall(z.any()),
+  "additionalProperties",
+  true,
+);
+
+export function delayControlsMetadataResponseDtoValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<DelayControlsMetadataResponseDtoValues, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) =>
+      DelayControlsMetadataResponseDtoValues$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'DelayControlsMetadataResponseDtoValues' from JSON`,
+  );
+}
 
 /** @internal */
 export const DelayControlsMetadataResponseDto$inboundSchema: z.ZodType<
@@ -35,7 +134,8 @@ export const DelayControlsMetadataResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: DelayControlDto$inboundSchema,
+  values: z.lazy(() => DelayControlsMetadataResponseDtoValues$inboundSchema)
+    .optional(),
 });
 
 export function delayControlsMetadataResponseDtoFromJSON(

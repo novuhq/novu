@@ -599,6 +599,7 @@ function useManualHealthPoll(integrationId: string, enabled: boolean): ManualHea
 // Main component
 // ---------------------------------------------------------------------------
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing setup guide flow is outside this change.
 export function TeamsSetupGuide({
   agent,
   integrationId,
@@ -1161,7 +1162,7 @@ export function TeamsSetupGuide({
             </li>
             <li>
               <strong>Recommended:</strong> While still in <strong>Application permissions</strong>, also search for and
-              add these two optional permissions before clicking <strong>Add permissions</strong>:
+              add these optional permissions before clicking <strong>Add permissions</strong>:
               <ul className="mt-1.5 flex flex-col gap-1 pl-4 [list-style:disc]">
                 <li>
                   <code className="font-code text-[11px]">TeamsAppInstallation.ReadWriteSelfForTeam.All</code>
@@ -1177,6 +1178,14 @@ export function TeamsSetupGuide({
                     {' '}
                     Lets the bot install itself for individual users automatically. Without it, users must manually
                     install the bot before they can receive direct messages.
+                  </span>
+                </li>
+                <li>
+                  <code className="font-code text-[11px]">Files.ReadWrite.All</code>
+                  <span className="text-text-soft">
+                    {' '}
+                    Lets workflow chat steps send files. Novu stores each file in the channel's SharePoint folder or the
+                    recipient's OneDrive. Without it, messages still arrive, but without their files.
                   </span>
                 </li>
               </ul>

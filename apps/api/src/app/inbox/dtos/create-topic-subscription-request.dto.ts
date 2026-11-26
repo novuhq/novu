@@ -64,4 +64,12 @@ export class CreateTopicSubscriptionRequestDto {
   @IsArray()
   @IsOptional()
   preferences?: Array<string | WorkflowPreferenceRequestDto | GroupPreferenceFilterDto>;
+
+  @ApiPropertyOptional({
+    description:
+      'Topic grant minted by your backend for this subscriber and topic. When set, a missing topic is created with its key only.',
+  })
+  @IsString()
+  @IsOptional()
+  topicGrant?: string;
 }

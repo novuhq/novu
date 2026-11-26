@@ -36,6 +36,10 @@ export type ResourceDiffDtoUpdatedBy = {
    * User external ID
    */
   externalId?: string | undefined;
+  /**
+   * User email, used when the user has no name
+   */
+  email?: string | null | undefined;
 };
 
 /**
@@ -80,6 +84,10 @@ export type ResourceDiffDtoTargetResourceUpdatedBy = {
    * User external ID
    */
   externalId?: string | undefined;
+  /**
+   * User email, used when the user has no name
+   */
+  email?: string | null | undefined;
 };
 
 /**
@@ -163,6 +171,7 @@ export const ResourceDiffDtoUpdatedBy$inboundSchema: z.ZodType<
   firstName: z.string(),
   lastName: z.nullable(z.string()).optional(),
   externalId: z.string().optional(),
+  email: z.nullable(z.string()).optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -214,6 +223,7 @@ export const ResourceDiffDtoTargetResourceUpdatedBy$inboundSchema: z.ZodType<
   firstName: z.string(),
   lastName: z.nullable(z.string()).optional(),
   externalId: z.string().optional(),
+  email: z.nullable(z.string()).optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",

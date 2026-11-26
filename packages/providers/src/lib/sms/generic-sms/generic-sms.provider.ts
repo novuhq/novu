@@ -1,4 +1,4 @@
-import { isOutboundSsrfProtectionEnabled, SmsProviderIdEnum } from '@novu/shared';
+import { SmsProviderIdEnum } from '@novu/shared';
 import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
 import {
   assertSafeOutboundUrl,
@@ -7,16 +7,17 @@ import {
 } from '@novu/shared/utils/ssrf-url-validation';
 import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 
-import { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
-import { createProviderHttpClient } from '../../../utils/http';
+import { PROVIDER_HTTP_TIMEOUT_MS } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
+
+/** Honors a lower `NOVU_PROVIDER_HTTP_TIMEOUT_MS` while keeping the safe client's 30s cap. */
+const SSRF_REQUEST_TIMEOUT_MS = Math.min(30_000, PROVIDER_HTTP_TIMEOUT_MS);
 
 export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.GenericSms;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   protected casing = CasingEnum.CAMEL_CASE;
-  axiosInstance?: AxiosInstance;
   headers: Record<string, string>;
 
   constructor(
@@ -42,69 +43,11 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
     if (this.config?.secretKeyRequestHeader && this.config?.secretKey) {
       this.headers[this.config?.secretKeyRequestHeader] = config.secretKey;
     }
-
-    if (!this.config?.authenticateByToken) {
-      this.axiosInstance = createProviderHttpClient({
-        baseURL: config.baseUrl,
-        headers: this.headers,
-      });
-    }
   }
 
   async sendMessage(
     options: ISmsOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
-  ): Promise<ISendMessageSuccessResponse> {
-    if (isOutboundSsrfProtectionEnabled()) {
-      return this.sendMessageWithSsrfProtection(options, bridgeProviderData);
-    }
-
-    return this.sendMessageWithAxios(options, bridgeProviderData);
-  }
-
-  private async sendMessageWithAxios(
-    options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>>
-  ): Promise<ISendMessageSuccessResponse> {
-    const data = this.transform(bridgeProviderData, {
-      ...options,
-      sender: options.from || this.config.from,
-    });
-
-    if (this.config?.authenticateByToken) {
-      const tokenAxiosInstance = await createProviderHttpClient().request({
-        method: 'POST',
-        baseURL: this.config.domain,
-        headers: this.headers,
-      });
-
-      const token = tokenAxiosInstance.data.data[this.config.authenticationTokenKey!];
-
-      this.axiosInstance = createProviderHttpClient({
-        baseURL: this.config.baseUrl,
-        headers: {
-          [this.config.authenticationTokenKey!]: token,
-          ...data.headers,
-        },
-      });
-    }
-
-    const response = await this.axiosInstance!.request({
-      method: 'POST',
-      data: data.body,
-    });
-
-    const responseData = response.data as Record<string, unknown>;
-
-    return {
-      id: this.getResponseValue(this.config.idPath || 'id', responseData) ?? '',
-      date: this.getResponseValue(this.config.datePath || 'date', responseData) || new Date().toISOString(),
-    };
-  }
-
-  private async sendMessageWithSsrfProtection(
-    options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>>
   ): Promise<ISendMessageSuccessResponse> {
     const data = this.transform(bridgeProviderData, {
       ...options,
@@ -137,8 +80,9 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
         throw new Error('Generic SMS auth request failed: authentication token missing from response.');
       }
 
+      // The API key and secret authenticate against the auth URL only; the SMS endpoint
+      // gets the issued token, never the login credentials.
       requestHeaders = {
-        ...this.headers,
         ...data.headers,
         [authTokenKey]: token,
       };
@@ -202,6 +146,7 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
       method: options.method,
       headers: options.headers,
       body: options.body,
+      timeoutMs: SSRF_REQUEST_TIMEOUT_MS,
     }).catch((err: unknown) => {
       if (err instanceof SsrfBlockedError) {
         throw new Error(`${blockedPrefix}: ${err.message}`);

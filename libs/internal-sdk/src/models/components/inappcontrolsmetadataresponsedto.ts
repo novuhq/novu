@@ -3,14 +3,58 @@
  */
 
 import * as z from "zod/v3";
-import { safeParse } from "../../lib/schemas.js";
+import {
+  collectExtraKeys as collectExtraKeys$,
+  safeParse,
+} from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-import {
-  InAppControlDto,
-  InAppControlDto$inboundSchema,
-} from "./inappcontroldto.js";
+import { ActionDto, ActionDto$inboundSchema } from "./actiondto.js";
+import { RedirectDto, RedirectDto$inboundSchema } from "./redirectdto.js";
 import { UiSchema, UiSchema$inboundSchema } from "./uischema.js";
+
+/**
+ * Control values specific to In-App
+ */
+export type Values = {
+  /**
+   * JSONLogic filter conditions for conditionally skipping the step execution. Supports complex logical operations with AND, OR, and comparison operators. See https://jsonlogic.com/ for full typing reference.
+   */
+  skip?: { [k: string]: any } | undefined;
+  /**
+   * Content/body of the in-app message. Required if subject is empty.
+   */
+  body?: string | undefined;
+  /**
+   * Subject/title of the in-app message. Required if body is empty.
+   */
+  subject?: string | undefined;
+  /**
+   * URL for an avatar image. Must be a valid URL or start with / or {{ variable }}.
+   */
+  avatar?: string | undefined;
+  /**
+   * Primary action button details.
+   */
+  primaryAction?: ActionDto | undefined;
+  /**
+   * Secondary action button details.
+   */
+  secondaryAction?: ActionDto | undefined;
+  /**
+   * Redirection URL configuration for the main content click (if no actions defined/clicked)..
+   */
+  redirect?: RedirectDto | undefined;
+  /**
+   * Disable sanitization of the output.
+   */
+  disableOutputSanitization: boolean;
+  /**
+   * Additional data payload for the step.
+   */
+  data?: { [k: string]: any } | undefined;
+  additionalProperties?: { [k: string]: any } | undefined;
+};
 
 export type InAppControlsMetadataResponseDto = {
   /**
@@ -24,8 +68,36 @@ export type InAppControlsMetadataResponseDto = {
   /**
    * Control values specific to In-App
    */
-  values: InAppControlDto;
+  values?: Values | undefined;
 };
+
+/** @internal */
+export const Values$inboundSchema: z.ZodType<Values, z.ZodTypeDef, unknown> =
+  collectExtraKeys$(
+    z.object({
+      skip: z.record(z.any()).optional(),
+      body: z.string().optional(),
+      subject: z.string().optional(),
+      avatar: z.string().optional(),
+      primaryAction: ActionDto$inboundSchema.optional(),
+      secondaryAction: ActionDto$inboundSchema.optional(),
+      redirect: RedirectDto$inboundSchema.optional(),
+      disableOutputSanitization: z.boolean().default(false),
+      data: z.record(z.any()).optional(),
+    }).catchall(z.any()),
+    "additionalProperties",
+    true,
+  );
+
+export function valuesFromJSON(
+  jsonString: string,
+): SafeParseResult<Values, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => Values$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Values' from JSON`,
+  );
+}
 
 /** @internal */
 export const InAppControlsMetadataResponseDto$inboundSchema: z.ZodType<
@@ -35,7 +107,7 @@ export const InAppControlsMetadataResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   dataSchema: z.record(z.any()).optional(),
   uiSchema: UiSchema$inboundSchema.optional(),
-  values: InAppControlDto$inboundSchema,
+  values: z.lazy(() => Values$inboundSchema).optional(),
 });
 
 export function inAppControlsMetadataResponseDtoFromJSON(

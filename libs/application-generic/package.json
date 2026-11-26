@@ -1,6 +1,6 @@
 {
   "name": "@novu/application-generic",
-  "version": "3.20.0",
+  "version": "3.21.0",
   "description": "Generic backend code used inside of Novu's different services",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -34,7 +34,7 @@
     "@nestjs/terminus": "11.1.1",
     "@nestjs/testing": "11.1.27",
     "jsonwebtoken": "9.0.3",
-    "newrelic": "13.20.0",
+    "newrelic": "14.13.0",
     "reflect-metadata": "0.2.2"
   },
   "dependencies": {
@@ -75,7 +75,6 @@
     "@opentelemetry/sdk-trace-node": "2.7.1",
     "@opentelemetry/semantic-conventions": "1.39.0",
     "@pulsecron/pulse": "1.6.8",
-    "@segment/analytics-node": "^1.1.4",
     "@sentry/node": "^10.63.0",
     "@team-plain/typescript-sdk": "5.8.0",
     "@tufjs/canonical-json": "^2.0.0",
@@ -120,8 +119,7 @@
     "sqs-producer": "^8.0.1",
     "svix": "^1.96.1",
     "uuid": "^11.1.1",
-    "zod": "^3.23.8",
-    "zod-to-json-schema": "^3.23.3"
+    "zod": "^4.6.6"
   },
   "optionalDependencies": {
     "@novu/ee-shared-services": "workspace:*"

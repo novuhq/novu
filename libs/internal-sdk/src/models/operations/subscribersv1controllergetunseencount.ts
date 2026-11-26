@@ -12,6 +12,10 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 export type SubscribersV1ControllerGetUnseenCountRequest = {
   subscriberId: string;
   /**
+   * Identifier for the feed. Can be a single string or an array of strings.
+   */
+  feedId?: Array<string> | undefined;
+  /**
    * Indicates whether to count seen notifications.
    */
   seen?: boolean | undefined;
@@ -33,6 +37,7 @@ export type SubscribersV1ControllerGetUnseenCountResponse = {
 /** @internal */
 export type SubscribersV1ControllerGetUnseenCountRequest$Outbound = {
   subscriberId: string;
+  feedId?: Array<string> | undefined;
   seen: boolean;
   limit: number;
   "idempotency-key"?: string | undefined;
@@ -46,6 +51,7 @@ export const SubscribersV1ControllerGetUnseenCountRequest$outboundSchema:
     SubscribersV1ControllerGetUnseenCountRequest
   > = z.object({
     subscriberId: z.string(),
+    feedId: z.array(z.string()).optional(),
     seen: z.boolean().default(false),
     limit: z.number().default(100),
     idempotencyKey: z.string().optional(),

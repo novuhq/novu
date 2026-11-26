@@ -2,16 +2,28 @@ import { Logger, OnModuleDestroy } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { IDestroy } from '@novu/application-generic';
-import { MessageRepository } from '@novu/dal';
-import { ChannelTypeEnum, ISubscriberJwt, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+import { ISubscriberJwt, ObservabilityBackgroundTransactionEnum, WebSocketEventEnum } from '@novu/shared';
 import { instrument } from '@socket.io/admin-ui';
-import { Server, Socket } from 'socket.io';
+import { DefaultEventsMap, Server, Socket } from 'socket.io';
 
 import { SubscriberOnlineService } from '../shared/subscriber-online';
 
 const nr = require('newrelic');
 
 const LOG_CONTEXT = 'WSGateway';
+
+// Longer delays overflow setTimeout's 32-bit signed int and fire at once.
+const MAX_TIMEOUT_DELAY_MS = 2 ** 31 - 1;
+
+type SubscriberSession = ISubscriberJwt & { exp?: number };
+
+// socket.io's Redis adapter serializes this across instances, so it must stay plain JSON.
+type ConnectionData = {
+  contextKeys?: string[];
+  session?: SubscriberSession;
+};
+
+type Connection = Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, ConnectionData>;
 
 @WebSocketGateway()
 export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDestroy, OnModuleDestroy {
@@ -25,7 +37,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
   @WebSocketServer()
   server: Server;
 
-  async handleDisconnect(connection: Socket) {
+  async handleDisconnect(connection: Connection) {
     Logger.debug(`New disconnect received from ${connection.id}`, LOG_CONTEXT);
 
     const _this = this;
@@ -49,7 +61,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     });
   }
 
-  async handleConnection(connection: Socket) {
+  async handleConnection(connection: Connection) {
     Logger.debug(`New connection received from ${connection.id}`, LOG_CONTEXT);
 
     const _this = this;
@@ -73,12 +85,12 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     });
   }
 
-  private extractToken(connection: Socket): string | undefined {
+  private extractToken(connection: Connection): string | undefined {
     return connection.handshake.auth?.token || connection.handshake.query?.token;
   }
 
-  private async getSubscriber(token: string): Promise<ISubscriberJwt | undefined> {
-    let subscriber: ISubscriberJwt;
+  private async getSubscriber(token: string): Promise<SubscriberSession | undefined> {
+    let subscriber: SubscriberSession;
 
     try {
       subscriber = await this.jwtService.verify(token as string);
@@ -97,7 +109,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
    * * When a shutdown is in progress, we opt out of updating the subscriber status,
    * assuming that when the current instance goes down, another instance will take its place and handle the subscriber status update.
    */
-  private async processDisconnectionRequest(connection: Socket) {
+  private async processDisconnectionRequest(connection: Connection) {
     if (!this.isShutdown) {
       await this.handlerSubscriberDisconnection(connection);
     } else {
@@ -105,19 +117,13 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     }
   }
 
-  private async handlerSubscriberDisconnection(connection: Socket) {
-    const token = this.extractToken(connection);
-
-    if (!token || token === 'null') {
-      return;
-    }
-
-    const subscriber = await this.getSubscriber(token);
+  private async handlerSubscriberDisconnection(connection: Connection) {
+    const subscriber = connection.data.session;
     if (!subscriber) {
       return;
     }
 
-    const activeConnections = await this.getActiveConnections(connection, subscriber._id);
+    const activeConnections = await this.getActiveConnections(subscriber._id);
 
     Logger.debug(
       `Disconnect request received from ${subscriber._id}. Active connections: ${activeConnections}`,
@@ -126,13 +132,13 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     await this.subscriberOnlineService.handleDisconnection(subscriber, activeConnections);
   }
 
-  private async getActiveConnections(socket: Socket, subscriberId: string) {
+  private async getActiveConnections(subscriberId: string) {
     const activeSockets = await this.server?.in(subscriberId).fetchSockets();
 
     return activeSockets?.length || 0;
   }
 
-  private async processConnectionRequest(connection: Socket) {
+  private async processConnectionRequest(connection: Connection) {
     const token = this.extractToken(connection);
 
     if (!token || token === 'null') {
@@ -156,8 +162,14 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     const contextKeys = subscriber.contextKeys ?? [];
 
     connection.data.contextKeys = contextKeys;
+    connection.data.session = subscriber;
 
     await connection.join(subscriber._id);
+    if (connection.disconnected) {
+      return;
+    }
+
+    this.scheduleExpiry(connection);
 
     const contextDisplay = contextKeys.length === 0 ? 'no context' : contextKeys.join(', ');
     Logger.debug(
@@ -214,126 +226,32 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     return messageContextKeys.every((key) => inboxContextKeys.includes(key));
   }
 
-  async sendUnreadCountToAllConnections(userId: string, environmentId: string, messageRepository: MessageRepository) {
-    if (!this.server) {
-      Logger.error('No server available to send unread count', LOG_CONTEXT);
-
+  private scheduleExpiry(connection: Connection) {
+    const exp = connection.data.session?.exp;
+    if (!exp) {
       return;
     }
 
-    const sockets = await this.server.in(userId).fetchSockets();
+    let timer: NodeJS.Timeout;
+    const arm = () => {
+      const delay = exp * 1000 - Date.now();
+      timer = setTimeout(
+        delay > MAX_TIMEOUT_DELAY_MS ? arm : () => this.expireSession(connection),
+        Math.min(Math.max(delay, 0), MAX_TIMEOUT_DELAY_MS)
+      );
+    };
 
-    Logger.log(`Sending individualized unread counts to ${sockets.length} socket(s) for user ${userId}`, LOG_CONTEXT);
-
-    for (const socket of sockets) {
-      const contextKeys = socket.data.contextKeys ?? [];
-
-      try {
-        const [unreadCount, severityCounts] = await Promise.all([
-          messageRepository.getCount(
-            environmentId,
-            userId,
-            ChannelTypeEnum.IN_APP,
-            { read: false },
-            { limit: 101 },
-            contextKeys,
-            undefined,
-            'primary'
-          ),
-          messageRepository.getCountBySeverity(
-            environmentId,
-            userId,
-            ChannelTypeEnum.IN_APP,
-            { read: false, snoozed: false },
-            { limit: 99 },
-            contextKeys
-          ),
-        ]);
-
-        const paginationIndication =
-          unreadCount > 100 ? { unreadCount: 100, hasMore: true } : { unreadCount, hasMore: false };
-
-        const counts = {
-          total: unreadCount,
-          severity: {
-            high: 0,
-            medium: 0,
-            low: 0,
-            none: 0,
-          },
-        };
-
-        for (const { severity, count } of severityCounts) {
-          if (severity in counts.severity) {
-            counts.severity[severity] = count;
-          }
-        }
-
-        socket.emit('unread_count_changed', {
-          unreadCount: paginationIndication.unreadCount,
-          counts,
-          hasMore: paginationIndication.hasMore,
-        });
-
-        const contextDisplay = contextKeys.length === 0 ? 'none' : contextKeys.join(', ');
-
-        Logger.log(
-          `Sent unread count to socket ${socket.id} with contexts [${contextDisplay}]: ${counts.total}`,
-          LOG_CONTEXT
-        );
-      } catch (error) {
-        Logger.error(`Failed to send unread count to socket ${socket.id}: ${error.message}`, LOG_CONTEXT);
-      }
-    }
+    arm();
+    connection.once('disconnect', () => clearTimeout(timer));
   }
 
-  async sendUnseenCountToAllConnections(userId: string, environmentId: string, messageRepository: MessageRepository) {
-    if (!this.server) {
-      Logger.error('No server available to send unseen count', LOG_CONTEXT);
-
-      return;
-    }
-
-    const sockets = await this.server.in(userId).fetchSockets();
-
-    Logger.log(`Sending individualized unseen counts to ${sockets.length} socket(s) for user ${userId}`, LOG_CONTEXT);
-
-    for (const socket of sockets) {
-      const contextKeys = socket.data.contextKeys ?? [];
-
-      try {
-        const unseenCount = await messageRepository.getCount(
-          environmentId,
-          userId,
-          ChannelTypeEnum.IN_APP,
-          { seen: false },
-          { limit: 101 },
-          contextKeys,
-          undefined,
-          'primary'
-        );
-
-        const paginationIndication =
-          unseenCount > 100 ? { unseenCount: 100, hasMore: true } : { unseenCount, hasMore: false };
-
-        socket.emit('unseen_count_changed', {
-          unseenCount: paginationIndication.unseenCount,
-          hasMore: paginationIndication.hasMore,
-        });
-
-        const contextDisplay = contextKeys.length === 0 ? 'none' : contextKeys.join(', ');
-
-        Logger.log(
-          `Sent unseen count to socket ${socket.id} with contexts [${contextDisplay}]: ${unseenCount}`,
-          LOG_CONTEXT
-        );
-      } catch (error) {
-        Logger.error(`Failed to send unseen count to socket ${socket.id}: ${error.message}`, LOG_CONTEXT);
-      }
-    }
+  private expireSession(connection: Connection) {
+    Logger.debug(`Session expired for connection ${connection.id}`, LOG_CONTEXT);
+    connection.emit(WebSocketEventEnum.SESSION_EXPIRED);
+    this.disconnect(connection);
   }
 
-  private disconnect(socket: Socket) {
+  private disconnect(socket: Connection) {
     socket.disconnect();
   }
 

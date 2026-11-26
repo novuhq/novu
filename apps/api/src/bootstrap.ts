@@ -18,6 +18,7 @@ import helmet from 'helmet';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
 
+import { accessLogMiddleware } from './app/shared/middleware/access-log.middleware';
 import { RequestIdMiddleware } from './app/shared/middleware/request-id.middleware';
 
 import { AppModule } from './app.module';
@@ -112,6 +113,9 @@ export async function bootstrap(
   const transactionIdMiddleware = new RequestIdMiddleware();
   app.use((req, res, next) => transactionIdMiddleware.use(req, res, next));
 
+  // Before the body parsers, so a request they reject gets an access line too.
+  app.use(accessLogMiddleware);
+
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -168,7 +172,11 @@ export async function bootstrap(
 
   const document = await setupSwagger(app, bootstrapOptions?.internalSdkGeneration);
 
-  app.useGlobalFilters(new AllExceptionsFilter(app.get(Logger), app.get(RequestLogRepository)));
+  /*
+   * A PinoLogger, not the Nest `Logger` adapter: the adapter would log the filter's message text as `context`
+   * and leave `msg` as the raw exception message.
+   */
+  app.useGlobalFilters(new AllExceptionsFilter(await app.resolve(PinoLogger), app.get(RequestLogRepository)));
 
   /*
    * Handle unhandled promise rejections

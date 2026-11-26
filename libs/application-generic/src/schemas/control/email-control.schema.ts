@@ -1,8 +1,6 @@
-import { JSONSchemaEntity } from '@novu/dal';
 import { UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { defaultOptions, skipStepUiSchema, skipZodSchema } from './shared';
+import { skipStepUiSchema, skipZodSchema, toControlJsonSchema } from './shared';
 
 export const emailControlZodSchema = z
   .object({
@@ -28,7 +26,7 @@ export type EmailControlType = Omit<z.infer<typeof emailControlZodSchema>, 'layo
   layoutId?: string | null;
 };
 
-export const emailControlSchema = zodToJsonSchema(emailControlZodSchema, defaultOptions) as JSONSchemaEntity;
+export const emailControlSchema = toControlJsonSchema(emailControlZodSchema);
 
 export const emailUiSchema: UiSchema = {
   group: UiSchemaGroupEnum.EMAIL,

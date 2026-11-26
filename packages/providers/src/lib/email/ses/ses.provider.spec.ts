@@ -226,7 +226,21 @@ describe('getMessageId', () => {
   test('should return messageId when body is valid', async () => {
     const provider = new SESEmailProvider(mockConfig);
     const messageId = provider.getMessageId(mockSESMessage);
-    expect(messageId).toEqual([`<${mockSESMessage.mail.messageId}@${mockConfig.region}.amazonses.com>`]);
+    expect(messageId).toEqual([`<${mockSESMessage.mail.messageId}@email.amazonses.com>`]);
+  });
+
+  // The inbound webhook looks the message up by the id stored at send time, so the id rebuilt from
+  // the webhook body has to equal the one sendMessage returned for the same SES message.
+  test.each(['us-east-1', 'eu-west-1'])('should rebuild the id sendMessage returned in %s', async (region) => {
+    const mockResponse = { MessageId: mockSESMessage.mail.messageId };
+    vi.spyOn(SESv2Client.prototype, 'send').mockImplementation(async () => {
+      return mockResponse as any;
+    });
+
+    const provider = new SESEmailProvider({ ...mockConfig, region });
+    const sent = await provider.sendMessage(mockNovuMessage);
+
+    expect(provider.getMessageId(mockSESMessage)).toEqual([sent.id]);
   });
 
   test('should return undefined when event body is undefined', async () => {

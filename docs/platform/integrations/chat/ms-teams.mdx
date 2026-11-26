@@ -11,7 +11,7 @@ You create and host a Microsoft Teams bot in your Azure environment, and your cu
 Once a customer connects their workspace, Novu establishes a secure channel connection using your bot's credentials. You then map specific destinations, whether the destinations involve public channels or individual users to channel endpoints, allowing Novu to route notifications dynamically to the correct tenant and conversation context.
 
 <Note>
-  Compose rich Chat step content with the [block editor](/platform/integrations/chat/writing-chat-template), or keep a plain-text / Liquid body. Novu renders shared cards as Microsoft Teams Adaptive Cards. Use provider overrides when you need Teams-native payloads beyond the shared card model.
+  Compose rich Chat step content with the [block editor](/platform/integrations/chat/writing-chat-template), or keep a plain-text / Liquid body. Novu renders shared cards as Microsoft Teams Adaptive Cards. Provider overrides apply only to messages sent to a [Workflows webhook](/platform/integrations/chat/ms-teams-workflows) endpoint. Messages that the bot sends to a channel or user endpoint use the Chat step content and ignore provider overrides.
 </Note>
 
 ## Choose a path
@@ -36,6 +36,57 @@ Once a customer connects their workspace, Novu establishes a secure channel conn
     Connect the same bot to a managed or custom-code agent.
   </Card>
 </Columns>
+
+## File attachments
+
+Novu sends files, such as PDFs or CSVs, with Teams notifications when you pass them in the trigger's `payload.attachments` with `chat` in their `channels` list. See [Chat file attachments](/platform/integrations/chat#file-attachments) for the payload format.
+
+```typescript
+await novu.trigger({
+  workflowId: 'workflowId',
+  to: { subscriberId: 'subscriberId' },
+  payload: {
+    attachments: [
+      { file: pdfBuffer, name: 'invoice.pdf', mime: 'application/pdf', channels: ['chat'] },
+    ],
+  },
+});
+```
+
+Teams shows a file only when it is stored in Microsoft 365, so Novu stores each file with Microsoft Graph before it posts a file card:
+
+| Destination    | Where Novu stores the file                                                       | Where the file card appears                  |
+| -------------- | -------------------------------------------------------------------------------- | -------------------------------------------- |
+| Channel        | The channel's folder in the team's SharePoint site. Team members can open it.   | A reply under the notification.              |
+| Direct message | The recipient's OneDrive, in the **Microsoft Teams Chat Files** folder. The recipient owns it. | The same chat, right after the notification. |
+
+If Teams doesn't accept the file card, Novu posts a link to the stored file instead.
+
+### Grant file permissions
+
+Your Azure app needs the Microsoft Graph **application** permission `Files.ReadWrite.All`:
+
+1. In the Azure portal, open your app registration and add the permission under **API permissions**. See [Add Microsoft Graph app permissions](/platform/integrations/chat/ms-teams-azure-setup#add-microsoft-graph-app-permissions).
+2. Have the administrator of each connected tenant grant consent again, so the new permission applies in their tenant. See [admin consent](/platform/integrations/chat/ms-teams-connect).
+
+`Files.ReadWrite.All` lets your app read and write files across the tenant's SharePoint sites and OneDrive accounts. Novu uses it only to store the files you send.
+
+A recipient's OneDrive exists only after they first open OneDrive. Until then, Novu can't store direct-message files for them.
+
+### Limits
+
+- Teams webhooks (workflow webhooks) can't carry files. For a webhook destination, Novu sends the message and skips the files.
+- Files larger than 250 MB are skipped.
+- Novu sends the message even when its files can't be sent. The step's activity log shows **Chat files sent**, or **Chat files not sent** with the reason for each file, such as a missing permission.
+
+<Note>
+  In the Teams message format, `attachments` is the field that carries the Adaptive Card. Use `payload.attachments` with `channels: ['chat']` to send files.
+</Note>
+
+You can also share a file without storing it in Microsoft 365:
+
+- **Link to the file.** Host the file yourself and add the URL to the message as a link or a link button.
+- **Show images by URL.** Use the **Image** block in the [block editor](/platform/integrations/chat/writing-chat-template#supported-blocks), or the `Image` element in a [Framework card](/framework/typescript/steps/chat#rich-card). The URL must be absolute and reachable by Teams.
 
 ## Agent conversations vs. workflow notifications
 

@@ -4,6 +4,21 @@
 
 import * as z from "zod/v3";
 
+/**
+ * Rich context object with id and optional data
+ */
+export type LinkChannelEndpointRequestDtoContext2 = {
+  id: string;
+  /**
+   * Optional additional context data
+   */
+  data?: { [k: string]: any } | undefined;
+};
+
+export type LinkChannelEndpointRequestDtoContext =
+  | LinkChannelEndpointRequestDtoContext2
+  | string;
+
 export type LinkChannelEndpointRequestDto = {
   /**
    * Integration identifier for the chat provider integration
@@ -13,12 +28,74 @@ export type LinkChannelEndpointRequestDto = {
    * External subscriber identifier to link to their chat identity
    */
   subscriberId: string;
+  context?:
+    | { [k: string]: LinkChannelEndpointRequestDtoContext2 | string }
+    | undefined;
+  /**
+   * HMAC-SHA256 of the canonicalized `context`, signed with the tenant environment secret key (the same "Inbox with context" signing scheme). Required when the integration has HMAC validation enabled.
+   */
+  contextHash?: string | undefined;
 };
+
+/** @internal */
+export type LinkChannelEndpointRequestDtoContext2$Outbound = {
+  id: string;
+  data?: { [k: string]: any } | undefined;
+};
+
+/** @internal */
+export const LinkChannelEndpointRequestDtoContext2$outboundSchema: z.ZodType<
+  LinkChannelEndpointRequestDtoContext2$Outbound,
+  z.ZodTypeDef,
+  LinkChannelEndpointRequestDtoContext2
+> = z.object({
+  id: z.string(),
+  data: z.record(z.any()).optional(),
+});
+
+export function linkChannelEndpointRequestDtoContext2ToJSON(
+  linkChannelEndpointRequestDtoContext2: LinkChannelEndpointRequestDtoContext2,
+): string {
+  return JSON.stringify(
+    LinkChannelEndpointRequestDtoContext2$outboundSchema.parse(
+      linkChannelEndpointRequestDtoContext2,
+    ),
+  );
+}
+
+/** @internal */
+export type LinkChannelEndpointRequestDtoContext$Outbound =
+  | LinkChannelEndpointRequestDtoContext2$Outbound
+  | string;
+
+/** @internal */
+export const LinkChannelEndpointRequestDtoContext$outboundSchema: z.ZodType<
+  LinkChannelEndpointRequestDtoContext$Outbound,
+  z.ZodTypeDef,
+  LinkChannelEndpointRequestDtoContext
+> = z.union([
+  z.lazy(() => LinkChannelEndpointRequestDtoContext2$outboundSchema),
+  z.string(),
+]);
+
+export function linkChannelEndpointRequestDtoContextToJSON(
+  linkChannelEndpointRequestDtoContext: LinkChannelEndpointRequestDtoContext,
+): string {
+  return JSON.stringify(
+    LinkChannelEndpointRequestDtoContext$outboundSchema.parse(
+      linkChannelEndpointRequestDtoContext,
+    ),
+  );
+}
 
 /** @internal */
 export type LinkChannelEndpointRequestDto$Outbound = {
   integrationIdentifier: string;
   subscriberId: string;
+  context?: {
+    [k: string]: LinkChannelEndpointRequestDtoContext2$Outbound | string;
+  } | undefined;
+  contextHash?: string | undefined;
 };
 
 /** @internal */
@@ -29,6 +106,13 @@ export const LinkChannelEndpointRequestDto$outboundSchema: z.ZodType<
 > = z.object({
   integrationIdentifier: z.string(),
   subscriberId: z.string(),
+  context: z.record(
+    z.union([
+      z.lazy(() => LinkChannelEndpointRequestDtoContext2$outboundSchema),
+      z.string(),
+    ]),
+  ).optional(),
+  contextHash: z.string().optional(),
 });
 
 export function linkChannelEndpointRequestDtoToJSON(

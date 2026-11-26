@@ -9,4 +9,6 @@ export type ToolAccessors = {
 	 * `Bearer oat_…` / `ApiKey …` header, and `getToken` may return null.
 	 */
 	getAuthorization?: () => string | Promise<string>;
+	/** Optional. The Novu dashboard for this region, for links the tools hand back; `https://dashboard.novu.co` when unset. */
+	getDashboardUrl?: () => string;
 };

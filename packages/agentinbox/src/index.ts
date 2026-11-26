@@ -281,4 +281,17 @@ program
   // Loaded only when it runs, with the hosts it starts, so the other commands stay as light.
   .action(async (what: string, options) => (await import('./commands/listen')).listenCommand(what, options));
 
+// The tools a contact's run gets for its own conversation: the listener has the host start this for each such run.
+program
+  .command('conversation-tools', { hidden: true })
+  .requiredOption('--conversation <id>', 'the conversation the run answers')
+  .option('--host <host>', 'the host the run is on')
+  .action(async (options) => (await import('./commands/conversation-tools')).conversationToolsCommand(options));
+
+// The check a host runs before each tool call of a contact's run: the listener sets it up as Codex's hook.
+program
+  .command('contact-check', { hidden: true })
+  .requiredOption('--host <host>', 'the host that asks')
+  .action(async (options) => (await import('./commands/contact-check')).contactCheckCommand(options));
+
 program.parse(process.argv);

@@ -21,7 +21,7 @@ import { type AllowIo, type AllowOutcome, type AskedStore, askToAllow, fileAsked
 import { computerName, ensureComputerId, projectLabel } from '../listen/computer';
 import { type ForegroundStore, fileForeground, stopForeground } from '../listen/foreground';
 import type { HostAdapter, HostProgram } from '../listen/host-adapter';
-import { hostNameOf, hostNames, isListenHostId, loadHost, startableHosts } from '../listen/hosts';
+import { GATEWAY_PLUGINS, hostNameOf, hostNames, isListenHostId, loadHost, startableHosts } from '../listen/hosts';
 import { type ListenTiming, type LoopEnd, runListenLoop } from '../listen/loop';
 import {
   type BackgroundCommand,
@@ -44,6 +44,7 @@ import {
   backgroundSecretsWarning,
   backgroundSignInMessage,
   connectionChangedMessage,
+  gatewayPluginMessage,
   KEY_CHANGED_MESSAGE,
   movedMessage,
   NEEDS_ACCOUNT_MESSAGE,
@@ -374,6 +375,11 @@ async function hostFor(hostInput: string, deps: ListenDeps): Promise<HostAdapter
     );
   }
 
+  const plugin = GATEWAY_PLUGINS[hostInput];
+  if (plugin) {
+    throw new Error(gatewayPluginMessage(hostNameOf(hostInput), plugin, !deps.io.personAtTerminal));
+  }
+
   const host = await deps.loadHost(hostInput);
   if (!host) {
     throw new Error(`Listening doesn’t start ${hostNameOf(hostInput)}, only ${hostNames(supported)}.`);
@@ -589,6 +595,12 @@ function loopFor(
 
       return saved ? connectionOf(saved) : null;
     },
+    // This very program, as the background service runs it.
+    conversationTools: (conversationId) => ({
+      command: deps.nodePath,
+      args: [deps.script, 'conversation-tools', '--conversation', conversationId, '--host', host.id],
+    }),
+    contactCheck: () => ({ command: deps.nodePath, args: [deps.script, 'contact-check', '--host', host.id] }),
   });
 }
 

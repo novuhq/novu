@@ -143,6 +143,20 @@ describe('AllExceptionsFilter', () => {
     expect(requestLogRepository.create.called).to.equal(false);
   });
 
+  it('should not write a second response or reject when the response was already sent', async () => {
+    const status = sinon.stub().throws(new Error('Cannot set headers after they are sent to the client'));
+    const json = sinon.stub().returnsThis();
+    const response = { status, json, headersSent: true };
+    const host = buildHost({ request: buildLogRequest({ _shouldLogAnalytics: false }), response });
+
+    await filter.catch(new Error('Cannot set headers after they are sent to the client'), host);
+
+    expect(status.called).to.equal(false);
+    expect(json.called).to.equal(false);
+    expect(logger.warn.calledOnce).to.equal(true);
+    expect(unhandledRejections).to.deep.equal([]);
+  });
+
   describe('multer errors not translated by @nestjs/platform-express', () => {
     function buildMulterError(code: string, message: string, field?: string) {
       return Object.assign(new Error(message), { name: 'MulterError', code, field });

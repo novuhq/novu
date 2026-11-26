@@ -19,6 +19,7 @@ import {
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
   OAuthHandlerEnum,
+  RequirePermissions,
   SubscriberResponseDto,
   UpdateSubscriber,
   UpdateSubscriberChannel,
@@ -33,10 +34,12 @@ import {
   ButtonTypeEnum,
   ChatProviderIdEnum,
   IPreferenceChannels,
+  PermissionsEnum,
   PreferenceLevelEnum,
   TriggerTypeEnum,
   UserSessionData,
 } from '@novu/shared';
+import { Response } from 'express';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UpdatePreferencesCommand } from '../inbox/usecases/update-preferences/update-preferences.command';
@@ -292,6 +295,7 @@ export class SubscribersV1Controller {
   @Put('/:subscriberId/credentials')
   @ExternalApiAccessible()
   @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Update provider credentials',
@@ -321,6 +325,7 @@ export class SubscribersV1Controller {
   @Patch('/:subscriberId/credentials')
   @ExternalApiAccessible()
   @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Upsert provider credentials',
@@ -351,6 +356,7 @@ export class SubscribersV1Controller {
   @Delete('/:subscriberId/credentials/:providerId')
   @ExternalApiAccessible()
   @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
   @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
@@ -818,7 +824,7 @@ export class SubscribersV1Controller {
     @Param('subscriberId') subscriberId: string,
     @Param('providerId') providerId: ChatProviderIdEnum,
     @Query() query: ChatOauthCallbackRequestDto,
-    @Res() res: any
+    @Res() res: Response
   ): Promise<void> {
     const callbackResult = await this.chatOauthCallbackUsecase.execute(
       ChatOauthCallbackCommand.create({

@@ -10,4 +10,9 @@ export class ApiKey {
     description: 'SHA-256 hash of the API key, used to reference a specific key (e.g. for deletion)',
   })
   hash?: string;
+  @ApiPropertyOptional({
+    type: Boolean,
+    description: 'Whether the key was created before the revocation cutoff and has to be replaced',
+  })
+  requiresRotation?: boolean;
 }

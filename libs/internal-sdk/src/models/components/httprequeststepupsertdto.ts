@@ -31,7 +31,7 @@ export type HttpRequestStepUpsertDto = {
    */
   name: string;
   /**
-   * Type of the step
+   * Channels of the notification
    */
   type: "http_request";
   /**

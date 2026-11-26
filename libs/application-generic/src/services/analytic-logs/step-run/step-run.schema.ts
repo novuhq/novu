@@ -22,7 +22,7 @@ const schemaDefinition = {
   // Core step run identification
   step_run_id: { type: CHString() }, // Maps to JobEntity._id
   step_id: { type: CHString() }, // Maps to messageTemplate._id
-  workflow_run_id: { type: CHNullable(CHString()) }, // Maps to NotificationEntity._id
+  workflow_run_id: { type: CHNullable(CHString(), null) }, // Maps to NotificationEntity._id
   workflow_id: { type: CHString('') }, // Maps to NotificationTemplateEntity._id
 
   // Context
@@ -56,7 +56,7 @@ const schemaDefinition = {
   expires_at: { type: CHDateTime64(3, 'UTC') },
 
   // Digest data
-  digest: { type: CHNullable(CHString()) }, // JSON string of digest metadata
+  digest: { type: CHNullable(CHString(), null) }, // JSON string of digest metadata
 
   // Schedule extensions count
   schedule_extensions_count: { type: CHUInt8(0) },
@@ -69,7 +69,7 @@ export const TTL: keyof typeof schemaDefinition = 'expires_at';
 const clickhouseSchemaOptions = {
   table_name: TABLE_NAME,
   engine: 'ReplacingMergeTree(updated_at)',
-  order_by: `(${ORDER_BY.join(', ')})` as any,
+  order_by: `(${ORDER_BY.join(', ')})` as keyof typeof schemaDefinition,
   additional_options: ['PARTITION BY toYYYYMM(created_at)', `TTL toDateTime(${TTL})`],
 };
 
