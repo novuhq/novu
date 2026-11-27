@@ -475,6 +475,21 @@ describe('when the token source fails', () => {
     expect(backend.state.sessionBodies).toHaveLength(0);
   });
 
+  it('warns once, naming the route and its status, while the token endpoint keeps failing', async () => {
+    const backend = createFakeBackend();
+    backend.state.tokenEndpointStatus = 401;
+    const novu = createNovu();
+
+    await novu.notifications.list();
+    backend.advanceTime(MINUTE_MS);
+    await novu.notifications.list();
+
+    const tokenWarnings = warn.mock.calls.filter(([message]: unknown[]) => String(message).includes(TOKEN_ENDPOINT));
+    expect(backend.state.tokenRequests).toHaveLength(2);
+    expect(tokenWarnings).toHaveLength(1);
+    expect(String(tokenWarnings[0][0])).toContain('401');
+  });
+
   it('signs in on the first call after the cooldown when the first token fetch failed', async () => {
     const backend = createFakeBackend();
     backend.state.tokenEndpointStatus = 401;

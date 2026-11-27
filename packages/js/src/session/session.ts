@@ -6,7 +6,7 @@ import { buildContextKey } from '../utils/build-context-key';
 import { NovuError } from '../utils/errors';
 import { isBrowser } from '../utils/is-browser';
 import { decodeJwtPayload, EXPIRY_SKEW_MS, getJwtExpiresAt, isJwtExpired } from '../utils/jwt';
-import type { SessionIdentity, SubscriberIdentity, TokenIdentity } from './identity';
+import { type SessionIdentity, type SubscriberIdentity, type TokenIdentity, warnOnce } from './identity';
 import type { InitializeSessionArgs } from './types';
 
 type TokenSessionClaims = {
@@ -453,6 +453,17 @@ export class Session {
       }
     }
 
-    return exchange(await identity.getToken());
+    return exchange(await this.#fetchLoginToken(identity));
+  }
+
+  /** The customer sees nothing in the Inbox while their token source fails, so the reason goes to the console. */
+  async #fetchLoginToken(identity: TokenIdentity): Promise<string> {
+    try {
+      return await identity.getToken();
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      warnOnce(`[Novu] ${reason}. The Inbox stays signed out until getting a token succeeds.`);
+      throw error;
+    }
   }
 }
