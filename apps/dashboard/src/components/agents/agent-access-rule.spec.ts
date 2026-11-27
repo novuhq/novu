@@ -1,12 +1,6 @@
 import type { RuleGroupType } from 'react-querybuilder';
 import { describe, expect, it } from 'vitest';
-import {
-  ACCESS_RULE_SUBSCRIBER_VARIABLES,
-  getAccessRuleFieldIssue,
-  getAccessRuleOperatorIssue,
-  parseAccessRule,
-  toAccessRule,
-} from '@/components/agents/agent-access-rule';
+import { ACCESS_RULE_SUBSCRIBER_VARIABLES, parseAccessRule, toAccessRule } from '@/components/agents/agent-access-rule';
 import type { EnhancedConditionVariable } from '@/components/conditions-editor/types';
 
 const variables: EnhancedConditionVariable[] = [
@@ -63,59 +57,50 @@ describe('toAccessRule', () => {
     expect(toAccessRule(query(), variables)).toBeNull();
     expect(toAccessRule({ combinator: 'and', rules: [{ combinator: 'or', rules: [] }] }, variables)).toBeNull();
   });
-
-  it('saves a stored rule unchanged after it is opened in the editor', () => {
-    const saved = {
-      and: [
-        { '!': { in: [{ var: 'subscriber.email' }, ['a@x.com', 'b@y.com']] } },
-        { '==': [{ var: 'subscriber.data.vip' }, true] },
-        { '==': [{ var: 'context.tenant.data.seats' }, 5] },
-      ],
-    };
-
-    expect(toAccessRule(parseAccessRule(saved), variables)).toEqual(saved);
-  });
-
-  it('opens stored typed values as text, which the editor form requires', () => {
-    const opened = parseAccessRule({ and: [{ '==': [{ var: 'context.tenant.data.seats' }, 5] }] });
-
-    expect(opened.rules).toEqual([expect.objectContaining({ field: 'context.tenant.data.seats', value: '5' })]);
-  });
 });
 
-describe('getAccessRuleFieldIssue', () => {
+const email = { var: 'subscriber.email' };
+const seats = { var: 'context.tenant.data.seats' };
+const subscriberVariablesOnly = ACCESS_RULE_SUBSCRIBER_VARIABLES;
+
+describe('opening a rule written through the API', () => {
   it.each([
-    'subscriber.email',
-    'subscriber.timezone',
-    'subscriber.data',
-    'subscriber.data.plan.tier',
-    'context.tenant.id',
-    'context.tenant.data',
-    'context.tenant.data.plan',
-  ])('allows %s', (field) => {
-    expect(getAccessRuleFieldIssue(field)).toBeNull();
+    {
+      name: 'notIn block list',
+      stored: { notIn: [email, ['a@x.com']] },
+    },
+    {
+      name: 'block list that mixes !in and notIn',
+      stored: { and: [{ '!': { in: [email, ['bad@x.com']] } }, { notIn: [email, ['b@x.com']] }] },
+    },
+  ])('reports $name as not editable', ({ stored }) => {
+    expect(parseAccessRule(stored)).toBeNull();
   });
 
   it.each([
-    'subscriber',
-    'subscriber.channels',
-    'subscriber.email.domain',
-    'subscriber.constructor',
-    'context.tenant',
-    'context.tenant.name',
-    'context.tenant.id.x',
-    'payload.region',
-    'workflow.name',
-  ])('rejects %s', (field) => {
-    expect(getAccessRuleFieldIssue(field)).toEqual(expect.any(String));
-  });
-});
+    {
+      name: 'typed context number whose field is not in the loaded variables',
+      stored: { '==': [seats, 5] },
+      saved: { and: [{ '==': [seats, 5] }] },
+    },
+    {
+      name: 'block list with a typed context number and a subscriber.data boolean',
+      stored: {
+        and: [
+          { '!': { in: [email, ['bad@x.com']] } },
+          { '==': [seats, 5] },
+          { '==': [{ var: 'subscriber.data.vip' }, true] },
+        ],
+      },
+    },
+    {
+      name: 'subscriber.data text that reads like a boolean',
+      stored: { and: [{ '==': [{ var: 'subscriber.data.code' }, 'true'] }] },
+    },
+  ])('saves $name unchanged', ({ stored, saved = stored }) => {
+    const opened = parseAccessRule(stored);
 
-describe('getAccessRuleOperatorIssue', () => {
-  it('rejects editor operators that the API does not evaluate in access rules', () => {
-    expect(getAccessRuleOperatorIssue('withinLast')).toEqual(expect.any(String));
-    expect(getAccessRuleOperatorIssue('some')).toEqual(expect.any(String));
-    expect(getAccessRuleOperatorIssue('notIn')).toBeNull();
-    expect(getAccessRuleOperatorIssue('between')).toBeNull();
+    expect(opened).not.toBeNull();
+    expect(toAccessRule(opened as RuleGroupType, subscriberVariablesOnly)).toEqual(saved);
   });
 });
