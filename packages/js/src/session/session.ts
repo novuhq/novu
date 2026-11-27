@@ -9,7 +9,6 @@ import { decodeJwtPayload, EXPIRY_SKEW_MS, getJwtExpiresAt, isJwtExpired } from 
 import type { SessionIdentity, SubscriberIdentity, TokenIdentity } from './identity';
 import type { InitializeSessionArgs } from './types';
 
-/** What a token session's JWT says, decoded once when the session arrives. */
 type TokenSessionClaims = {
   subscriberId: string | undefined;
   /** Server time minus browser time, from the session's `iat`, so expiry is judged on the server's clock. */
@@ -35,7 +34,6 @@ export class Session {
   #identity: SessionIdentity;
   #defaultSchedule: DefaultSchedule | undefined;
   #initialToken: string | undefined;
-  /** The running session request; resolves to its token when it kept the same subscriber and context. */
   #inFlight: Promise<string | undefined> | undefined;
   /** What the server returned for the current subscriber and context; cleared when either changes. */
   #session: SessionResponse | undefined;
@@ -44,7 +42,6 @@ export class Session {
   #tokens = new Set<string>();
   /** Who the client was last signed in as; kept across `changeIdentity`, so a switch is noticed when it resolves. */
   #signedInAs: { subscriberId: string | undefined; contextKey: string } | undefined;
-  /** The latest renewal of a token source that failed, until one succeeds. */
   #failedRenewal: { at: number; error: unknown } | undefined;
   #onSubscriberChange: () => void;
 
@@ -186,11 +183,7 @@ export class Session {
   }
 
   /**
-   * Called before every request except the session request. Resolves to the token to send it with: the latest one
-   * for the subscriber and context `currentToken` belongs to, renewed first when it is about to expire. Rejects with
-   * a `NovuError` when the request must not go out: `currentToken` belongs to a subscriber or context that has been
-   * replaced, or the renewal failed or signed in someone else, so the request would run as the wrong subscriber.
-   *
+   * Rejects with a `NovuError` when the request must not go out, because it would run as the wrong subscriber.
    * Only a token source renews here (see `isExpired`); a subscriber session renews after a 401.
    */
   public async tokenForRequest(currentToken: string | undefined): Promise<string | undefined> {
@@ -243,7 +236,6 @@ export class Session {
     return Date.now() + claims.clockOffsetMs >= expiresAt - claims.renewalSkewMs;
   }
 
-  /** Whether `token` was issued for the current subscriber and context. */
   public isCurrentToken(token: string): boolean {
     return this.#tokens.has(token);
   }
@@ -357,7 +349,6 @@ export class Session {
     }
   }
 
-  /** Records who the client is now signed in as; true when that differs from who it was signed in as before. */
   #recordSignedIn(): boolean {
     const previous = this.#signedInAs;
     const current = { subscriberId: this.subscriberId, contextKey: this.contextKey };

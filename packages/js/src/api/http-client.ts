@@ -6,21 +6,11 @@ export type HttpClientOptions = {
   headers?: Record<string, string>;
 };
 
-/**
- * Gets a new session token. Resolves to a token newer than `staleToken` for the same subscriber and context, to send
- * the request again with, or `undefined` when there is none.
- */
 export type SessionRefresher = (staleToken?: string) => Promise<string | undefined>;
 
-/** The session's say over each request; it owns when a token is renewed and whether a request may be resent. */
 export type SessionGuard = {
-  /** Resolves to the token to send a request with; rejects when the request must not go out at all. */
   tokenForRequest: (currentToken: string | undefined) => Promise<string | undefined>;
   refresh: SessionRefresher;
-  /**
-   * False when `token` belongs to a subscriber or context that has been replaced since it was issued. A response
-   * to a request sent with it is the previous subscriber's data and must not reach caches or listeners.
-   */
   isCurrentToken: (token: string) => boolean;
 };
 
@@ -153,7 +143,6 @@ export class HttpClient {
     options?: Omit<RequestInit, 'body'> & { body?: unknown };
     unwrapEnvelope?: boolean;
     allowSessionRefresh?: boolean;
-    /** Set on the one retry after a 401: the token the refresh produced, sent as is. */
     retryToken?: string;
   }): Promise<T> {
     const fullUrl = combineUrl(this.apiUrl, path, searchParams ? `?${searchParams.toString()}` : '');
@@ -214,10 +203,6 @@ export class HttpClient {
     return (unwrapEnvelope ? res.data : res) as T;
   }
 
-  /**
-   * Called when a request fails with 401, for example because its token expired.
-   * The request is retried once after the refresh succeeds.
-   */
   private async refreshSessionAfter401(sentAuthorization: string | undefined): Promise<string | undefined> {
     if (!sentAuthorization || !this.session) {
       return undefined;

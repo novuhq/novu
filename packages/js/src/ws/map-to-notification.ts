@@ -12,7 +12,6 @@ import { decodeJwtPayload } from '../utils/jwt';
 
 type SocketMessageButton = { type?: ActionTypeEnum; content: string; url?: string; target?: unknown };
 
-/** A notification as the socket servers send it in `notification_received`. */
 export type SocketMessage = {
   _id: string;
   transactionId: string;

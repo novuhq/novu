@@ -5,7 +5,6 @@ const fakeSocketIo = vi.hoisted(() => {
   const create = () => {
     const handlers = new Map<string, Handler>();
     const managerHandlers = new Map<string, Handler>();
-    /** The token each `connect()` call carried. */
     const connectedWith: Array<string | undefined> = [];
 
     return {
@@ -118,13 +117,9 @@ type SessionBody = {
 const createFakeBackend = ({ subscriberId = 'user_1', contextKeys = ['tenant:org_1'] } = {}) => {
   let now = Date.now();
   const state = {
-    /** The user whose cookie the token endpoint sees. */
     signedInUser: subscriberId,
-    /** The context keys the session endpoint returns for the next session. */
     contextKeys,
-    /** How long the API takes to answer a request it already authorized. */
     apiDelayMs: 0,
-    /** How long the API takes to stream the body after the status and headers arrived. */
     apiBodyDelayMs: 0,
     apiCalls: [] as Array<{ path: string; subscriberId: string }>,
     loginTokens: [] as string[],
@@ -136,9 +131,7 @@ const createFakeBackend = ({ subscriberId = 'user_1', contextKeys = ['tenant:org
     tokenEndpointStatus: 200,
     sessionDelayMs: 0,
     loginTokenLifetimeMs: 10 * MINUTE_MS,
-    /** How far the browser clock runs ahead of the server clock. */
     clientClockAheadMs: 0,
-    /** Login tokens the session endpoint rejects as invalid (400), like a token signed with a rotated key. */
     invalidLoginTokens: new Set<string>(),
   };
 
@@ -491,7 +484,6 @@ describe('when the token source fails', () => {
     const failed = await novu.notifications.list();
     expect(backend.state.tokenRequests).toHaveLength(2);
     expect(backend.state.sessionBodies).toHaveLength(1);
-    // The renewal failed: the error must not claim another subscriber signed in.
     expect(failed.error?.originalError?.message).toMatch(/could not be renewed/);
 
     const results = await Promise.all([
