@@ -90,7 +90,7 @@ export class WebChatController {
         agentIdentifier,
         session.environmentId,
         session.organizationId,
-        agentHash
+        { agentHash, isTokenSession: session.contextVerified === true }
       );
 
       await this.inboundDispatcher.handleWebhook(published.agentId, published.integrationIdentifier, req, res, {
