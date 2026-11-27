@@ -528,6 +528,24 @@ describe('when the token endpoint signs in another user', () => {
     await novu.socket.disconnect();
   });
 
+  it('has dropped the previous user cached data before telling listeners the new user signed in', async () => {
+    const { backend, novu } = await switchToBob();
+    expect(novu.notifications.cache.getAll({ limit: 10 })).toBeDefined();
+    const seenOnResolve: Array<{ subscriberId?: string; cached: unknown }> = [];
+    novu.on('session.initialize.resolved', ({ data }) => {
+      if (data) {
+        seenOnResolve.push({ subscriberId: novu.subscriberId, cached: novu.notifications.cache.getAll({ limit: 10 }) });
+      }
+    });
+
+    backend.advanceTime(10 * MINUTE_MS);
+    await novu.notifications.count({});
+
+    expect(seenOnResolve).toEqual([{ subscriberId: 'bob', cached: undefined }]);
+
+    await novu.socket.disconnect();
+  });
+
   it('does not send a request started as the previous user after a refresh before expiry signed in the new user', async () => {
     const { backend, novu } = await switchToBob();
     backend.advanceTime(10 * MINUTE_MS);
