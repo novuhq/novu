@@ -93,13 +93,13 @@ export const InternalNovuProvider = (props: InternalNovuProviderProps) => {
   }, []);
   const tokenSource = useMemo((): TokenSource | undefined => {
     if (hasGetToken) {
-      const getToken: GetToken = async (args) => {
+      const getToken: GetToken = async () => {
         const latest = getTokenRef.current;
         if (!latest) {
           throw new NovuError('getToken was removed from the Novu provider', undefined);
         }
 
-        return latest(args);
+        return latest();
       };
 
       return { getToken };

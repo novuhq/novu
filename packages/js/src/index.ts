@@ -17,7 +17,7 @@ export type {
 export type { EventHandler, Events, SocketEventNames } from './event-emitter';
 export { NOTIFICATION_COUNT_SYNC_EVENTS } from './notifications/count-sync-events';
 export { Novu } from './novu';
-export type { GetToken, GetTokenArgs } from './session/token-source';
+export type { GetToken } from './session/token-source';
 export type {
   AgentApprovalPart,
   AgentApprovalPartState,

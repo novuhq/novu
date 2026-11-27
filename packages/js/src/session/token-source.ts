@@ -1,19 +1,17 @@
 import { NovuError } from '../utils/errors';
 
-export type GetTokenArgs = { topicKey?: string };
-
 /** Returns a Novu subscriber token minted by your backend. */
-export type GetToken = (args: GetTokenArgs) => Promise<string>;
+export type GetToken = () => Promise<string>;
 
 export function fromTokenEndpoint(url: string): GetToken {
-  return async (args) => {
+  return async () => {
     let response: Response;
     try {
       response = await fetch(url, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(args.topicKey ? { topicKey: args.topicKey } : {}),
+        body: '{}',
       });
     } catch (error) {
       throw new NovuError(`Failed to reach the token endpoint ${url}`, error);

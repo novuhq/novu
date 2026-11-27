@@ -437,6 +437,6 @@ export class Session {
       }
     }
 
-    return exchange(await identity.getToken({}));
+    return exchange(await identity.getToken());
   }
 }
