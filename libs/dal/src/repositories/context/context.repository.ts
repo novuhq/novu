@@ -32,9 +32,10 @@ export class ContextRepository extends BaseRepository<ContextDBModel, ContextEnt
   }
 
   /**
-   * For a signed payload: an entry with `data` replaces the stored record's data (created when missing),
-   * so the signer's data wins over data an unsigned session saved first. An entry with only an id is
-   * found or created as in `findOrCreateContextsFromPayload`.
+   * For a signed payload, the signer is the source of truth. An entry with `data` replaces the stored
+   * record's whole `data` (created when missing), like `PATCH /v2/contexts` does: fields the signer left out
+   * are dropped, so no field an unsigned session saved first can survive next to signed ones. An entry with
+   * only an id signs no data, so the stored record is found or created as in `findOrCreateContextsFromPayload`.
    */
   async upsertContextsFromPayload(
     environmentId: string,
