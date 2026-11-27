@@ -1,13 +1,6 @@
-export enum AgentPlatformEnum {
-  SLACK = 'slack',
-  WHATSAPP = 'whatsapp',
-  TEAMS = 'teams',
-  EMAIL = 'email',
-  TELEGRAM = 'telegram',
-  SENDBLUE = 'sendblue',
-  PHOTON_IMESSAGE = 'photon_imessage',
-  WEB_CHAT = 'web_chat',
-}
+import { AgentPlatformEnum } from '@novu/shared';
+
+export { AgentPlatformEnum };
 
 export const PLATFORMS_WITH_TYPING_INDICATOR = new Set<AgentPlatformEnum>([
   AgentPlatformEnum.SLACK,

@@ -93,6 +93,7 @@ async function findRuleRefusal(
   const verdict = evaluateAgentAccessRule(config.accessRule, {
     subscriber: sender.subscriber,
     context: sender.context,
+    channel: { platform: config.platform },
   });
 
   switch (verdict.outcome) {

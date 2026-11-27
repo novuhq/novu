@@ -1,3 +1,4 @@
+export * from './agent-access-rule';
 export * from './agent-content-flagged';
 export * from './agent-inbox-analytics';
 export * from './agents-org-funnel';

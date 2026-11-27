@@ -1,9 +1,10 @@
+import type { RuleGroupType } from 'react-querybuilder';
 import { describe, expect, it } from 'vitest';
-import { getOperatorsForFieldType } from '@/components/conditions-editor/field-type-operators';
 import {
   INTEGRATION_CONDITION_VARIABLES,
   isAllowedIntegrationConditionVariable,
-  mergeIntegrationConditionVariables,
+  parseIntegrationRules,
+  toIntegrationRules,
 } from './integration-conditions';
 
 describe('workflow condition variables', () => {
@@ -28,35 +29,18 @@ describe('integration condition variable boundaries', () => {
   });
 });
 
-describe('mergeIntegrationConditionVariables', () => {
-  it('deduplicates matching variable types', () => {
-    const variables = mergeIntegrationConditionVariables([
-      { name: 'context.tenant.data.region', dataType: 'string' },
-      { name: 'context.tenant.data.region', dataType: 'string' },
-    ]);
+describe('opening integration rules written through the API', () => {
+  it('reports a notIn rule as not editable instead of shortening it on the next edit', () => {
+    const stored = { notIn: [{ var: 'subscriber.email' }, ['a@x.com']] };
 
-    expect(variables).toEqual([{ name: 'context.tenant.data.region', dataType: 'string' }]);
+    expect(parseIntegrationRules(stored)).toBeNull();
   });
 
-  it('marks conflicting variable types as mixed', () => {
-    const variables = mergeIntegrationConditionVariables([
-      { name: 'context.tenant.data.priority', dataType: 'number', inputType: 'number' },
-      { name: 'context.tenant.data.priority', dataType: 'string', inputType: 'text' },
-    ]);
+  it('saves an editable rule unchanged', () => {
+    const stored = { and: [{ '==': [{ var: 'subscriber.data.region' }, 'eu'] }] };
+    const opened = parseIntegrationRules(stored);
 
-    expect(variables).toEqual([
-      {
-        name: 'context.tenant.data.priority',
-        displayLabel: 'context.tenant.data.priority (mixed types)',
-        dataType: 'mixed',
-        format: undefined,
-        inputType: undefined,
-      },
-    ]);
-    expect(getOperatorsForFieldType('mixed')).toEqual([
-      { name: 'null', label: 'is null' },
-      { name: 'notNull', label: 'is not null' },
-    ]);
-    expect(getOperatorsForFieldType('unknown')).toEqual(getOperatorsForFieldType('mixed'));
+    expect(opened).not.toBeNull();
+    expect(toIntegrationRules(opened as RuleGroupType)).toEqual(stored);
   });
 });

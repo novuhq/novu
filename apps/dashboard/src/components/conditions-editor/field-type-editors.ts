@@ -16,12 +16,20 @@ export function shouldUseRelativeDateEditor(operator: string): boolean {
   return isRelativeDateOperator(operator);
 }
 
+function getAllowedValuesPlaceholder(operator: string, allowedValues: readonly string[]): string {
+  return operator === 'in' || operator === 'notIn' ? allowedValues.slice(0, 2).join(', ') : allowedValues[0];
+}
+
 export function getPlaceholderForField(
   fieldName: string,
   operator: string,
   { fieldData }: { fieldData: EnhancedField }
 ): string {
-  const { dataType } = fieldData;
+  const { dataType, allowedValues } = fieldData;
+
+  if (allowedValues?.length) {
+    return getAllowedValuesPlaceholder(operator, allowedValues);
+  }
 
   if (isArrayItemOperator(operator)) {
     return 'item property';
@@ -269,9 +277,32 @@ function getArrayHelpText(operator: string): HelpTextInfo {
   };
 }
 
-export function getHelpTextForField(operator: string, { fieldData }: { fieldData: EnhancedField }): HelpTextInfo {
-  const { dataType } = fieldData;
+const DYNAMIC_VALUES_SENTENCE = ' You can also use dynamic values from the payload.';
 
+export function getHelpTextForField(
+  operator: string,
+  { fieldData, allowDynamicValues = true }: { fieldData: EnhancedField; allowDynamicValues?: boolean }
+): HelpTextInfo {
+  const helpText = getHelpTextWithDynamicValues(operator, fieldData.dataType);
+  const literalHelpText = allowDynamicValues
+    ? helpText
+    : {
+        ...helpText,
+        description: helpText.description.replace(DYNAMIC_VALUES_SENTENCE, ''),
+        examples: helpText.examples.filter((example) => !example.includes('{{')),
+      };
+
+  if (!fieldData.allowedValues?.length) {
+    return literalHelpText;
+  }
+
+  return {
+    ...literalHelpText,
+    description: `${literalHelpText.description} Use one of: ${fieldData.allowedValues.join(', ')}.`,
+  };
+}
+
+function getHelpTextWithDynamicValues(operator: string, dataType: EnhancedField['dataType']): HelpTextInfo {
   if (isArrayItemOperator(operator)) {
     return ARRAY_ITEM_HELP_TEXT[operator];
   }

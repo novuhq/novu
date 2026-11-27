@@ -3,8 +3,10 @@ import {
   INTEGRATION_CONDITION_NAMESPACES,
   INTEGRATION_CONDITION_VARIABLES as INTEGRATION_CONDITION_VARIABLE_NAMES,
 } from '@novu/shared';
-import { generateID, RuleGroupType } from 'react-querybuilder';
+import { formatQuery, type RuleGroupType } from 'react-querybuilder';
+import { type JsonLogicRule, parseLosslessRule } from '@/components/conditions-editor/lossless-rule';
 import type { EnhancedConditionVariable } from '@/components/conditions-editor/types';
+import { customRuleProcessor } from '@/utils/conditions';
 import { type FieldDataType, type IsAllowedVariable } from '@/utils/parseStepVariables';
 
 const INTEGRATION_CONDITION_VARIABLE_TYPES: Record<
@@ -34,33 +36,6 @@ export const INTEGRATION_CONDITION_VARIABLES: EnhancedConditionVariable[] = INTE
   })
 );
 
-export function mergeIntegrationConditionVariables(
-  variables: EnhancedConditionVariable[]
-): EnhancedConditionVariable[] {
-  const variablesByName = new Map<string, EnhancedConditionVariable>();
-
-  for (const variable of variables) {
-    const existingVariable = variablesByName.get(variable.name);
-
-    if (!existingVariable) {
-      variablesByName.set(variable.name, variable);
-      continue;
-    }
-
-    if (existingVariable.dataType !== variable.dataType) {
-      variablesByName.set(variable.name, {
-        ...existingVariable,
-        displayLabel: `${variable.name} (mixed types)`,
-        dataType: 'mixed',
-        format: undefined,
-        inputType: undefined,
-      });
-    }
-  }
-
-  return Array.from(variablesByName.values());
-}
-
 export const isAllowedIntegrationConditionVariable: IsAllowedVariable = (variable) => {
   if ((INTEGRATION_CONDITION_VARIABLE_NAMES as readonly string[]).includes(variable.name)) {
     return true;
@@ -79,6 +54,17 @@ export function countLegacyIntegrationConditions(conditions?: IMessageFilter[]):
   return conditions.reduce((sum, group) => sum + (group.children?.length ?? 0), 0);
 }
 
-export function createEmptyConditionsQuery(): RuleGroupType {
-  return { id: generateID(), combinator: 'and', rules: [] };
+/** Returns null for stored rules the editor can't show without changing them, such as `notIn`. */
+export function parseIntegrationRules(rules: JsonLogicRule): RuleGroupType | null {
+  return parseLosslessRule(rules, { format: toIntegrationRules });
+}
+
+export function toIntegrationRules(query: RuleGroupType): JsonLogicRule | null {
+  if (!query.rules.length) {
+    return null;
+  }
+
+  const logic = formatQuery(query, { format: 'jsonlogic', ruleProcessor: customRuleProcessor });
+
+  return logic && typeof logic === 'object' ? (logic as JsonLogicRule) : null;
 }

@@ -8,6 +8,7 @@ import { AddGroupAction } from '@/components/conditions-editor/add-group-action'
 import { CombinatorSelector } from '@/components/conditions-editor/combinator-selector';
 import { increasesGroupBeyondLimit } from '@/components/conditions-editor/conditions-editor-policy';
 import { ConditionsEditorProvider } from '@/components/conditions-editor/conditions-editor-provider';
+import { toConditionField } from '@/components/conditions-editor/conditions-variables';
 import { FieldSelector } from '@/components/conditions-editor/field-selector';
 import {
   getHelpTextForField,
@@ -33,6 +34,7 @@ export interface EnhancedField extends Field {
   dataType: ConditionFieldDataType;
   inputType?: string;
   format?: string;
+  allowedValues?: readonly string[];
 }
 
 const ruleActionsClassName = `*:data-[actions="true"]:opacity-0! [&:hover>[data-actions="true"]]:opacity-100! [&>[data-actions="true"]:has(~[data-radix-popper-content-wrapper])]:opacity-100!`;
@@ -84,6 +86,7 @@ function InternalConditionsEditor({
   enhancedVariables,
   disabled,
   valueInput,
+  allowDynamicValues,
 }: {
   fields: EnhancedField[];
   variables: LiquidVariable[];
@@ -94,23 +97,12 @@ function InternalConditionsEditor({
   enhancedVariables?: EnhancedConditionVariable[];
   disabled?: boolean;
   valueInput?: ConditionsValueInput;
+  allowDynamicValues: boolean;
 }) {
   const fieldDataMap = useMemo(() => {
     if (!enhancedVariables) return new Map();
 
-    return new Map(
-      enhancedVariables.map((variable) => [
-        variable.name,
-        {
-          name: variable.name,
-          label: variable.displayLabel || variable.name,
-          value: variable.name,
-          dataType: variable.dataType,
-          inputType: variable.inputType,
-          format: variable.format,
-        },
-      ])
-    );
+    return new Map(enhancedVariables.map((variable) => [variable.name, toConditionField(variable)]));
   }, [enhancedVariables]);
 
   const getOperators = useCallback(
@@ -172,35 +164,17 @@ function InternalConditionsEditor({
 
   const getHelpText = useCallback(
     (fieldName: string, operator: string) => {
-      if (!enhancedVariables) {
+      const fieldData = fieldDataMap.get(fieldName) ?? {
         // Fallback to default help text for variables not found in schema
-        return getHelpTextForField(operator, {
-          fieldData: {
-            name: fieldName,
-            label: fieldName,
-            value: fieldName,
-            dataType: 'string',
-          },
-        });
-      }
+        name: fieldName,
+        label: fieldName,
+        value: fieldName,
+        dataType: 'string',
+      };
 
-      const fieldData = fieldDataMap.get(fieldName);
-
-      if (!fieldData) {
-        // Fallback to default help text for variables not found in schema
-        return getHelpTextForField(operator, {
-          fieldData: {
-            name: fieldName,
-            label: fieldName,
-            value: fieldName,
-            dataType: 'string',
-          },
-        });
-      }
-
-      return getHelpTextForField(operator, { fieldData });
+      return getHelpTextForField(operator, { fieldData, allowDynamicValues });
     },
-    [fieldDataMap, enhancedVariables]
+    [fieldDataMap, allowDynamicValues]
   );
 
   const getArrayItemPaths = useCallback(
@@ -271,6 +245,7 @@ export function ConditionsEditor({
   enhancedVariables,
   disabled,
   valueInput,
+  allowDynamicValues = true,
 }: {
   query: RuleGroupType;
   onQueryChange: (query: RuleGroupType) => void;
@@ -281,6 +256,8 @@ export function ConditionsEditor({
   enhancedVariables?: EnhancedConditionVariable[];
   disabled?: boolean;
   valueInput?: ConditionsValueInput;
+  /** Off where values are compared as literal text, so help text shows no `{{payload.x}}` examples. */
+  allowDynamicValues?: boolean;
 }) {
   const configuredMaxConditionsPerGroup = useNumericFeatureFlag(
     FeatureFlagsKeysEnum.MAX_STEP_CONDITIONS_PER_GROUP_NUMBER,
@@ -319,6 +296,7 @@ export function ConditionsEditor({
         enhancedVariables={enhancedVariables}
         disabled={disabled}
         valueInput={valueInput}
+        allowDynamicValues={allowDynamicValues}
       />
     </ConditionsEditorProvider>
   );

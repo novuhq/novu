@@ -23,3 +23,35 @@ export const INTEGRATION_CONDITION_VARIABLES = [
 ] as const;
 
 export type IntegrationConditionVariableName = (typeof INTEGRATION_CONDITION_VARIABLES)[number];
+
+/**
+ * JSON Logic operators that integration conditions and agent access rules may persist.
+ * Native json-logic ops outside this set (`log`, `map`, `reduce`, `if`, `+`, …)
+ * must not be persisted or applied — jsonLogic.apply would still execute them.
+ */
+export const INTEGRATION_RULE_OPERATORS = [
+  'and',
+  'or',
+  '!',
+  '==',
+  '!=',
+  '>',
+  '<',
+  '>=',
+  '<=',
+  'in',
+  'startsWith',
+  'endsWith',
+  'isEmpty',
+  'isNonEmpty',
+  'var',
+  'contains',
+  'doesNotContain',
+  'doesNotBeginWith',
+  'doesNotEndWith',
+  'containsAny',
+  'doesNotContainAny',
+  'null',
+  'notNull',
+  'notIn',
+] as const;

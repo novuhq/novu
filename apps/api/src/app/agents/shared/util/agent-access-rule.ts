@@ -3,10 +3,15 @@ import {
   extractFieldsFromRules,
   getIntegrationRulesIssues,
   hasIntegrationRules,
-  INTEGRATION_CONDITION_NAMESPACES,
 } from '@novu/application-generic';
 import type { SubscriberEntity } from '@novu/dal';
 import type { AgentContextPayload, AgentContextValue } from '@novu/framework';
+import {
+  ACCESS_RULE_NAMESPACES,
+  ACCESS_RULE_SUBSCRIBER_FIELDS,
+  type AgentPlatformEnum,
+  isAccessRuleField,
+} from '@novu/shared';
 import jsonLogic, { AdditionalOperation, RulesLogic } from 'json-logic-js';
 
 export type AgentAccessRuleVerdict =
@@ -30,7 +35,7 @@ export function getAgentAccessRuleIssues(rule: unknown): string[] {
     return [`Access rule objects and arrays must be nested at most ${ACCESS_RULE_MAX_DEPTH} levels deep`];
   }
 
-  const issues = getIntegrationRulesIssues(rule, INTEGRATION_CONDITION_NAMESPACES).map((issue) =>
+  const issues = getIntegrationRulesIssues(rule, ACCESS_RULE_NAMESPACES).map((issue) =>
     issue === 'Invalid integration conditions' ? 'Invalid access rule' : issue
   );
 
@@ -76,40 +81,13 @@ function withoutCoercingEquality(node: AccessRuleNode): AccessRuleNode {
   );
 }
 
-const ACCESS_RULE_SUBSCRIBER_FIELDS = [
-  'subscriberId',
-  'firstName',
-  'lastName',
-  'email',
-  'phone',
-  'locale',
-  'avatar',
-  'timezone',
-  'data',
-] as const satisfies readonly (keyof SubscriberEntity)[];
+type AccessRuleEvaluationInput = {
+  subscriber: SubscriberEntity;
+  context: AgentContextPayload | null | undefined;
+  channel: { platform: AgentPlatformEnum };
+};
 
-function isAccessRuleField(field: string): boolean {
-  const [namespace, key, ...path] = field.split('.');
-
-  if (!key || [key, ...path].some((segment) => segment in Object.prototype)) {
-    return false;
-  }
-
-  if (namespace === 'subscriber') {
-    return key === 'data' || (path.length === 0 && (ACCESS_RULE_SUBSCRIBER_FIELDS as readonly string[]).includes(key));
-  }
-
-  if (namespace === 'context') {
-    return path[0] === 'data' || (path[0] === 'id' && path.length === 1);
-  }
-
-  return false;
-}
-
-export function evaluateAgentAccessRule(
-  rule: unknown,
-  data: { subscriber: SubscriberEntity; context: AgentContextPayload | null | undefined }
-): AgentAccessRuleVerdict {
+export function evaluateAgentAccessRule(rule: unknown, data: AccessRuleEvaluationInput): AgentAccessRuleVerdict {
   const issues = getAgentAccessRuleIssues(rule);
   if (issues.length > 0) {
     return { outcome: 'error', reason: issues.join('; ') };
@@ -138,11 +116,13 @@ interface AccessRuleContextValue {
   data?: Record<string, unknown>;
 }
 
-function projectEvaluationData(data: {
-  subscriber: SubscriberEntity;
-  context: AgentContextPayload | null | undefined;
-}): { subscriber: AccessRuleSubscriber; context: Record<string, AccessRuleContextValue> } {
+function projectEvaluationData(data: AccessRuleEvaluationInput): {
+  subscriber: AccessRuleSubscriber;
+  context: Record<string, AccessRuleContextValue>;
+  channel: { platform: AgentPlatformEnum };
+} {
   return {
+    channel: { platform: data.channel.platform },
     subscriber: Object.fromEntries(
       ACCESS_RULE_SUBSCRIBER_FIELDS.map((field) => [field, data.subscriber[field]])
     ) as AccessRuleSubscriber,

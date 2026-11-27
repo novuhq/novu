@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { AgentReplyPolicyEnum, AgentSubscriberAccessEnum } from '@novu/shared';
+import { AGENT_PLATFORMS, AgentReplyPolicyEnum, AgentSubscriberAccessEnum } from '@novu/shared';
 import { IsBoolean, IsEnum, IsObject, IsOptional, ValidateIf } from 'class-validator';
 import { IsWellKnownEmoji } from '../validators/is-well-known-emoji.validator';
 
@@ -49,7 +49,8 @@ export class AgentBehaviorDto {
     type: 'object',
     additionalProperties: true,
     description:
-      'JSON Logic rule evaluated over subscriber.* and context.* when subscriberAccess is "rule". ' +
+      'JSON Logic rule evaluated over subscriber.*, context.* and channel.platform when subscriberAccess is "rule". ' +
+      `channel.platform is the platform the message arrives on: ${AGENT_PLATFORMS.join(', ')}. ` +
       'Present only when subscriberAccess is "rule". A missing field evaluates as JSON Logic says, ' +
       'so `null` is less than any positive number. "==" and "!=" compare strictly, without type coercion. ' +
       'At most 16 KB, with objects and arrays nested at most 32 levels deep.',

@@ -111,8 +111,11 @@ SelectLabel.displayName = SelectPrimitive.Label.displayName;
 
 const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> & {
+    /** Shown under the label in the list only; the trigger shows the label alone. */
+    description?: React.ReactNode;
+  }
+>(({ className, children, description, ...props }, ref) => (
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
@@ -126,7 +129,14 @@ const SelectItem = React.forwardRef<
         <CheckIcon className="size-4" />
       </SelectPrimitive.ItemIndicator>
     </span>
-    <SelectPrimitive.ItemText className="text-sm">{children}</SelectPrimitive.ItemText>
+    {description ? (
+      <div className="flex flex-col gap-0.5">
+        <SelectPrimitive.ItemText className="text-sm">{children}</SelectPrimitive.ItemText>
+        <span className="text-text-soft text-paragraph-xs">{description}</span>
+      </div>
+    ) : (
+      <SelectPrimitive.ItemText className="text-sm">{children}</SelectPrimitive.ItemText>
+    )}
   </SelectPrimitive.Item>
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;

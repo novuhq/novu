@@ -2,16 +2,10 @@ import {
   INTEGRATION_CONDITION_NAMESPACES,
   INTEGRATION_CONDITION_RUNTIME_NAMESPACES,
   INTEGRATION_CONDITION_VARIABLES,
+  INTEGRATION_RULE_OPERATORS,
 } from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
-import {
-  COMPARISON_OPERATORS,
-  evaluateRules,
-  isValidRule,
-  LOGICAL_OPERATORS,
-  QueryValidatorService,
-  UNARY_STRING_OPERATORS,
-} from '../services/query-parser';
+import { evaluateRules, isValidRule, QueryValidatorService } from '../services/query-parser';
 import type { WorkflowVariables } from './build-workflow-variables';
 
 export interface IntegrationRuleEvaluationData {
@@ -28,30 +22,7 @@ export interface IntegrationRuleEvaluationResult {
 
 export { INTEGRATION_CONDITION_NAMESPACES, INTEGRATION_CONDITION_RUNTIME_NAMESPACES, INTEGRATION_CONDITION_VARIABLES };
 
-type IntegrationConditionNamespace =
-  | (typeof INTEGRATION_CONDITION_NAMESPACES)[number]
-  | (typeof INTEGRATION_CONDITION_RUNTIME_NAMESPACES)[number];
-
-/**
- * Operators the conditions editor and QueryValidatorService actually inspect.
- * Native json-logic ops outside this set (`log`, `map`, `reduce`, `if`, `+`, …)
- * must not be persisted or applied — jsonLogic.apply would still execute them.
- */
-const INTEGRATION_RULE_OPERATORS = new Set<string>([
-  ...LOGICAL_OPERATORS,
-  ...COMPARISON_OPERATORS,
-  ...UNARY_STRING_OPERATORS,
-  'var',
-  'contains',
-  'doesNotContain',
-  'doesNotBeginWith',
-  'doesNotEndWith',
-  'containsAny',
-  'doesNotContainAny',
-  'null',
-  'notNull',
-  'notIn',
-]);
+const ALLOWED_RULE_OPERATORS = new Set<string>(INTEGRATION_RULE_OPERATORS);
 
 export function hasIntegrationRules(rules?: unknown): rules is Record<string, unknown> {
   return !!rules && typeof rules === 'object' && !Array.isArray(rules) && Object.keys(rules).length > 0;
@@ -61,11 +32,7 @@ export function hasLegacyIntegrationConditions(conditions?: unknown[] | null): b
   return Array.isArray(conditions) && conditions.length > 0;
 }
 
-function collectDisallowedOperatorIssues(
-  node: unknown,
-  issues: string[],
-  namespaces: readonly IntegrationConditionNamespace[]
-): void {
+function collectDisallowedOperatorIssues(node: unknown, issues: string[], namespaces: readonly string[]): void {
   if (node === null || typeof node !== 'object') {
     return;
   }
@@ -93,7 +60,7 @@ function collectDisallowedOperatorIssues(
 
   const [operator, value] = entries[0];
 
-  if (!INTEGRATION_RULE_OPERATORS.has(operator)) {
+  if (!ALLOWED_RULE_OPERATORS.has(operator)) {
     issues.push(`Unsupported operator "${operator}"`);
 
     return;
@@ -112,7 +79,7 @@ function collectDisallowedOperatorIssues(
   collectDisallowedOperatorIssues(value, issues, namespaces);
 }
 
-function isAllowedIntegrationVar(fieldValue: string, namespaces: readonly IntegrationConditionNamespace[]): boolean {
+function isAllowedIntegrationVar(fieldValue: string, namespaces: readonly string[]): boolean {
   if (!fieldValue) {
     return false;
   }
@@ -130,7 +97,7 @@ function isAllowedIntegrationVar(fieldValue: string, namespaces: readonly Integr
 
 export function getIntegrationRulesIssues(
   logic: Record<string, unknown>,
-  namespaces: readonly IntegrationConditionNamespace[] = INTEGRATION_CONDITION_NAMESPACES
+  namespaces: readonly string[] = INTEGRATION_CONDITION_NAMESPACES
 ): string[] {
   if (!isValidRule(logic as RulesLogic<AdditionalOperation>)) {
     return ['Invalid integration conditions'];
