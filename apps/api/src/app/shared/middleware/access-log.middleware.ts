@@ -73,6 +73,10 @@ export function buildAccessLog(
     country: getHeader(req, 'cf-ipcountry'),
     userAgent: getHeader(req, 'user-agent'),
     origin: getHeader(req, 'origin'),
+    // Joins this line to a retried call, the caller's Sentry span, and the AWS load balancer trace.
+    idempotencyKey: getHeader(req, 'idempotency-key'),
+    sentryTrace: getHeader(req, 'sentry-trace'),
+    amznTraceId: getHeader(req, 'x-amzn-trace-id'),
     // The guards keep the first word of the header, which is the whole key when a client leaves out `ApiKey `.
     authScheme: authScheme && (KNOWN_AUTH_SCHEMES.has(authScheme) ? authScheme : UNKNOWN_AUTH_SCHEME),
     organizationId: user?.organizationId,

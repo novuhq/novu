@@ -56,6 +56,9 @@ const environmentSchema = new Schema<EnvironmentDBModel>(
     webhookAppId: {
       type: Schema.Types.String,
     },
+    subscriberTokens: {
+      requiredAt: Schema.Types.Date,
+    },
     _parentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
@@ -107,7 +110,7 @@ environmentSchema.index(
 
 // To provide backward compatibility with environments created before the type field was added
 environmentSchema.post(['find', 'findOne', 'findOneAndUpdate'], (docs) => {
-  const processDoc = (document: any) => {
+  const processDoc = (document: { type?: EnvironmentTypeEnum; name?: string } | null) => {
     if (document && !document.type) {
       let defaultType = EnvironmentTypeEnum.PROD;
       if (document.name === EnvironmentEnum.DEVELOPMENT) {

@@ -1,4 +1,5 @@
 import { type ReactNode, useContext, useEffect } from 'react';
+import { CopilotHistoryButton } from './copilot-history-button';
 import type { EditorCopilotMode } from './copilot-mode';
 import { CopilotNewChatButton } from './copilot-new-chat-button';
 import { CopilotThreadPanel } from './copilot-thread-panel';
@@ -31,7 +32,12 @@ export function useCopilotWebChatSidebar({
         <CopilotThreadPanel />
       </div>
     ),
-    headerActions: <CopilotNewChatButton />,
+    headerActions: (
+      <>
+        <CopilotHistoryButton />
+        <CopilotNewChatButton />
+      </>
+    ),
     isGenerating,
     isRevealPending,
   };

@@ -17,7 +17,13 @@ import {
 } from "../utils/activity-format";
 import { NovuApiUtils } from "../utils/api";
 import type { ToolAccessors } from "../utils/tool-accessors";
-import { type ApiCallResult, type ToolContext, ToolFactory } from "../utils/tool-factory";
+import {
+	apiMessage,
+	type FailedApiCall,
+	type ToolContext,
+	ToolFactory,
+} from "../utils/tool-factory";
+import { resolveWorkflow } from "../utils/workflow-lookup";
 import { ACTIVITY_TOOL_NAMES } from "./tool-names";
 
 const [GET_WORKFLOW_RUNS, GET_WORKFLOW_RUN, GET_TRIGGER_REQUESTS] = ACTIVITY_TOOL_NAMES;
@@ -31,7 +37,6 @@ const RUN_REQUESTS_LIMIT = 5;
 const RUN_REQUESTS_SCAN = 50;
 const REQUESTS_PAGE_SIZE = 100;
 const REQUESTS_SCAN_CAP = 500;
-const OBJECT_ID = /^[a-f\d]{24}$/i;
 
 const isoDate = (description: string) =>
 	z
@@ -116,27 +121,8 @@ const getTriggerRequestsSchema = z.object({
 		.describe("Workflow trigger identifier, matched against the body's name"),
 });
 
-type FailedCall = Extract<ApiCallResult, { ok: false }>;
-
-function apiMessage(result: FailedCall): string {
-	const body = asRecord(safeParse(result.errorText));
-	const message = Array.isArray(body?.message)
-		? body.message.join("; ")
-		: asString(body?.message);
-
-	return message ?? result.errorText;
-}
-
-function safeParse(text: string): unknown {
-	try {
-		return JSON.parse(text);
-	} catch {
-		return undefined;
-	}
-}
-
 /** Any non-2xx is an error result; a 402 says how to stay inside the plan's retention window. */
-function activityError(operation: string, result: FailedCall): ApiResponse {
+function activityError(operation: string, result: FailedApiCall): ApiResponse {
 	const message =
 		result.status === 402
 			? `Error: The requested date range is outside your plan's activity retention period. ${apiMessage(result)} Send a later createdAfter, or omit createdAfter and createdBefore to search the whole retention window.`
@@ -151,47 +137,6 @@ function activityError(operation: string, result: FailedCall): ApiResponse {
 
 function json(value: unknown): ApiResponse {
 	return { content: [{ text: JSON.stringify(value), type: "text" }] };
-}
-
-/**
- * The Activity API filters by the workflow's database _id. A trigger identifier
- * is resolved through `GET /v2/workflows/{workflowId}`, which accepts either.
- * An _id is used as is, so runs of a deleted workflow can still be listed.
- */
-async function resolveWorkflow(
-	context: ToolContext,
-	workflowId: string,
-): Promise<{ id: string; identifier?: string } | { error: ApiResponse }> {
-	if (OBJECT_ID.test(workflowId)) return { id: workflowId };
-
-	const result = await ToolFactory.callApi(context, {
-		endpoint: `/v2/workflows/${encodeURIComponent(workflowId)}`,
-		method: "GET",
-	});
-	if (!result.ok) {
-		if (result.status === 404) {
-			return {
-				error: ToolFactory.errorResult({
-					message: `Error: Workflow "${workflowId}" was not found. Pass its trigger identifier (workflowId) or _id from get_workflows.`,
-					status: 404,
-				}),
-			};
-		}
-
-		return { error: activityError(`look up workflow ${workflowId}`, result) };
-	}
-
-	const workflow = asRecord(result.data);
-	const id = asString(workflow?._id);
-	if (!id) {
-		return {
-			error: ToolFactory.errorResult({
-				message: `Error: The workflow lookup for "${workflowId}" returned no _id.`,
-			}),
-		};
-	}
-
-	return { id, identifier: asString(workflow?.workflowId) ?? workflowId };
 }
 
 function emptyRunsNote(input: z.infer<typeof getWorkflowRunsSchema>): string {

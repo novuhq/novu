@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { RiAddLine, RiCloseLine } from 'react-icons/ri';
+import { RiAddLine, RiCloseLine, RiHistoryLine } from 'react-icons/ri';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { cn } from '@/utils/ui';
 import { CopilotLauncher } from './copilot-launcher';
@@ -20,11 +20,14 @@ function HeaderButton({
   label,
   onClick,
   disabled,
+  isPressed,
   children,
 }: {
   label: string;
   onClick: () => void;
   disabled?: boolean;
+  /** For a toggle: whether what it shows is open. */
+  isPressed?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -34,7 +37,11 @@ function HeaderButton({
       title={label}
       onClick={onClick}
       disabled={disabled}
-      className="flex size-6 items-center justify-center rounded-md text-text-soft hover:bg-bg-soft hover:text-text-strong disabled:pointer-events-none disabled:opacity-40"
+      aria-pressed={isPressed}
+      className={cn(
+        'flex size-6 items-center justify-center rounded-md text-text-soft hover:bg-bg-soft hover:text-text-strong disabled:pointer-events-none disabled:opacity-40',
+        isPressed && 'bg-bg-soft text-text-strong'
+      )}
     >
       {children}
     </button>
@@ -42,8 +49,10 @@ function HeaderButton({
 }
 
 export function CopilotPopover() {
-  const { isAvailable, isOpen, close, chat, startNewConversation, isBusy } = useCopilotWebChat();
-  const title = useCopilotPopoverTitle(chat);
+  const { isAvailable, isOpen, close, chat, startNewConversation, isBusy, isHistoryOpen, openHistory, closeHistory } =
+    useCopilotWebChat();
+  const conversationTitle = useCopilotPopoverTitle(chat);
+  const title = isHistoryOpen ? 'Chats' : conversationTitle;
   // Above a sheet (z-50) and its overlay, with the launcher, as the design shows it.
   const isOverSheet = !!useCopilotPageView()?.overSheet;
   // Back under a modal dialog opened over the sheet, which dims and blocks everything else.
@@ -78,6 +87,14 @@ export function CopilotPopover() {
           <div className="flex h-11 shrink-0 items-center gap-2 border-b border-stroke-soft bg-bg-weak pl-3.5 pr-2">
             <BroomSparkle className="size-4 shrink-0" isAnimating={isBusy} />
             <span className="min-w-0 flex-1 truncate text-label-sm text-text-sub">{title}</span>
+            <HeaderButton
+              label="Chat history"
+              disabled={!isAvailable}
+              isPressed={isHistoryOpen}
+              onClick={isHistoryOpen ? closeHistory : openHistory}
+            >
+              <RiHistoryLine className="size-3.5" />
+            </HeaderButton>
             <HeaderButton label="New chat" disabled={!!chat?.isRunning} onClick={startNewConversation}>
               <RiAddLine className="size-3.5" />
             </HeaderButton>

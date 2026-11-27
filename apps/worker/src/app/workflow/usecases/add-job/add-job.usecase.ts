@@ -8,11 +8,13 @@ import {
   DeferReasonEnum,
   DetailEnum,
   DurationUtils,
+  getCachedEnvironment,
   getDigestType,
   getEffectiveJobOverrides,
   getEffectiveJobPayload,
   getNestedValue,
   IFilterVariables,
+  InMemoryLRUCacheService,
   InstrumentUsecase,
   isDynamicOutput,
   isLookBackDigestOutput,
@@ -34,15 +36,18 @@ import {
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 import {
+  ContextRepository,
+  EnvironmentEntity,
+  EnvironmentRepository,
+  EnvironmentVariableRepository,
   JobEntity,
   JobRepository,
   JobStatusEnum,
   NotificationRepository,
-  NotificationTemplateEntity,
   SubscriberRepository,
   TopicPreferenceEvaluation,
 } from '@novu/dal';
-import { DelayOutput, DigestOutput, ExecuteOutput } from '@novu/framework/internal';
+import { ContextResolved, DelayOutput, DigestOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
   castUnitToDigestUnitEnum,
   DelayTypeEnum,
@@ -64,6 +69,7 @@ import { parseExpression as parseCronExpression } from 'cron-parser';
 import { differenceInMilliseconds } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import _ from 'lodash';
+import { buildWorkflowEnvVariables, getCachedEnvironmentVariables, WorkflowEnvVariables } from '../../../shared/utils';
 import type { ExecuteBridgeJobResult } from '../execute-bridge-job';
 import { ExecuteBridgeJob, ExecuteBridgeJobCommand } from '../execute-bridge-job';
 import { AddJobCommand } from './add-job.command';
@@ -118,7 +124,11 @@ export class AddJob {
     private redisThrottleService: RedisThrottleService,
     private notificationRepository: NotificationRepository,
     private logger: PinoLogger,
-    private stepRunV2Writer: StepRunV2Writer
+    private stepRunV2Writer: StepRunV2Writer,
+    private contextRepository: ContextRepository,
+    private environmentRepository: EnvironmentRepository,
+    private environmentVariableRepository: EnvironmentVariableRepository,
+    private inMemoryLRUCacheService: InMemoryLRUCacheService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -224,16 +234,31 @@ export class AddJob {
     let digestAmount: number | undefined;
     let delayAmount: number | undefined;
 
-    const variables = await this.normalizeVariablesUsecase.execute(
-      NormalizeVariablesCommand.create({
-        filters: command.job.step.filters || [],
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        userId: command.userId,
-        step: job.step,
-        job,
-      })
-    );
+    /*
+     * Channel steps resolve context, actor and env in SendMessage. Deferred steps (delay, digest,
+     * throttle) must do the same here, or their step conditions and the bridge `skip` check see
+     * empty values for them.
+     */
+    const [variables, context, actor, environment] = await Promise.all([
+      this.normalizeVariablesUsecase.execute(
+        NormalizeVariablesCommand.create({
+          filters: command.job.step.filters || [],
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+          step: job.step,
+          job,
+        })
+      ),
+      this.resolveContext(command),
+      this.resolveActor(command),
+      this.resolveEnvironment(command),
+    ]);
+    variables.context = context;
+
+    if (actor) {
+      variables.actor = actor;
+    }
 
     const shouldRun = await this.conditionsFilter.filter(
       ConditionsFilterCommand.create({
@@ -249,7 +274,7 @@ export class AddJob {
 
     const filterVariables = shouldRun.variables;
     const filtered = !shouldRun.passed;
-    const bridgeResponse = await this.fetchBridgeData(command, filterVariables);
+    const bridgeResponse = await this.fetchBridgeData(command, filterVariables, environment);
 
     if (filtered || bridgeResponse?.options?.skip) {
       return {
@@ -619,17 +644,86 @@ export class AddJob {
     };
   }
 
+  private async resolveContext(command: AddJobCommand): Promise<ContextResolved> {
+    const contextKeys = command.job.contextKeys ?? [];
+
+    if (contextKeys.length === 0) {
+      return {} as ContextResolved;
+    }
+
+    const contexts = await this.contextRepository.findByKeys(
+      command.environmentId,
+      command.organizationId,
+      contextKeys
+    );
+
+    return contexts.reduce((acc, context) => {
+      acc[context.type] = {
+        id: context.id,
+        data: context.data,
+      };
+
+      return acc;
+    }, {} as ContextResolved);
+  }
+
+  private async resolveActor(command: AddJobCommand): Promise<IFilterVariables['actor']> {
+    const { actorId } = command.job;
+
+    if (!actorId) {
+      return undefined;
+    }
+
+    // Cached per subscriber, the same lookup NormalizeVariables uses for the subscriber.
+    return (
+      (await this.normalizeVariablesUsecase.getSubscriberBySubscriberId({
+        subscriberId: actorId,
+        _environmentId: command.environmentId,
+      })) ?? undefined
+    );
+  }
+
+  /**
+   * The environment and the `env` variables the bridge receives. Both reads go through the
+   * worker's in-memory LRU cache shared with SendMessage, and the environment is handed to
+   * ExecuteBridgeJob so it does not read it again. Secrets stay masked: deferred steps never
+   * authenticate outbound requests.
+   */
+  private async resolveEnvironment(
+    command: AddJobCommand
+  ): Promise<{ entity: EnvironmentEntity; env: WorkflowEnvVariables } | undefined> {
+    const { environmentId, organizationId } = command;
+    const [entity, envVars] = await Promise.all([
+      getCachedEnvironment(this.inMemoryLRUCacheService, this.environmentRepository, {
+        environmentId,
+        organizationId,
+      }),
+      getCachedEnvironmentVariables(this.inMemoryLRUCacheService, this.environmentVariableRepository, {
+        environmentId,
+        organizationId,
+        includeSecrets: false,
+      }),
+    ]);
+
+    if (!entity) {
+      // ExecuteBridgeJob reads it again and reports the missing environment.
+      return undefined;
+    }
+
+    return { entity, env: buildWorkflowEnvVariables(envVars, entity) };
+  }
+
   private async fetchBridgeData(
     command: AddJobCommand,
     filterVariables: IFilterVariables,
-    workflow?: NotificationTemplateEntity
+    environment?: { entity: EnvironmentEntity; env: WorkflowEnvVariables }
   ): Promise<ExecuteBridgeJobResult | null> {
     const response = await this.executeBridgeJob.execute(
       ExecuteBridgeJobCommand.create({
         identifier: command.job.identifier,
         ...command,
-        variables: filterVariables,
-        workflow,
+        variables: { ...filterVariables, ...(environment && { env: environment.env }) },
+        environment: environment?.entity,
       })
     );
 

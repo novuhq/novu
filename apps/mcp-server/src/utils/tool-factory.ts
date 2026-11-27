@@ -19,6 +19,26 @@ export type ApiCallResult =
 	| { ok: true; status: number; data: unknown }
 	| { ok: false; status: number; errorText: string; retryAfter?: string };
 
+export type FailedApiCall = Extract<ApiCallResult, { ok: false }>;
+
+/** The `message` of a Novu API error body, or the raw text when the body has none. */
+export function apiMessage(result: FailedApiCall): string {
+	const body = safeParse(result.errorText);
+	const message =
+		body && typeof body === "object" ? (body as { message?: unknown }).message : undefined;
+	if (Array.isArray(message)) return message.join("; ");
+
+	return typeof message === "string" && message.length > 0 ? message : result.errorText;
+}
+
+function safeParse(text: string): unknown {
+	try {
+		return JSON.parse(text);
+	} catch {
+		return undefined;
+	}
+}
+
 export interface ToolErrorDetails {
 	/** HTTP status of the failed Novu API call, or a 4xx for input the tool rejected. Absent for network errors. */
 	status?: number;

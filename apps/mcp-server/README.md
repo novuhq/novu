@@ -172,7 +172,7 @@ For the EU region, swap the URL for `https://eu.mcp.novu.co/`.
 | `get_agent` | Retrieve a single agent by identifier |
 | `update_agent` | Update an agent's name, status, bridge URL, or behavior |
 | `get_conversations` | List agent conversations with optional filters (agent, subscriber, status, provider) |
-| `get_conversation_activities` | Inspect a conversation timeline (compact debug digest; `verbose` for raw JSON) |
+| `get_conversation_activities` | Inspect a conversation timeline (compact debug digest; `verbose` for each activity's fields as JSON) |
 | `get_environments` | List all environments with their details and API keys |
 | `get_notifications` | Fetch events with filtering by channel, template, subscriber, date, and more |
 | `get_notification` | Get a specific notification with detailed execution logs |

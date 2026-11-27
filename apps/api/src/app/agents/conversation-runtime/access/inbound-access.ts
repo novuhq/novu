@@ -1,7 +1,7 @@
 import type { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { AgentSubscriberAccessEnum } from '@novu/shared';
+import { isSubscriberTokensEnabled } from '../../../shared/utils/assert-subscriber-tokens-enabled';
 import type { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
-import { isSubscriberTokensEnabled } from '../../shared/assert-subscriber-tokens-enabled';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import type { SubscriberResolution } from '../../shared/types/subscriber-resolution';

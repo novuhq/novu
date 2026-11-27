@@ -9,13 +9,12 @@ import {
   GetPreferences,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
+  getCachedEnvironment,
   ICompileContext,
   InMemoryLRUCacheService,
-  InMemoryLRUCacheStore,
   Instrument,
   InstrumentUsecase,
   PlatformException,
-  resolveEnvironmentVariables,
 } from '@novu/application-generic';
 import {
   ContextRepository,
@@ -33,14 +32,13 @@ import { ContextResolved, ExecuteOutput } from '@novu/framework/internal';
 import {
   DeliveryLifecycleDetail,
   DeliveryLifecycleStatusEnum,
-  EnvironmentSystemVariables,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IPreferenceChannels,
   PreferencesTypeEnum,
   StepTypeEnum,
 } from '@novu/shared';
-import { getCachedEnvironment } from '../../../shared/utils';
+import { buildWorkflowEnvVariables, getCachedEnvironmentVariables } from '../../../shared/utils';
 import { ExecuteBridgeJob } from '../execute-bridge-job';
 import { Digest } from './digest';
 import { ExecuteCodeFirstCustomStep } from './execute-code-first-custom-step.usecase';
@@ -388,16 +386,7 @@ export class SendMessage {
 
     if (!environmentEntity) throw new PlatformException('EnvironmentEntity not found');
 
-    // Compile-safe: adding a required field to EnvironmentSystemVariables will cause a TS error here
-    const environmentSystemVars: EnvironmentSystemVariables = {
-      name: environmentEntity.name,
-      type: environmentEntity.type,
-    };
-
-    const env: EnvironmentSystemVariables & Record<string, string> = {
-      ...envVars,
-      ...environmentSystemVars,
-    };
+    const env = buildWorkflowEnvVariables(envVars, environmentEntity);
 
     const compileContext: ICompileContext = {
       subscriber,
@@ -430,34 +419,11 @@ export class SendMessage {
 
   @Instrument()
   private async getEnvironmentVariables(command: SendMessageCommand): Promise<Record<string, string>> {
-    const includeSecrets = shouldIncludeEnvironmentSecrets(command.job?.type);
-    const cacheKey = `${command.organizationId}:${command.environmentId}:${includeSecrets ? 'full' : 'masked'}`;
-
-    return this.inMemoryLRUCacheService.get(
-      InMemoryLRUCacheStore.ENVIRONMENT_VARIABLES,
-      cacheKey,
-      async () => {
-        try {
-          const rawEnvVars = await this.environmentVariableRepository.findByEnvironment(
-            command.organizationId,
-            command.environmentId
-          );
-
-          return resolveEnvironmentVariables(rawEnvVars, { includeSecrets });
-        } catch (error) {
-          Logger.warn(
-            { err: error, organizationId: command.organizationId, environmentId: command.environmentId },
-            'Failed to fetch environment variables, falling back to empty object'
-          );
-
-          return {};
-        }
-      },
-      {
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-      }
-    );
+    return getCachedEnvironmentVariables(this.inMemoryLRUCacheService, this.environmentVariableRepository, {
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      includeSecrets: shouldIncludeEnvironmentSecrets(command.job?.type),
+    });
   }
 
   @Instrument()

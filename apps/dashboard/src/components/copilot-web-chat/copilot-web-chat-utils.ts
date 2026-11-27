@@ -126,6 +126,10 @@ export function writeStoredConversationId(scope: string | undefined, conversatio
   }
 }
 
+/** The raised white surface of the empty state's icon tile and of the suggestions list. */
+export const COPILOT_RAISED_SURFACE_SHADOW =
+  'shadow-[0_0_0_1px_rgba(14,18,27,0.04),0_1px_2px_0_rgba(14,18,27,0.06),0_0_2px_0_rgba(14,18,27,0.08)]';
+
 /** DOM id of the popover, so the launcher can tell when the focus sits in it while it animates out. */
 export const COPILOT_POPOVER_ID = 'copilot-popover';
 

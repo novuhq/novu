@@ -53,7 +53,7 @@ export const dalService = {
 export const analyticsService = {
   provide: AnalyticsService,
   useFactory: async () => {
-    const service = new AnalyticsService(process.env.SEGMENT_TOKEN);
+    const service = new AnalyticsService(process.env.MIXPANEL_TOKEN);
     await service.initialize();
 
     return service;
