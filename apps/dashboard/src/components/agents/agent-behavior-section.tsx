@@ -14,6 +14,7 @@ import {
   listAgentEmoji,
   updateAgent,
 } from '@/api/agents';
+import { parseAccessRule } from '@/components/agents/agent-access-rule';
 import { AgentAccessRuleSheet } from '@/components/agents/agent-access-rule-sheet';
 import {
   SUBSCRIBER_ACCESS_MODE_SETTING_LABEL,
@@ -162,7 +163,11 @@ function SubscriberAccessSetting({ agent, disabled, readOnly, onAccessChange }: 
   const access = agent.behavior.subscriberAccess;
   const [isRuleSheetOpen, setIsRuleSheetOpen] = useState(false);
   const [pendingAccess, setPendingAccess] = useState<Exclude<AgentSubscriberAccess, 'rule'> | null>(null);
-  const conditionsCount = countConditions(agent.behavior.accessRule as RQBJsonLogic | undefined);
+  const accessRule = agent.behavior?.accessRule;
+  const conditionsCount = useMemo(
+    () => (parseAccessRule(accessRule) ? countConditions(accessRule as RQBJsonLogic | undefined) : null),
+    [accessRule]
+  );
 
   const handleValueChange = (next: AgentSubscriberAccess) => {
     if (next === access) return;
@@ -217,9 +222,11 @@ function SubscriberAccessSetting({ agent, disabled, readOnly, onAccessChange }: 
           onClick={() => setIsRuleSheetOpen(true)}
         >
           {readOnly ? 'View rule' : 'Edit rule'}
-          <span className="text-text-soft">
-            {conditionsCount} condition{conditionsCount === 1 ? '' : 's'}
-          </span>
+          {conditionsCount !== null && (
+            <span className="text-text-soft">
+              {conditionsCount} condition{conditionsCount === 1 ? '' : 's'}
+            </span>
+          )}
         </Button>
       )}
 

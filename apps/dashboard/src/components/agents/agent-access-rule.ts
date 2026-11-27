@@ -1,4 +1,5 @@
 import { ACCESS_RULE_SUBSCRIBER_FIELDS, isAccessRuleField } from '@novu/shared';
+import isEqual from 'lodash.isequal';
 import {
   formatQuery,
   generateID,
@@ -36,26 +37,31 @@ export function createEmptyAccessRuleQuery(): RuleGroupType {
   return { id: generateID(), combinator: 'and', rules: [] };
 }
 
-export function parseAccessRule(rule: AgentAccessRule | undefined): RuleGroupType {
+/**
+ * Returns null when the editor can't show the rule as stored, so saving it from the editor would change it.
+ */
+export function parseAccessRule(rule: AgentAccessRule | undefined): RuleGroupType | null {
   if (!rule) {
     return createEmptyAccessRuleQuery();
   }
 
-  const query = parseJsonLogic(rule as RQBJsonLogic, { generateIDs: true, ...parseJsonLogicOptions });
+  const query = withStoredValues(
+    parseJsonLogic(rule as RQBJsonLogic, { generateIDs: true, ...parseJsonLogicOptions })
+  ) as RuleGroupType;
+  const saved = toAccessRule(query, []);
 
-  return stringifyValues(query) as RuleGroupType;
+  return isEqual(saved, rule) || isEqual(saved, { and: [rule] }) ? query : null;
 }
 
-function stringifyValues(group: RuleGroupTypeAny): RuleGroupTypeAny {
+function withStoredValues(group: RuleGroupTypeAny): RuleGroupTypeAny {
   return {
     ...group,
     rules: group.rules.map((rule) => {
       if (typeof rule === 'string') return rule;
-      if (isRuleGroup(rule)) return stringifyValues(rule);
+      if (isRuleGroup(rule)) return withStoredValues(rule);
+      if (!['string', 'number', 'boolean'].includes(typeof rule.value)) return rule;
 
-      return typeof rule.value === 'number' || typeof rule.value === 'boolean'
-        ? { ...rule, value: String(rule.value) }
-        : rule;
+      return { ...rule, value: String(rule.value), storedValue: rule.value };
     }),
   } as RuleGroupTypeAny;
 }
@@ -66,6 +72,10 @@ export function toAccessRule(query: RuleGroupType, variables: EnhancedConditionV
   const logic = formatQuery(query, {
     format: 'jsonlogic',
     ruleProcessor: (rule, options) => {
+      if ('storedValue' in rule && rule.value === String(rule.storedValue)) {
+        return customRuleProcessor({ ...rule, value: rule.storedValue }, { ...options, parseNumbers: false });
+      }
+
       const dataType = dataTypes.get(rule.field);
 
       return customRuleProcessor(withBooleanValue(rule, dataType), { ...options, parseNumbers: dataType === 'number' });

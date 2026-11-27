@@ -7,6 +7,7 @@ import type { RuleGroupType } from 'react-querybuilder';
 import { type AgentResponse, getAgentDetailQueryKey, updateAgent } from '@/api/agents';
 import {
   ACCESS_RULE_SUBSCRIBER_VARIABLES,
+  createEmptyAccessRuleQuery,
   getAccessRuleFieldIssue,
   getAccessRuleOperatorIssue,
   parseAccessRule,
@@ -28,6 +29,9 @@ const conditionsSchema = getConditionsSchema({
   getFieldIssue: getAccessRuleFieldIssue,
   getOperatorIssue: getAccessRuleOperatorIssue,
 });
+
+const UNEDITABLE_RULE_NOTICE =
+  "This rule was written through the API and uses conditions the editor can't show. Edit it through the API.";
 
 const isAllowedVariable = (variable: { name: string }) => getAccessRuleFieldIssue(variable.name) === null;
 
@@ -57,10 +61,14 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
     [variables]
   );
 
+  const savedRule = agent.behavior?.accessRule;
+  const savedQuery = useMemo(() => parseAccessRule(savedRule), [savedRule]);
+  const isEditable = !readOnly && savedQuery !== null;
+
   const form = useForm({
     mode: 'onSubmit',
     resolver: standardSchemaResolver(conditionsSchema),
-    defaultValues: { query: { ...parseAccessRule(agent.behavior?.accessRule) } },
+    defaultValues: { query: { ...(savedQuery ?? createEmptyAccessRuleQuery()) } },
   });
   const [emptyRuleError, setEmptyRuleError] = useState(false);
 
@@ -77,14 +85,14 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
     },
   });
 
-  const savedRuleRef = useDataRef(agent.behavior?.accessRule);
+  const savedQueryRef = useDataRef(savedQuery);
   useEffect(() => {
     if (!open) return;
 
-    form.reset({ query: { ...parseAccessRule(savedRuleRef.current) } });
+    form.reset({ query: { ...(savedQueryRef.current ?? createEmptyAccessRuleQuery()) } });
     setEmptyRuleError(false);
     reset();
-  }, [open, form, savedRuleRef, reset]);
+  }, [open, form, savedQueryRef, reset]);
 
   const save = form.handleSubmit(({ query }) => {
     const accessRule = toAccessRule(query as RuleGroupType, variables);
@@ -108,33 +116,42 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
 
       <Form {...form}>
         <div className="flex flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden px-3 py-5">
-          <Panel className="overflow-initial">
-            <PanelHeader>
-              <RiInputField className="text-feature size-4" />
-              <span className="text-neutral-950">Accept messages when</span>
-            </PanelHeader>
-            <PanelContent className="flex flex-col gap-2 border-solid">
-              <FormField
-                control={form.control}
-                name="query"
-                render={({ field }) => (
-                  <ConditionsEditor
-                    query={field.value as RuleGroupType}
-                    onQueryChange={(query) => {
-                      setEmptyRuleError(false);
-                      field.onChange(query);
-                    }}
-                    fields={fields}
-                    variables={variables}
-                    enhancedVariables={variables}
-                    isAllowedVariable={isAllowedVariable}
-                    saveForm={() => undefined}
-                    disabled={readOnly}
-                  />
-                )}
-              />
-            </PanelContent>
-          </Panel>
+          {savedQuery === null ? (
+            <>
+              <p className="text-warning-base text-xs">{UNEDITABLE_RULE_NOTICE}</p>
+              <pre className="bg-bg-weak overflow-x-auto rounded-md p-3 font-mono text-xs">
+                {JSON.stringify(savedRule, null, 2)}
+              </pre>
+            </>
+          ) : (
+            <Panel className="overflow-initial">
+              <PanelHeader>
+                <RiInputField className="text-feature size-4" />
+                <span className="text-neutral-950">Accept messages when</span>
+              </PanelHeader>
+              <PanelContent className="flex flex-col gap-2 border-solid">
+                <FormField
+                  control={form.control}
+                  name="query"
+                  render={({ field }) => (
+                    <ConditionsEditor
+                      query={field.value as RuleGroupType}
+                      onQueryChange={(query) => {
+                        setEmptyRuleError(false);
+                        field.onChange(query);
+                      }}
+                      fields={fields}
+                      variables={variables}
+                      enhancedVariables={variables}
+                      isAllowedVariable={isAllowedVariable}
+                      saveForm={() => undefined}
+                      disabled={!isEditable}
+                    />
+                  )}
+                />
+              </PanelContent>
+            </Panel>
+          )}
           <p className="text-foreground-400 text-xs">
             Senders who are not subscribers are always denied. On <code>subscriber.data</code>, equals matches text and
             true/false. To compare a stored number, use greater than or less than.
@@ -149,9 +166,9 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
           </p>
         )}
         <Button type="button" variant="secondary" mode="outline" onClick={() => onOpenChange(false)}>
-          {readOnly ? 'Close' : 'Cancel'}
+          {isEditable ? 'Cancel' : 'Close'}
         </Button>
-        {!readOnly && (
+        {isEditable && (
           <Button type="button" onClick={save} isLoading={isPending}>
             Save rule
           </Button>
