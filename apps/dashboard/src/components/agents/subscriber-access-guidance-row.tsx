@@ -3,6 +3,7 @@ import { RiArrowRightSLine, RiArrowRightUpLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import type { AgentResponse, AgentSubscriberAccess } from '@/api/agents';
 import { AgentInboxCardRow, AgentInboxCardRowInfoTitle } from '@/components/agents/agent-inbox-card-row';
+import { getSubscriberAccess } from '@/components/agents/subscriber-access-copy';
 import { useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
@@ -101,7 +102,7 @@ type SubscriberAccessGuidanceRowProps = {
 export function SubscriberAccessGuidanceRow({ channel, agent }: SubscriberAccessGuidanceRowProps) {
   const { currentEnvironment } = useEnvironment();
   const copy = CHANNEL_COPY[channel];
-  const guidance = copy.access[agent.behavior.subscriberAccess];
+  const guidance = copy.access[getSubscriberAccess(agent)];
   const subscribersPath = buildRoute(ROUTES.SUBSCRIBERS, {
     environmentSlug: currentEnvironment?.slug ?? '',
   });

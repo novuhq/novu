@@ -17,6 +17,7 @@ import {
 import { parseAccessRule } from '@/components/agents/agent-access-rule';
 import { AgentAccessRuleSheet } from '@/components/agents/agent-access-rule-sheet';
 import {
+  getSubscriberAccess,
   SUBSCRIBER_ACCESS_MODE_SETTING_LABEL,
   SUBSCRIBER_ACCESS_MODES,
   SUBSCRIBER_ACCESS_SETTING_LABEL,
@@ -160,7 +161,7 @@ type SubscriberAccessSettingProps = {
 };
 
 function SubscriberAccessSetting({ agent, disabled, readOnly, onAccessChange }: SubscriberAccessSettingProps) {
-  const access = agent.behavior.subscriberAccess;
+  const access = getSubscriberAccess(agent);
   const [isRuleSheetOpen, setIsRuleSheetOpen] = useState(false);
   const [pendingAccess, setPendingAccess] = useState<Exclude<AgentSubscriberAccess, 'rule'> | null>(null);
   const accessRule = agent.behavior?.accessRule;
