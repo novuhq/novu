@@ -283,6 +283,7 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
       subscriberId: session.subscriberId,
       createdAt: new Date().toISOString(),
       contextKeys: session.contextKeys ?? [],
+      contextVerified: session.contextVerified === true,
       ...(metadata ? { metadata } : {}),
     });
 
@@ -348,7 +349,12 @@ export class NovuWebChatAdapterImpl implements Adapter<WebChatThreadId, WebChatR
           messageId: kind.sourceMessageId ?? '',
           threadId,
           user,
-          raw: { ...body, metadata: sanitizeMessageMetadata(body.metadata), contextKeys: session.contextKeys ?? [] },
+          raw: {
+            ...body,
+            metadata: sanitizeMessageMetadata(body.metadata),
+            contextKeys: session.contextKeys ?? [],
+            contextVerified: session.contextVerified === true,
+          },
         },
         options
       );
