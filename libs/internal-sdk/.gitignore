@@ -16,6 +16,7 @@
 /lib
 /sdk
 /funcs
+/helpers
 /react-query
 /hooks
 /docs
