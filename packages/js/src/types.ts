@@ -335,8 +335,11 @@ export type StandardNovuOptions = CommonNovuOptions & {
   subscriberHash?: string;
   contextHash?: string;
   context?: Context;
+  /** Pass `tokenEndpoint` or `getToken` to sign in with subscriber tokens; then drop `subscriberHash`. */
   tokenEndpoint?: never;
+  /** Pass `tokenEndpoint` or `getToken` to sign in with subscriber tokens; then drop `subscriberHash`. */
   getToken?: never;
+  /** `initialToken` needs `tokenEndpoint` or `getToken`. */
   initialToken?: never;
 } & (
     | {
@@ -362,6 +365,7 @@ type TokenSourceOptions =
        * A failed request surfaces as a session error.
        */
       tokenEndpoint: string;
+      /** Pass either `tokenEndpoint` or `getToken`, not both. */
       getToken?: never;
     }
   | {
@@ -373,14 +377,19 @@ type TokenSourceOptions =
        * client asks again every 10 seconds. An error thrown here surfaces as a session error.
        */
       getToken: GetToken;
+      /** Pass either `tokenEndpoint` or `getToken`, not both. */
       tokenEndpoint?: never;
     };
 
 /**
  * Signs in with subscriber tokens minted by your backend, renewed before they expire.
  *
- * When getting a token fails, calls made in the next 10 seconds fail at once with a session error. The first call
- * after that tries again, so an Inbox mounted before the user finished signing in recovers on its own.
+ * A token is renewed 60 seconds before it expires, so mint tokens that live well over 2 minutes (`expiresIn`);
+ * shorter ones are renewed on almost every request.
+ *
+ * When getting a token fails, calls made in the next 10 seconds fail at once with a session error and a console
+ * warning. The first call after that tries again, so an Inbox mounted before the user finished signing in recovers on
+ * its own. A route that answers 401 after sign-out is retried the same way, every 10 seconds.
  *
  * On sign-out, drop the `Novu` instance (in React, unmount `NovuProvider` or change its `key`). The client learns of
  * a new user only at the next renewal, and until then it keeps the previous user's session.

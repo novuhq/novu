@@ -106,8 +106,11 @@ type SubscriberIdentityProps = {
   subscriberHash?: string;
   contextHash?: string;
   context?: Context;
+  /** Pass `tokenEndpoint` or `getToken` to sign in with subscriber tokens; then drop `subscriberHash`. */
   tokenEndpoint?: never;
+  /** Pass `tokenEndpoint` or `getToken` to sign in with subscriber tokens; then drop `subscriberHash`. */
   getToken?: never;
+  /** `initialToken` needs `tokenEndpoint` or `getToken`. */
   initialToken?: never;
 } & (
   | {

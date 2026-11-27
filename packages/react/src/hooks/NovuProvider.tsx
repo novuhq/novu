@@ -26,7 +26,8 @@ const NovuContext = createContext<{ novu: Novu | undefined; realtime: boolean }>
  * another subscriber or context signs in.
  *
  * On sign-out, unmount `NovuProvider` or change its `key`. With a token source the client learns of a new user only at
- * the next renewal, and until then it keeps the previous user's session.
+ * the next renewal, and until then it keeps the previous user's session; a token route that answers 401 after
+ * sign-out is retried every 10 seconds.
  */
 export const NovuProvider = (props: NovuProviderProps) => {
   const { subscriberId, realtime = true, ...propsWithoutSubscriberId } = props;
