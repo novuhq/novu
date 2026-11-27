@@ -1,9 +1,8 @@
 import { afterEach, expect, it, vi } from 'vitest';
 
-vi.mock('socket.io-client', () => ({
-  __esModule: true,
-  default: vi.fn(() => ({ on: vi.fn(), connect: vi.fn(), disconnect: vi.fn(), io: { on: vi.fn(), opts: {} } })),
-}));
+const ioClient = vi.hoisted(() => vi.fn());
+
+vi.mock('socket.io-client', () => ({ __esModule: true, default: ioClient }));
 
 import { Novu } from '../novu';
 
@@ -16,12 +15,22 @@ const SESSION_TOKEN = createJwt({ subscriberId: 'user_1', contextKeys: ['tenant:
 
 type Call = { url: string; headers: Record<string, string>; body: Record<string, unknown> };
 
-afterEach(() => {
+let novu: Novu | undefined;
+
+afterEach(async () => {
+  await novu?.socket.disconnect();
+  novu = undefined;
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
 it('sends Web Chat messages with the session a subscriber token opened, without an agentHash', async () => {
+  ioClient.mockImplementation(() => ({
+    on: vi.fn(),
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    io: { on: vi.fn(), opts: {} },
+  }));
   const calls: Call[] = [];
   vi.stubGlobal(
     'fetch',
@@ -38,7 +47,12 @@ it('sends Web Chat messages with the session a subscriber token opened, without 
       return { ok: true, status: 201, json: async () => ({ data }) } as unknown as Response;
     })
   );
-  const novu = new Novu({ applicationIdentifier: 'app', getToken: async () => LOGIN_TOKEN, useCache: false });
+  novu = new Novu({
+    applicationIdentifier: 'app',
+    getToken: async () => LOGIN_TOKEN,
+    useCache: false,
+    socketOptions: { socketType: 'self-hosted' },
+  });
 
   const webChat = await novu.loadWebChat();
   const { error } = await webChat.conversation({ agentId: 'support' }).sendMessage('Hello');
@@ -51,4 +65,5 @@ it('sends Web Chat messages with the session a subscriber token opened, without 
   expect(send?.headers.Authorization).toBe(`Bearer ${SESSION_TOKEN}`);
   expect(send?.body).toMatchObject({ agentId: 'support', text: 'Hello' });
   expect(send?.body).not.toHaveProperty('agentHash');
+  expect(ioClient).toHaveBeenCalled();
 });
