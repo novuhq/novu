@@ -150,7 +150,7 @@ export async function createDashboardInboxToken({
 }): Promise<string> {
   const { data } = await post<{ data: { token: string; expiresAt: string } }>(
     `/environments/me/dashboard-inbox-token`,
-    { environment, signal }
+    { environment, signal, body: { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone } }
   );
 
   return data.token;

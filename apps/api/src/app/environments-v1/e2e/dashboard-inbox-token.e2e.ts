@@ -27,12 +27,12 @@ describe('Dashboard Inbox token - /environments/me/dashboard-inbox-token (POST) 
     }
   });
 
-  function requestToken() {
-    return session.testAgent.post('/v1/environments/me/dashboard-inbox-token').send({});
+  function requestToken(body: Record<string, unknown> = {}) {
+    return session.testAgent.post('/v1/environments/me/dashboard-inbox-token').send(body);
   }
 
-  async function openInbox() {
-    const minted = await requestToken();
+  async function openInbox(body: Record<string, unknown> = {}) {
+    const minted = await requestToken(body);
     expect(minted.status, JSON.stringify(minted.body)).to.equal(201);
 
     return session.testAgent.post('/v1/inbox/session').send({ subscriberToken: minted.body.data.token });
@@ -41,7 +41,7 @@ describe('Dashboard Inbox token - /environments/me/dashboard-inbox-token (POST) 
   it('should sign the session user into an HMAC-protected Inbox with their dashboard profile', async () => {
     const sessionUser = jwt.decode(session.token.split(' ')[1]) as UserSessionData;
 
-    const res = await openInbox();
+    const res = await openInbox({ timezone: 'Europe/Berlin' });
 
     expect(res.status, JSON.stringify(res.body)).to.equal(201);
     const claims = jwt.decode(res.body.data.token) as JwtPayload;
@@ -56,6 +56,7 @@ describe('Dashboard Inbox token - /environments/me/dashboard-inbox-token (POST) 
       firstName: sessionUser.firstName,
       lastName: sessionUser.lastName,
       email: sessionUser.email,
+      timezone: 'Europe/Berlin',
     });
 
     const feed = await session.testAgent
@@ -87,6 +88,12 @@ describe('Dashboard Inbox token - /environments/me/dashboard-inbox-token (POST) 
     expect(res.status, JSON.stringify(res.body)).to.equal(201);
     expect(res.body.data.applicationIdentifier).to.equal(session.environment.identifier);
     expect((jwt.decode(res.body.data.token) as JwtPayload).environmentId).to.equal(session.environment._id);
+  });
+
+  it('should refuse a timezone that is not an IANA zone', async () => {
+    const res = await requestToken({ timezone: 'Mars/Olympus' });
+
+    expect(res.status).to.equal(422);
   });
 
   it('should return 404 when subscriber tokens are disabled', async () => {

@@ -45,6 +45,7 @@ import {
 import { CreateSubscriberTokenResponseDto } from '../subscribers-v2/dtos/create-subscriber-token-response.dto';
 import { CreateSubscriberTokenCommand } from '../subscribers-v2/usecases/create-subscriber-token/create-subscriber-token.command';
 import { CreateSubscriberToken } from '../subscribers-v2/usecases/create-subscriber-token/create-subscriber-token.usecase';
+import { CreateDashboardInboxTokenRequestDto } from './dtos/create-dashboard-inbox-token-request.dto';
 import { CreateEnvironmentRequestDto } from './dtos/create-environment-request.dto';
 import { DashboardInboxHashesResponseDto } from './dtos/dashboard-inbox-hashes-response.dto';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
@@ -140,7 +141,10 @@ export class EnvironmentsControllerV1 {
   @ApiResponse(CreateSubscriberTokenResponseDto, 201)
   @ApiExcludeEndpoint()
   @SkipPermissionsCheck()
-  async createDashboardInboxToken(@UserSession() user: UserSessionData): Promise<CreateSubscriberTokenResponseDto> {
+  async createDashboardInboxToken(
+    @UserSession() user: UserSessionData,
+    @Body() body: CreateDashboardInboxTokenRequestDto
+  ): Promise<CreateSubscriberTokenResponseDto> {
     return await this.createSubscriberTokenUsecase.execute(
       CreateSubscriberTokenCommand.create({
         environmentId: user.environmentId,
@@ -152,6 +156,7 @@ export class EnvironmentsControllerV1 {
             lastName: user.lastName || undefined,
             email: user.email || undefined,
             avatar: user.profilePicture || undefined,
+            timezone: body.timezone,
           },
         },
       })
