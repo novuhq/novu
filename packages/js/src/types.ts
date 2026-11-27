@@ -388,7 +388,11 @@ type TokenSourceOptions =
 export type TokenNovuOptions = CommonNovuOptions &
   TokenSourceOptions & {
     applicationIdentifier: string;
-    /** A token rendered by your server, used for the first session so the Inbox loads without a round trip. */
+    /**
+     * A subscriber token your server rendered with the page: the same kind of token `getToken` returns. It is used
+     * once, for the first session, so the Inbox loads without a round trip; later tokens come from `getToken` or
+     * `tokenEndpoint`. An expired or rejected one is skipped.
+     */
     initialToken?: string;
     /** Ignored with a warning: the token decides who the user is. */
     subscriber?: Subscriber | string;
