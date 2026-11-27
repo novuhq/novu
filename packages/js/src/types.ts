@@ -367,6 +367,12 @@ type TokenSourceOptions =
       tokenEndpoint?: never;
     };
 
+/**
+ * Signs in with subscriber tokens minted by your backend, renewed before they expire.
+ *
+ * On sign-out, drop the `Novu` instance (in React, unmount `NovuProvider` or change its `key`). The client learns of
+ * a new user only at the next renewal, and until then it keeps the previous user's session.
+ */
 export type TokenNovuOptions = CommonNovuOptions &
   TokenSourceOptions & {
     applicationIdentifier: string;

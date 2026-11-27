@@ -1,7 +1,7 @@
 import { Accessor, createEffect, createMemo, createSignal, onCleanup } from 'solid-js';
 import type { EventHandler, EventNames, Events, SocketEventNames } from '../../../event-emitter';
 import type { Novu } from '../../../novu';
-import { getIdentityKey, subscribeToIdentity } from '../../internal/identity';
+import { getIdentityKey, subscribeToIdentity, subscribeToIdentitySwitch } from '../../internal/identity';
 import { isWebLocksSupported, requestLock } from '../browser';
 
 /** Subscribes to a client event for as long as the owning reactive scope lives, following the current `Novu` instance. */
@@ -16,6 +16,13 @@ export const createNovuEventEffect = <E extends EventNames>(
     onCleanup(() => {
       cleanup();
     });
+  });
+};
+
+/** Runs `onSwitch` when another subscriber or context signs in on the current `Novu` instance. */
+export const createIdentitySwitchEffect = (novu: Accessor<Novu>, onSwitch: () => void) => {
+  createEffect(() => {
+    onCleanup(subscribeToIdentitySwitch(novu(), onSwitch));
   });
 };
 

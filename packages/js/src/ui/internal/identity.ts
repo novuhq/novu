@@ -16,3 +16,23 @@ export function getIdentityKey(novu: Novu): string | undefined {
 export function subscribeToIdentity(novu: Novu, onChange: () => void): () => void {
   return novu.on('session.initialize.resolved', onChange);
 }
+
+/**
+ * Calls `onSwitch` when another subscriber or context signs in on `novu` than the one before, so a view can drop the
+ * data it shows. The first sign-in is not a switch.
+ */
+export function subscribeToIdentitySwitch(novu: Novu, onSwitch: () => void): () => void {
+  let signedInAs = getIdentityKey(novu);
+
+  return subscribeToIdentity(novu, () => {
+    const identityKey = getIdentityKey(novu);
+    if (identityKey === undefined || identityKey === signedInAs) {
+      return;
+    }
+    const switched = signedInAs !== undefined;
+    signedInAs = identityKey;
+    if (switched) {
+      onSwitch();
+    }
+  });
+}

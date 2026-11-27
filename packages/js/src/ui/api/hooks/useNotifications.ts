@@ -3,6 +3,7 @@ import { ListNotificationsArgs, ListNotificationsResponse } from '../../../notif
 import type { NotificationFilter } from '../../../types';
 import { isSameFilter } from '../../../utils/notification-utils';
 import { useNovu } from '../../context';
+import { createIdentitySwitchEffect } from '../../core/stores/events';
 import { createInfiniteScroll } from '../../helpers';
 
 type UseNotificationsInfiniteScrollProps = {
@@ -49,6 +50,8 @@ export const useNotificationsInfiniteScroll = (props: UseNotificationsInfiniteSc
     await reset();
     filter = newFilter;
   });
+
+  createIdentitySwitchEffect(novuAccessor, () => void reset());
 
   const refetch = async ({ filter }: { filter?: NotificationFilter }) => {
     novuAccessor().notifications.clearCache({ filter });

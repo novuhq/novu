@@ -2,6 +2,7 @@ import { createEffect, createResource, createSignal, onCleanup } from 'solid-js'
 import { Preference } from '../../../preferences/preference';
 import { FetchPreferencesArgs } from '../../../preferences/types';
 import { useNovu } from '../../context';
+import { createIdentitySwitchEffect } from '../../core/stores/events';
 
 export const usePreferences = (options?: FetchPreferencesArgs) => {
   const novuAccessor = useNovu();
@@ -33,6 +34,11 @@ export const usePreferences = (options?: FetchPreferencesArgs) => {
     const cleanup = novuAccessor().on('preferences.list.updated', listener);
 
     onCleanup(() => cleanup());
+  });
+
+  createIdentitySwitchEffect(novuAccessor, () => {
+    mutate(undefined);
+    void refetch();
   });
 
   createEffect(() => {
