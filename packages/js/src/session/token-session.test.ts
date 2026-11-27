@@ -606,7 +606,7 @@ describe('when the token endpoint signs in another user', () => {
     const { error } = await novu.notifications.readAll();
 
     expect(error).toBeInstanceOf(NovuError);
-    expect(error?.originalError?.message).toMatch(/another subscriber/);
+    expect(error?.originalError?.message).toMatch(/another subscriber/i);
     expect(backend.state.apiCalls.filter((call) => call.path.endsWith('/notifications/read'))).toEqual([]);
     expect(novu.subscriberId).toBe('bob');
 

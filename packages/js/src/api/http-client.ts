@@ -7,10 +7,10 @@ export type HttpClientOptions = {
 };
 
 /**
- * Gets a new session token. Resolves to `true` when the client now holds a token newer than `staleToken`
- * for the same subscriber and context, so a request sent with `staleToken` can be retried.
+ * Gets a new session token. Resolves to a token newer than `staleToken` for the same subscriber and context, to send
+ * the request again with, or `undefined` when there is none.
  */
-export type SessionRefresher = (staleToken?: string) => Promise<boolean>;
+export type SessionRefresher = (staleToken?: string) => Promise<string | undefined>;
 
 /** The session's say over each request; it owns when a token is renewed and whether a request may be resent. */
 export type SessionGuard = {
@@ -146,19 +146,23 @@ export class HttpClient {
     options,
     unwrapEnvelope = true,
     allowSessionRefresh = true,
-    isRetry = false,
+    retryToken,
   }: {
     path: string;
     searchParams?: URLSearchParams;
     options?: Omit<RequestInit, 'body'> & { body?: unknown };
     unwrapEnvelope?: boolean;
     allowSessionRefresh?: boolean;
-    isRetry?: boolean;
+    /** Set on the one retry after a 401: the token the refresh produced, sent as is. */
+    retryToken?: string;
   }): Promise<T> {
     const fullUrl = combineUrl(this.apiUrl, path, searchParams ? `?${searchParams.toString()}` : '');
+    const isRetry = retryToken !== undefined;
     const currentToken = this.headers.Authorization?.replace(/^Bearer /, '');
     const token =
-      allowSessionRefresh && !isRetry && this.session ? await this.session.tokenForRequest(currentToken) : currentToken;
+      allowSessionRefresh && !isRetry && this.session
+        ? await this.session.tokenForRequest(currentToken)
+        : (retryToken ?? currentToken);
     const headers: Record<string, string> = {
       ...this.headers,
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -172,13 +176,11 @@ export class HttpClient {
 
     const response = await fetch(fullUrl, reqInit);
 
-    if (
-      response.status === 401 &&
-      allowSessionRefresh &&
-      !isRetry &&
-      (await this.refreshSessionAfter401(headers.Authorization))
-    ) {
-      return this.doFetch<T>({ path, searchParams, options, unwrapEnvelope, isRetry: true });
+    if (response.status === 401 && allowSessionRefresh && !isRetry) {
+      const renewedToken = await this.refreshSessionAfter401(headers.Authorization);
+      if (renewedToken) {
+        return this.doFetch<T>({ path, searchParams, options, unwrapEnvelope, retryToken: renewedToken });
+      }
     }
 
     // The subscriber or context can change until the body has been read; a response for the replaced one is dropped
@@ -216,9 +218,9 @@ export class HttpClient {
    * Called when a request fails with 401, for example because its token expired.
    * The request is retried once after the refresh succeeds.
    */
-  private async refreshSessionAfter401(sentAuthorization: string | undefined): Promise<boolean> {
+  private async refreshSessionAfter401(sentAuthorization: string | undefined): Promise<string | undefined> {
     if (!sentAuthorization || !this.session) {
-      return false;
+      return undefined;
     }
 
     /*
@@ -230,7 +232,7 @@ export class HttpClient {
     try {
       return await this.session.refresh(sentToken);
     } catch {
-      return false;
+      return undefined;
     }
   }
 }

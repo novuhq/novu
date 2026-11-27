@@ -101,7 +101,8 @@ export class Socket extends BaseModule implements BaseSocketInterface {
       return;
     }
 
-    const hasFreshToken = !session.isExpired(this.#token) || (await session.refresh().catch(() => false));
+    const hasFreshToken =
+      !session.isExpired(this.#token) || (await session.refresh().catch(() => undefined)) !== undefined;
 
     if (socket !== this.#socketIo) {
       return;
@@ -146,7 +147,7 @@ export class Socket extends BaseModule implements BaseSocketInterface {
 
       if (this.#session?.isExpired(this.#token)) {
         // This attempt still carries the expired token; the next one picks up the new token.
-        this.#session.refresh().catch(() => false);
+        this.#session.refresh().catch(() => undefined);
       }
     });
 

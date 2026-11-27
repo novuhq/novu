@@ -197,7 +197,7 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
    */
   #getSocketUrl = async (): Promise<string> => {
     if (this.#session?.isExpired(this.#token)) {
-      await this.#session.refresh().catch(() => false);
+      await this.#session.refresh().catch(() => undefined);
     }
 
     const url = new URL(this.#socketUrl);

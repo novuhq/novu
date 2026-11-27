@@ -59,10 +59,10 @@ const emitSession = (emitter: NovuEventEmitter, token: string) =>
 
 const createClient = () => {
   const emitter = new NovuEventEmitter();
-  const refreshSession = vi.fn(async () => {
+  const refreshSession = vi.fn(async (): Promise<string | undefined> => {
     emitSession(emitter, newToken);
 
-    return true;
+    return newToken;
   });
   const client = new Socket({
     socketUrl: 'https://ws.example.com',
@@ -132,7 +132,7 @@ describe('Socket (socket.io)', () => {
   it('keeps trying to get a token when the refresh fails after a server disconnect', async () => {
     const { client, refreshSession } = createClient();
     const refreshesThenRecovers = refreshSession.getMockImplementation()!;
-    refreshSession.mockImplementationOnce(async () => false);
+    refreshSession.mockImplementationOnce(async () => undefined);
     await client.connect();
     const socket = fakeSocketIo.current!;
 
@@ -151,7 +151,7 @@ describe('Socket (socket.io)', () => {
 
   it('stops trying after the socket is disconnected', async () => {
     const { client, refreshSession } = createClient();
-    refreshSession.mockImplementation(async () => false);
+    refreshSession.mockImplementation(async () => undefined);
     await client.connect();
     const socket = fakeSocketIo.current!;
 

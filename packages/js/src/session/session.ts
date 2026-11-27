@@ -22,13 +22,21 @@ type TokenSessionClaims = {
   renewalSkewMs: number | undefined;
 };
 
+/**
+ * How long a token source is left alone after a renewal failed. Requests made meanwhile fail at once instead of each
+ * calling the customer's token endpoint again; 10 s matches socket.io's longest reconnect delay, so a dead endpoint
+ * sees about one call per tab every 10 s, and a user who signs in again gets a working Inbox within 10 s.
+ */
+const RENEWAL_COOLDOWN_MS = 10_000;
+
 export class Session {
   #emitter: NovuEventEmitter;
   #inboxService: InboxService;
   #identity: SessionIdentity;
   #defaultSchedule: DefaultSchedule | undefined;
   #initialToken: string | undefined;
-  #inFlight: Promise<boolean> | undefined;
+  /** The running session request; resolves to its token when it kept the same subscriber and context. */
+  #inFlight: Promise<string | undefined> | undefined;
   /** What the server returned for the current subscriber and context; cleared when either changes. */
   #session: SessionResponse | undefined;
   #claims: TokenSessionClaims | undefined;
@@ -37,6 +45,8 @@ export class Session {
   /** Who the client was last signed in as; kept across `changeIdentity`, so a switch is noticed when it resolves. */
   #signedInAs: { subscriberId: string | undefined; contextKey: string } | undefined;
   #error: unknown;
+  /** The latest renewal of a token source that failed, until one succeeds. */
+  #failedRenewal: { at: number; error: unknown } | undefined;
   #onSubscriberChange: () => void;
 
   constructor(
@@ -203,13 +213,20 @@ export class Session {
       if (!this.isExpired(session.token)) {
         return session.token;
       }
-      if ((await this.refresh(session.token)) && this.#session) {
-        return this.#session.token;
+      const renewed = await this.refresh(session.token);
+      if (renewed) {
+        return renewed;
+      }
+      if (this.#tokens.has(currentToken)) {
+        throw new NovuError(
+          'The session could not be renewed, so the request was not sent',
+          this.#failedRenewal?.error
+        );
       }
     }
 
     throw new NovuError(
-      'The session could not be renewed for the same subscriber, so the request was not sent',
+      'Another subscriber or context signed in since the request was made, so it was not sent',
       undefined
     );
   }
@@ -243,34 +260,42 @@ export class Session {
    * Callers that ask while a session request is already running share that request.
    *
    * Pass `staleToken` (the token a failed request was sent with) to renew only that session:
-   * - a token of a subscriber or context that has been replaced since → nothing is requested, `false`;
-   * - a token older than the current one → nothing is requested, `true` (someone else already renewed it);
-   * - the current token of a subscriber session that has not expired → `false`: the 401 has another cause, and a
-   *   new token would not fix it;
-   * - otherwise the session is renewed. A token source always renews: its 401 can come from clock skew.
+   * - a token of a subscriber or context that has been replaced since → nothing is requested, `undefined`;
+   * - a token older than the current one → nothing is requested, the current token (someone else renewed it);
+   * - the current token of a subscriber session that has not expired → `undefined`: the 401 has another cause, and
+   *   a new token would not fix it;
+   * - otherwise the session is renewed. A token source always renews: its 401 can come from clock skew. Within
+   *   `RENEWAL_COOLDOWN_MS` of its last failed renewal it resolves to `undefined` without asking again.
    *
-   * Resolves to `true` when the current token is newer than the stale one and belongs to the same subscriber and
-   * context. A renewal that signs in someone else resolves to `false`, so the request is not resent as them.
+   * Resolves to the token to use instead: newer than the stale one, for the same subscriber and context. A renewal
+   * that fails or signs in someone else resolves to `undefined`, so the request is not resent as them.
    */
-  public refresh(staleToken?: string): Promise<boolean> {
+  public refresh(staleToken?: string): Promise<string | undefined> {
     if (staleToken !== undefined) {
       if (!this.#tokens.has(staleToken)) {
-        return Promise.resolve(false);
+        return Promise.resolve(undefined);
       }
 
       if (staleToken !== this.#session?.token) {
-        return Promise.resolve(true);
+        return Promise.resolve(this.#session?.token);
       }
 
       if (this.#identity.kind === 'subscriber' && !isJwtExpired(staleToken)) {
-        return Promise.resolve(false);
+        return Promise.resolve(undefined);
       }
     }
 
-    return this.#inFlight ?? this.#start(true);
+    if (this.#inFlight) {
+      return this.#inFlight;
+    }
+    if (this.#failedRenewal && Date.now() - this.#failedRenewal.at < RENEWAL_COOLDOWN_MS) {
+      return Promise.resolve(undefined);
+    }
+
+    return this.#start(true);
   }
 
-  #start(renew: boolean): Promise<boolean> {
+  #start(renew: boolean): Promise<string | undefined> {
     const request = this.#requestSession(renew).finally(() => {
       this.#inFlight = undefined;
     });
@@ -279,7 +304,7 @@ export class Session {
     return request;
   }
 
-  async #requestSession(renew: boolean): Promise<boolean> {
+  async #requestSession(renew: boolean): Promise<string | undefined> {
     const identity = this.#identity;
     const args = this.#eventArgs(identity);
     try {
@@ -304,6 +329,7 @@ export class Session {
         }
         this.#tokens.add(response.token);
         this.#error = undefined;
+        this.#failedRenewal = undefined;
       }
 
       if (response?.applicationIdentifier?.startsWith('pk_keyless_')) {
@@ -318,18 +344,25 @@ export class Session {
       }
       this.#emitter.emit('session.initialize.resolved', { args, data: response });
 
-      return identity === this.#identity && !subscriberChanged;
+      return identity === this.#identity && !subscriberChanged ? response.token : undefined;
     } catch (error) {
       if (identity === this.#identity) {
-        this.#error = error;
-        // A subscriber identity is known without a session, so the previous one's data goes even when this failed.
-        if (identity.kind === 'subscriber' && this.#recordSignedIn()) {
-          this.#onSubscriberChange();
-        }
+        this.#recordFailure(identity, renew, error);
       }
       this.#emitter.emit('session.initialize.resolved', { args, error });
 
-      return false;
+      return undefined;
+    }
+  }
+
+  #recordFailure(identity: SessionIdentity, renew: boolean, error: unknown): void {
+    this.#error = error;
+    if (renew && identity.kind === 'token') {
+      this.#failedRenewal = { at: Date.now(), error };
+    }
+    // A subscriber identity is known without a session, so the previous one's data goes even when this failed.
+    if (identity.kind === 'subscriber' && this.#recordSignedIn()) {
+      this.#onSubscriberChange();
     }
   }
 
