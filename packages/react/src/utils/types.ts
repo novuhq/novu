@@ -1,4 +1,4 @@
-import type { Context, DefaultSchedule, GetToken, NovuSocketOptions, Subscriber, UnreadCount } from '@novu/js';
+import type { Context, DefaultSchedule, NovuSocketOptions, Subscriber, TokenNovuOptions, UnreadCount } from '@novu/js';
 import type {
   AllIconKey,
   AllTheme,
@@ -82,6 +82,9 @@ export type DefaultInboxProps = {
   placementOffset?: InboxProps['placementOffset'];
 };
 
+/** `Omit` over a union merges its members into one bag of optional props; this keeps each member apart. */
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
+
 type StandardBaseProps = {
   backendUrl?: string;
   socketUrl?: string;
@@ -94,7 +97,10 @@ type StandardBaseProps = {
   preferencesSort?: PreferencesSort;
   defaultSchedule?: DefaultSchedule;
   routerPush?: RouterPush;
-} & (SubscriberIdentityProps | TokenIdentityProps);
+} & IdentityProps;
+
+/** Who the Inbox signs in as: a subscriber (optionally HMAC-signed), keyless, or a token source. */
+export type IdentityProps = SubscriberIdentityProps | TokenIdentityProps;
 
 type SubscriberIdentityProps = {
   subscriberHash?: string;
@@ -124,35 +130,8 @@ type SubscriberIdentityProps = {
     }
 );
 
-type TokenIdentityProps = {
-  applicationIdentifier: string;
-  /** A token rendered by your server, used for the first session so the Inbox loads without a round trip. */
-  initialToken?: string;
-  /** Ignored with a warning: the token decides who the user is. */
-  subscriber?: Subscriber | string;
-  /** Ignored with a warning: the token decides who the user is. */
-  subscriberId?: string;
-  /** Ignored with a warning: the token decides the context. */
-  context?: Context;
-  /** Ignored with a warning: the token replaces HMAC hashes. */
-  subscriberHash?: string;
-  /** Ignored with a warning: the token replaces HMAC hashes. */
-  contextHash?: string;
-} & (
-  | {
-      /** Your backend route that answers `POST` with `{ token, expiresAt }` for the signed-in user. */
-      tokenEndpoint: string;
-      getToken?: never;
-    }
-  | {
-      /** Returns a new subscriber token from your backend whenever one is needed. */
-      getToken: GetToken;
-      tokenEndpoint?: never;
-    }
-);
-
-/** `Omit` over a union merges its members into one bag of optional props; this keeps each member apart. */
-type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
+/** The Inbox has no `apiUrl` or `useCache` prop; everything else comes from `@novu/js`. */
+type TokenIdentityProps = DistributiveOmit<TokenNovuOptions, 'apiUrl' | 'useCache'>;
 
 type InboxBaseProps = DistributiveOmit<StandardBaseProps, 'appearance'> & {
   appearance?: ReactInboxAppearance;

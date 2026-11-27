@@ -1,4 +1,3 @@
-import { NovuOptions, StandardNovuOptions, TokenNovuOptions } from '@novu/js';
 import { buildSubscriber } from '@novu/js/internal';
 import React, { useMemo } from 'react';
 import { useNotificationOutlets } from '../hooks/internal/useNotificationOutlets';
@@ -64,27 +63,12 @@ export const Inbox = React.memo((props: InboxProps) => {
     );
   }
 
-  const standardOptions = {
-    applicationIdentifier,
-    subscriberHash: props.subscriberHash,
-    contextHash: props.contextHash,
-    backendUrl: props.backendUrl,
-    socketUrl: props.socketUrl,
-    socketOptions: props.socketOptions,
-    subscriber,
-    defaultSchedule: props.defaultSchedule,
-    context: props.context,
-  } satisfies StandardNovuOptions;
-  const { getToken, tokenEndpoint, initialToken } = props;
-  let providerProps: NovuOptions = standardOptions;
-  if (getToken) {
-    providerProps = { ...standardOptions, getToken, initialToken } satisfies TokenNovuOptions;
-  } else if (tokenEndpoint) {
-    providerProps = { ...standardOptions, tokenEndpoint, initialToken } satisfies TokenNovuOptions;
-  }
-
   return (
-    <InternalNovuProvider {...providerProps}>
+    <InternalNovuProvider
+      {...propsWithoutSubscriberId}
+      applicationIdentifier={applicationIdentifier}
+      subscriber={subscriber}
+    >
       <InboxChild {...propsWithoutSubscriberId} applicationIdentifier={applicationIdentifier} subscriber={subscriber} />
     </InternalNovuProvider>
   );
