@@ -635,7 +635,6 @@ describe('Agent access rule #novu-v2', () => {
         );
       }
 
-      /** Edits like Slack does: the platform also hands over its copy of the version before the edit. */
       async function editRich(message: SlackMessage, next: Pick<SlackMessage, 'text' | 'formatted' | 'attachments'>) {
         const previousMessage = { ...message };
         Object.assign(message, { formatted: undefined, attachments: undefined }, next, {
@@ -655,7 +654,10 @@ describe('Agent access rule #novu-v2', () => {
       }
 
       async function remove(message: SlackMessage) {
-        slackThread.splice(slackThread.indexOf(message), 1);
+        const index = slackThread.indexOf(message);
+        if (index >= 0) {
+          slackThread.splice(index, 1);
+        }
 
         await testServer.getService(AgentInboundHandler).handleMessageDeleted(ctx.agentId, await resolveConfig(), {
           threadId,
@@ -797,21 +799,25 @@ describe('Agent access rule #novu-v2', () => {
         await setTier('gold');
         await editRich(order, { text: 'My order number is 43' });
         await remove(damage);
+        // Slack sends the delete again when Novu doesn't answer in time.
+        await remove(damage);
 
         expect(bridgeCalls.map((call) => call.event)).to.deep.equal([
           AgentEventEnum.ON_MESSAGE,
           AgentEventEnum.ON_MESSAGE,
           AgentEventEnum.ON_MESSAGE_UPDATED,
           AgentEventEnum.ON_MESSAGE_DELETED,
+          AgentEventEnum.ON_MESSAGE_DELETED,
         ]);
         const bridgeExecutor = testServer.getService(BridgeExecutorService);
-        const [updated, deleted] = await Promise.all(
+        const [updated, deleted, redelivered] = await Promise.all(
           bridgeCalls.slice(2).map(async (call) => (await bridgeExecutor.prepareSignedBridgeRequest(call)).payload)
         );
         expect(updated.message?.text).to.equal('My order number is 43');
         expect(updated.previousMessage).to.deep.include({ text: 'My order number is 42' });
         expect(deleted.message).to.deep.include({ text: 'It arrived damaged' });
-        for (const payload of [updated, deleted]) {
+        expect(redelivered.message).to.deep.include({ text: 'It arrived damaged' });
+        for (const payload of [updated, deleted, redelivered]) {
           const sent = JSON.stringify(payload);
           expect(sent).to.not.include(injection);
           expect(sent).to.not.include('evil.example');
