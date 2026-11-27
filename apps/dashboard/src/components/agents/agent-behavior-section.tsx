@@ -1,7 +1,7 @@
 import { AgentReplyPolicyEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { RiArrowRightSLine, RiCloseCircleLine, RiExpandUpDownLine } from 'react-icons/ri';
+import { RiCloseCircleLine, RiExpandUpDownLine, RiPencilLine } from 'react-icons/ri';
 import type { RQBJsonLogic } from 'react-querybuilder';
 import {
   type AgentBehavior,
@@ -193,9 +193,9 @@ function SubscriberAccessSetting({ agent, disabled, readOnly, onAccessChange }: 
       <SelectTrigger size="2xs" className="w-[11.5rem] shrink-0">
         <SelectValue />
       </SelectTrigger>
-      <SelectContent align="end">
+      <SelectContent align="end" className="w-72">
         {(Object.keys(SUBSCRIBER_ACCESS_MODES) as AgentSubscriberAccess[]).map((mode) => (
-          <SelectItem key={mode} value={mode}>
+          <SelectItem key={mode} value={mode} description={SUBSCRIBER_ACCESS_MODES[mode].description}>
             {SUBSCRIBER_ACCESS_MODES[mode].label}
           </SelectItem>
         ))}
@@ -206,36 +206,31 @@ function SubscriberAccessSetting({ agent, disabled, readOnly, onAccessChange }: 
   return (
     <>
       <ToggleRow label={SUBSCRIBER_ACCESS_MODE_SETTING_LABEL} tooltip={SUBSCRIBER_ACCESS_MODE_TOOLTIP}>
-        {readOnly ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex">{select}</span>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs">{PROD_READ_ONLY_TOOLTIP}</TooltipContent>
-          </Tooltip>
-        ) : (
-          select
-        )}
-      </ToggleRow>
-      <p className="text-text-soft text-paragraph-xs -mt-1">{SUBSCRIBER_ACCESS_MODES[access].description}</p>
-      {access === 'rule' && (
-        <Button
-          type="button"
-          variant="secondary"
-          mode="outline"
-          size="2xs"
-          className="self-start"
-          trailingIcon={RiArrowRightSLine}
-          onClick={openRuleSheet}
-        >
-          {readOnly ? 'View rule' : 'Edit rule'}
-          {conditionsCount !== null && (
-            <span className="text-text-soft">
-              {conditionsCount} condition{conditionsCount === 1 ? '' : 's'}
-            </span>
+        <div className="flex shrink-0 items-center gap-1">
+          {access === 'rule' && (
+            <Button
+              type="button"
+              variant="secondary"
+              mode="ghost"
+              size="2xs"
+              trailingIcon={conditionsCount === null || readOnly ? undefined : RiPencilLine}
+              onClick={openRuleSheet}
+            >
+              {conditionsCount === null ? 'View' : `${conditionsCount} condition${conditionsCount === 1 ? '' : 's'}`}
+            </Button>
           )}
-        </Button>
-      )}
+          {readOnly ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">{select}</span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">{PROD_READ_ONLY_TOOLTIP}</TooltipContent>
+            </Tooltip>
+          ) : (
+            select
+          )}
+        </div>
+      </ToggleRow>
 
       <AgentAccessRuleSheet
         key={ruleSheetKey}
