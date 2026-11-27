@@ -207,7 +207,7 @@ export class Session {
     }
 
     throw new NovuError(
-      'Another subscriber or context signed in since the request was made, so it was not sent',
+      'The request was made with a session that is no longer current, for example because another subscriber or context signed in, so it was not sent',
       undefined
     );
   }
