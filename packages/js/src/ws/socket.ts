@@ -24,6 +24,7 @@ const WEB_CHAT_AGENT_EVENT: WebChatAgentEvent = 'web_chat.agent_event';
 
 export class Socket extends BaseModule implements BaseSocketInterface {
   #token: string;
+  #subscriberId = '';
   #emitter: NovuEventEmitter;
   #socketIo: SocketIO | undefined;
   #socketUrl: string;
@@ -58,12 +59,13 @@ export class Socket extends BaseModule implements BaseSocketInterface {
 
   protected onSessionSuccess({ token }: Session): void {
     this.#token = token;
+    this.#subscriberId = subscriberIdOfToken(token);
   }
 
   #notificationReceived = ({ message }: { message: SocketMessage }) => {
     this.#emitter.emit(NOTIFICATION_RECEIVED, {
       result: new Notification(
-        mapToNotification(message, subscriberIdOfToken(this.#token)),
+        mapToNotification(message, this.#subscriberId),
         this.#emitter,
         this._inboxService
       ),

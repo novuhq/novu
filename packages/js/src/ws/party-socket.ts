@@ -29,6 +29,7 @@ const WEB_CHAT_AGENT_EVENT: WebChatAgentEvent = 'web_chat.agent_event';
 
 export class PartySocketClient extends BaseModule implements BaseSocketInterface {
   #token: string;
+  #subscriberId = '';
   #emitter: NovuEventEmitter;
   #partySocket: WebSocket | undefined;
   #socketUrl: string;
@@ -66,6 +67,7 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
 
   protected onSessionSuccess({ token }: Session): void {
     this.#token = token;
+    this.#subscriberId = subscriberIdOfToken(token);
   }
 
   #notificationReceived = (event: MessageEvent) => {
@@ -74,7 +76,7 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
       if (data.event === WebSocketEvent.RECEIVED) {
         this.#emitter.emit(NOTIFICATION_RECEIVED, {
           result: new Notification(
-            mapToNotification(data.data.message, subscriberIdOfToken(this.#token)),
+            mapToNotification(data.data.message, this.#subscriberId),
             this.#emitter,
             this._inboxService
           ),
