@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InboxService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import type { Session } from '../types';
+import { isJwtExpired } from '../utils/jwt';
 import { Socket } from './socket';
 
 type Handler = (...args: unknown[]) => void;
@@ -67,7 +68,7 @@ const createClient = () => {
     socketUrl: 'https://ws.example.com',
     inboxServiceInstance: new InboxService(),
     eventEmitterInstance: emitter,
-    refreshSession,
+    session: { isExpired: (token) => isJwtExpired(token), refresh: refreshSession },
   });
   emitSession(emitter, oldToken);
 

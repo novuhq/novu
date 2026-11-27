@@ -1,7 +1,7 @@
 import 'event-target-polyfill';
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { WebSocket } from 'partysocket';
-import type { InboxService, SessionRefresher } from '../api';
+import type { InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import {
   NotificationReceivedEvent,
@@ -14,8 +14,7 @@ import {
 import { Notification } from '../notifications';
 import { Result, Session, WebSocketEvent } from '../types';
 import { NovuError } from '../utils/errors';
-import { isJwtExpired } from '../utils/jwt';
-import type { BaseSocketInterface } from './base-socket';
+import type { BaseSocketInterface, SocketSession } from './base-socket';
 import { mapToNotification } from './map-to-notification';
 
 export const PRODUCTION_SOCKET_URL = 'wss://socket.novu.co';
@@ -40,20 +39,20 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
   #hasGivenUp = false;
   /** Set once 'socket.disconnect.resolved' went out for the current outage, cleared on 'open' */
   #disconnectEmitted = false;
-  #refreshSession?: SessionRefresher;
+  #session?: SocketSession;
 
   constructor({
     socketUrl,
     socketOptions,
     inboxServiceInstance,
     eventEmitterInstance,
-    refreshSession,
+    session,
   }: {
     socketUrl?: string;
     socketOptions?: Record<string, unknown>;
     inboxServiceInstance: InboxService;
     eventEmitterInstance: NovuEventEmitter;
-    refreshSession?: SessionRefresher;
+    session?: SocketSession;
   }) {
     super({
       eventEmitterInstance,
@@ -62,7 +61,7 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
     this.#emitter = eventEmitterInstance;
     this.#socketUrl = socketUrl ?? PRODUCTION_SOCKET_URL;
     this.#socketOptions = socketOptions;
-    this.#refreshSession = refreshSession;
+    this.#session = session;
   }
 
   protected onSessionSuccess({ token }: Session): void {
@@ -197,8 +196,8 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
    * A reconnect with the expired token would be rejected on every attempt, so get a new token first.
    */
   #getSocketUrl = async (): Promise<string> => {
-    if (this.#refreshSession && isJwtExpired(this.#token)) {
-      await this.#refreshSession().catch(() => false);
+    if (this.#session?.isExpired(this.#token)) {
+      await this.#session.refresh().catch(() => false);
     }
 
     const url = new URL(this.#socketUrl);

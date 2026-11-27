@@ -181,7 +181,7 @@ export class Novu {
       socketOptions: options.socketOptions,
       eventEmitterInstance: this.#emitter,
       inboxServiceInstance: this.#inboxService,
-      refreshSession: (staleToken) => this.#session.refresh(staleToken),
+      session: this.#session,
     });
     this.on = (eventName, listener) => {
       if (this.socket.isSocketEvent(eventName)) {

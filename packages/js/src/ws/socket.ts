@@ -1,6 +1,6 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import io, { Socket as SocketIO } from 'socket.io-client';
-import type { InboxService, SessionRefresher } from '../api';
+import type { InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import {
   NotificationReceivedEvent,
@@ -13,8 +13,7 @@ import {
 import { Notification } from '../notifications';
 import { Result, Session, WebSocketEvent } from '../types';
 import { NovuError } from '../utils/errors';
-import { isJwtExpired } from '../utils/jwt';
-import type { BaseSocketInterface } from './base-socket';
+import type { BaseSocketInterface, SocketSession } from './base-socket';
 import { mapToNotification, type SocketMessage } from './map-to-notification';
 
 const PRODUCTION_SOCKET_URL = 'https://ws.novu.co';
@@ -29,7 +28,7 @@ export class Socket extends BaseModule implements BaseSocketInterface {
   #socketIo: SocketIO | undefined;
   #socketUrl: string;
   #socketOptions?: Record<string, unknown>;
-  #refreshSession?: SessionRefresher;
+  #session?: SocketSession;
   /** The token sent with the latest connection attempt. */
   #handshakeToken: string | undefined;
   #tokenRetryTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -39,13 +38,13 @@ export class Socket extends BaseModule implements BaseSocketInterface {
     socketOptions,
     inboxServiceInstance,
     eventEmitterInstance,
-    refreshSession,
+    session,
   }: {
     socketUrl?: string;
     socketOptions?: Record<string, unknown>;
     inboxServiceInstance: InboxService;
     eventEmitterInstance: NovuEventEmitter;
-    refreshSession?: SessionRefresher;
+    session?: SocketSession;
   }) {
     super({
       eventEmitterInstance,
@@ -54,7 +53,7 @@ export class Socket extends BaseModule implements BaseSocketInterface {
     this.#emitter = eventEmitterInstance;
     this.#socketUrl = socketUrl ?? PRODUCTION_SOCKET_URL;
     this.#socketOptions = socketOptions;
-    this.#refreshSession = refreshSession;
+    this.#session = session;
   }
 
   protected onSessionSuccess({ token }: Session): void {
@@ -97,12 +96,12 @@ export class Socket extends BaseModule implements BaseSocketInterface {
    */
   async #reconnectWithFreshToken(socket: SocketIO): Promise<void> {
     this.#tokenRetryTimeout = undefined;
-    const refreshSession = this.#refreshSession;
-    if (!refreshSession || socket !== this.#socketIo || !isJwtExpired(this.#handshakeToken)) {
+    const session = this.#session;
+    if (!session || socket !== this.#socketIo || !session.isExpired(this.#handshakeToken)) {
       return;
     }
 
-    const hasFreshToken = !isJwtExpired(this.#token) || (await refreshSession().catch(() => false));
+    const hasFreshToken = !session.isExpired(this.#token) || (await session.refresh().catch(() => false));
 
     if (socket !== this.#socketIo) {
       return;
@@ -145,9 +144,9 @@ export class Socket extends BaseModule implements BaseSocketInterface {
     socket.io.on('reconnect_attempt', () => {
       this.#useCurrentToken(socket);
 
-      if (this.#refreshSession && isJwtExpired(this.#token)) {
+      if (this.#session?.isExpired(this.#token)) {
         // This attempt still carries the expired token; the next one picks up the new token.
-        this.#refreshSession().catch(() => false);
+        this.#session.refresh().catch(() => false);
       }
     });
 

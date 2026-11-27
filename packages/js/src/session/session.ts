@@ -12,14 +12,14 @@ import type { InitializeSessionArgs } from './types';
 /** What a token session's JWT says, decoded once when the session arrives. */
 type TokenSessionClaims = {
   subscriberId: string | undefined;
-  expiresAt: number | undefined;
   /** Server time minus browser time, from the session's `iat`, so expiry is judged on the server's clock. */
   clockOffsetMs: number;
   /**
-   * False when the token already looked expired when it arrived (a lifetime under the skew, or a clock the offset
-   * could not correct). Refreshing before each request would then fetch a token per request; the 401 path renews it.
+   * How long before `exp` the token counts as expired. The skew normally; zero for a lifetime under the skew, which
+   * would otherwise be renewed for every request. `undefined` when the token looked expired on arrival (a clock the
+   * offset could not correct): it is never renewed early, only after the server rejects it.
    */
-  refreshBeforeExpiry: boolean;
+  renewalSkewMs: number | undefined;
 };
 
 export class Session {
@@ -188,7 +188,7 @@ export class Session {
    * a `NovuError` when the request must not go out: `currentToken` belongs to a subscriber or context that has been
    * replaced, or the renewal failed or signed in someone else, so the request would run as the wrong subscriber.
    *
-   * Only a token source renews here, judged on the server's clock; a subscriber session renews after a 401.
+   * Only a token source renews here (see `isExpired`); a subscriber session renews after a 401.
    */
   public async tokenForRequest(currentToken: string | undefined): Promise<string | undefined> {
     if (this.#identity.kind !== 'token' || currentToken === undefined) {
@@ -200,9 +200,7 @@ export class Session {
     }
     const session = this.#session;
     if (session && this.#tokens.has(currentToken)) {
-      const claims = this.#claims;
-      const mustRenew = claims?.refreshBeforeExpiry && this.#expiresSoon(claims);
-      if (!mustRenew) {
+      if (!this.isExpired(session.token)) {
         return session.token;
       }
       if ((await this.refresh(session.token)) && this.#session) {
@@ -214,6 +212,25 @@ export class Session {
       'The session could not be renewed for the same subscriber, so the request was not sent',
       undefined
     );
+  }
+
+  /**
+   * Whether `token` must be renewed before it is sent. The one expiry rule for requests and sockets.
+   * - A subscriber session judges it on the browser clock, a little before the real expiry.
+   * - A token source judges it on the server's clock, so a browser clock that is off neither keeps an expired token
+   *   nor renews a fresh one (see `renewalSkewMs` for short tokens).
+   */
+  public isExpired(token: string | undefined): boolean {
+    const claims = this.#claims;
+    if (this.#identity.kind === 'subscriber' || !claims) {
+      return isJwtExpired(token);
+    }
+    const expiresAt = getJwtExpiresAt(token);
+    if (expiresAt === undefined || claims.renewalSkewMs === undefined) {
+      return false;
+    }
+
+    return Date.now() + claims.clockOffsetMs >= expiresAt - claims.renewalSkewMs;
   }
 
   /** Whether `token` was issued for the current subscriber and context. */
@@ -331,19 +348,21 @@ export class Session {
   #readClaims(token: string): TokenSessionClaims {
     const payload = decodeJwtPayload(token);
     const issuedAt = payload?.iat;
-    const expiresAt = getJwtExpiresAt(token);
+    const expiresAt = getJwtExpiresAt(token) ?? Number.POSITIVE_INFINITY;
     const clockOffsetMs = typeof issuedAt === 'number' ? issuedAt * 1000 - Date.now() : 0;
+    const serverNow = Date.now() + clockOffsetMs;
+    let renewalSkewMs: number | undefined;
+    if (serverNow < expiresAt - EXPIRY_SKEW_MS) {
+      renewalSkewMs = EXPIRY_SKEW_MS;
+    } else if (serverNow < expiresAt) {
+      renewalSkewMs = 0;
+    }
 
     return {
       subscriberId: typeof payload?.subscriberId === 'string' ? payload.subscriberId : undefined,
-      expiresAt,
       clockOffsetMs,
-      refreshBeforeExpiry: !this.#expiresSoon({ expiresAt, clockOffsetMs }),
+      renewalSkewMs,
     };
-  }
-
-  #expiresSoon({ expiresAt, clockOffsetMs }: Pick<TokenSessionClaims, 'expiresAt' | 'clockOffsetMs'>): boolean {
-    return expiresAt !== undefined && Date.now() + clockOffsetMs >= expiresAt - EXPIRY_SKEW_MS;
   }
 
   #eventArgs(identity: SessionIdentity): InitializeSessionArgs {
