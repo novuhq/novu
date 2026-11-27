@@ -42,11 +42,15 @@ describe('Authorize a subscriber with the SDK helper - authorize() #novu-v2', ()
     const { status, body } = await authorize(novu, {
       subscriber: { subscriberId: 'sub-ada', firstName: 'Ada', email: 'ada@example.com', data: { team: 'core' } },
       context: { tenant: { id: 'acme', data: { plan: 'pro' } } },
+      scope: ['channels:shared'],
       expiresIn: 600,
     });
 
     expect(status).to.equal(200);
-    const loginExp = (jwt.decode(body.token) as JwtPayload).exp;
+    const login = jwt.decode(body.token) as JwtPayload;
+    const loginExp = login.exp;
+    expect(loginExp! - login.iat!).to.equal(600);
+    expect(login.scope).to.deep.equal(['channels:shared']);
     expect(body.expiresAt).to.equal(new Date(loginExp! * 1000).toISOString());
 
     const res = await session.testAgent.post('/v1/inbox/session').send({ subscriberToken: body.token });
