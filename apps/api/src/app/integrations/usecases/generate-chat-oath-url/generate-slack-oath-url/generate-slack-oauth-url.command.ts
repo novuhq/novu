@@ -52,5 +52,5 @@ export class GenerateSlackOauthUrlCommand extends EnvironmentCommand {
 
   @IsOptional()
   @IsBoolean()
-  readonly sharedConnectionsDenied?: boolean;
+  readonly canManageSharedConnections?: boolean;
 }

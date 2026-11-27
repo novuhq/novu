@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum } from '@novu/shared';
+import { assertCanManageSharedConnections } from '../../../channel-connections/usecases/channel-connection.utils';
 import { ConnectContextVerifier } from './connect-context-verifier.service';
 import { GenerateConnectOauthUrlCommand } from './generate-connect-oauth-url.command';
 import { GenerateMsTeamsOauthUrlCommand } from './generate-msteams-oath-url/generate-msteams-oauth-url.command';
@@ -21,6 +22,10 @@ export class GenerateConnectOauthUrl {
   ) {}
 
   async execute(command: GenerateConnectOauthUrlCommand): Promise<string> {
+    if (command.connectionMode === 'shared') {
+      assertCanManageSharedConnections(command.canManageSharedConnections !== false);
+    }
+
     const integration = await this.getIntegration(command);
 
     await this.connectContextVerifier.verify({
@@ -45,7 +50,7 @@ export class GenerateConnectOauthUrl {
             scope: command.scope,
             connectionMode: command.connectionMode,
             autoLinkUser: command.autoLinkUser,
-            sharedConnectionsDenied: command.sharedConnectionsDenied,
+            canManageSharedConnections: command.canManageSharedConnections,
             mode: 'connect',
           })
         );
@@ -78,7 +83,7 @@ export class GenerateConnectOauthUrl {
             scope: command.scope,
             connectionMode: command.connectionMode,
             autoLinkUser: command.autoLinkUser,
-            sharedConnectionsDenied: command.sharedConnectionsDenied,
+            canManageSharedConnections: command.canManageSharedConnections,
             mode: 'connect',
           })
         );

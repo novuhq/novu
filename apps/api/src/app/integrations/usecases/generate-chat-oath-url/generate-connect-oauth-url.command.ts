@@ -53,8 +53,8 @@ export class GenerateConnectOauthUrlCommand extends EnvironmentCommand {
   @IsBoolean()
   readonly autoLinkUser?: boolean;
 
-  /** Set when the caller may not create or replace a shared connection; travels in the signed OAuth state. */
+  /** Whether the caller may create or replace a shared connection; travels in the signed OAuth state. Absent means allowed. */
   @IsOptional()
   @IsBoolean()
-  readonly sharedConnectionsDenied?: boolean;
+  readonly canManageSharedConnections?: boolean;
 }

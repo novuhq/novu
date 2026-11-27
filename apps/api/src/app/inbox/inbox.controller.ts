@@ -30,8 +30,8 @@ import {
 import type { Request } from 'express';
 import { ListChannelConnectionsQueryDto } from '../channel-connections/dtos/list-channel-connections-query.dto';
 import {
-  assertCanManageSharedConnections,
   canCallerManageChannelConnection,
+  hasSharedConnectionsScope,
 } from '../channel-connections/usecases/channel-connection.utils';
 import { DeleteChannelConnectionCommand } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.command';
 import { DeleteChannelConnection } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.usecase';
@@ -780,20 +780,30 @@ export class InboxController {
       throw new NotFoundException(`Channel connection not found: ${identifier}`);
     }
 
-    if (!channelConnection.subscriberId) {
-      assertCanManageSharedConnections(
-        await this.subscriberTokensRequirement.canManageSharedConnections(subscriberSession)
-      );
-    }
-
     await this.deleteChannelConnectionUsecase.execute(
       DeleteChannelConnectionCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         identifier,
         channelConnectionId: channelConnection._id,
+        canManageSharedConnections: await this.canManageSharedConnections(subscriberSession),
       })
     );
+  }
+
+  /**
+   * A browser session may create, replace or delete a shared (subscriber-less) connection when its
+   * login token carried `channels:shared`, or when the environment does not require tokens.
+   */
+  private async canManageSharedConnections(session: SubscriberSession): Promise<boolean> {
+    if (hasSharedConnectionsScope(session)) {
+      return true;
+    }
+
+    return !(await this.subscriberTokensRequirement.isRequired({
+      organizationId: session._organizationId,
+      environmentId: session._environmentId,
+    }));
   }
 
   private async loadChannelConnectionForSubscriber(
@@ -893,11 +903,6 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Body() body: GenerateConnectOauthUrlRequestDto
   ): Promise<GenerateChatOAuthUrlResponseDto> {
-    const canManageShared = await this.subscriberTokensRequirement.canManageSharedConnections(subscriberSession);
-    if (body.connectionMode === 'shared') {
-      assertCanManageSharedConnections(canManageShared);
-    }
-
     const url = await this.generateConnectOauthUrlUsecase.execute(
       GenerateConnectOauthUrlCommand.create({
         environmentId: subscriberSession._environmentId,
@@ -909,7 +914,7 @@ export class InboxController {
         scope: body.scope,
         connectionMode: body.connectionMode,
         autoLinkUser: body.autoLinkUser,
-        sharedConnectionsDenied: canManageShared ? undefined : true,
+        canManageSharedConnections: await this.canManageSharedConnections(subscriberSession),
       })
     );
 

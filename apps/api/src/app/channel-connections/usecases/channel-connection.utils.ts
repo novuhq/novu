@@ -6,7 +6,16 @@ import {
   normalizeRotatingAuth,
 } from '@novu/application-generic';
 import { ChannelConnectionEntity, IntegrationEntity } from '@novu/dal';
-import { ChatProviderIdEnum, ConnectionMode, ContextPayload, createContextKey, ProvidersIdEnum } from '@novu/shared';
+import {
+  ChatProviderIdEnum,
+  ConnectionMode,
+  ContextPayload,
+  createContextKey,
+  ProvidersIdEnum,
+  SubscriberSessionAuthMethodEnum,
+} from '@novu/shared';
+import type { SubscriberSession } from '../../shared/framework/user.decorator';
+import { SubscriberTokenScopeEnum } from '../../shared/services/novu-tokens.service';
 import { AuthDto } from '../dtos/shared.dto';
 
 /**
@@ -88,6 +97,41 @@ export function assertCanReconnectChannelConnection(
     throw new ConflictException(
       `Channel connection "${connection.identifier}" already exists for a different subscriber or context`
     );
+  }
+}
+
+/** A shared connection belongs to a tenant (or the whole environment), not to one subscriber. */
+export function isSharedConnection(connection: Pick<ChannelConnectionEntity, 'subscriberId'>): boolean {
+  return !connection.subscriberId;
+}
+
+/** Whether a session's login token was minted with the `channels:shared` scope. */
+export function hasSharedConnectionsScope(session: Pick<SubscriberSession, 'authMethod' | 'scope'>): boolean {
+  return (
+    session.authMethod === SubscriberSessionAuthMethodEnum.TOKEN &&
+    Boolean(session.scope?.includes(SubscriberTokenScopeEnum.CHANNELS_SHARED))
+  );
+}
+
+/** The connection an OAuth connect callback writes: the existing one it replaces, or a new one for `subscriberId`. */
+export type WorkspaceTarget = {
+  subscriberId?: string;
+  existingConnection: ChannelConnectionEntity | null;
+};
+
+/**
+ * Guards an OAuth callback that would create a shared connection or replace an existing one.
+ * Run it before the provider code exchange, so a refused flow never gets a provider token.
+ */
+export function assertCanWriteConnection(
+  state: { connectionMode?: ConnectionMode; canManageSharedConnections?: boolean },
+  existingConnection: Pick<ChannelConnectionEntity, 'subscriberId'> | null
+): void {
+  const touchesShared =
+    state.connectionMode === 'shared' || (existingConnection !== null && isSharedConnection(existingConnection));
+
+  if (touchesShared) {
+    assertCanManageSharedConnections(state.canManageSharedConnections !== false);
   }
 }
 

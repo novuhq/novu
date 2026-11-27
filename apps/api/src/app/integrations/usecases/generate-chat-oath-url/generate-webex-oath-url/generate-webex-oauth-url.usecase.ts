@@ -24,8 +24,8 @@ export interface StateData {
   mode?: OAuthMode;
   connectionMode?: ConnectionMode;
   autoLinkUser?: boolean;
-  /** The caller may not create or replace a shared connection. Absent means allowed: server callers and states minted before this field. */
-  sharedConnectionsDenied?: boolean;
+  /** `false` when the caller may not create or replace a shared connection. Absent means allowed: API-key callers and states minted before this field. */
+  canManageSharedConnections?: boolean;
 }
 
 export const WEBEX_DEFAULT_OAUTH_SCOPES = [
@@ -59,17 +59,7 @@ export class GenerateWebexOauthUrl {
       throw new NotFoundException('Webex Messaging integration missing required OAuth credentials (clientId)');
     }
 
-    const secureState = await this.createSecureState(
-      command.integration,
-      command.subscriberId,
-      command.context,
-      command.connectionIdentifier,
-      command.mode,
-      command.connectionMode,
-      command.autoLinkUser,
-      command.contextKeys,
-      command.sharedConnectionsDenied
-    );
+    const secureState = await this.createSecureState(command);
 
     return this.getOAuthUrl(clientId, secureState, this.resolveScopes(command));
   }
@@ -131,18 +121,9 @@ export class GenerateWebexOauthUrl {
     return `${this.WEBEX_OAUTH_URL}${oauthParams.toString()}`;
   }
 
-  private async createSecureState(
-    integration: IntegrationEntity,
-    subscriberId?: string,
-    context?: ContextPayload,
-    connectionIdentifier?: string,
-    mode?: OAuthMode,
-    connectionMode?: ConnectionMode,
-    autoLinkUser?: boolean,
-    contextKeys?: string[],
-    sharedConnectionsDenied?: boolean
-  ): Promise<string> {
-    const { _environmentId, _organizationId, identifier, providerId } = integration;
+  private async createSecureState(command: GenerateWebexOauthUrlCommand): Promise<string> {
+    const { subscriberId, context, connectionIdentifier, mode, connectionMode, autoLinkUser, contextKeys } = command;
+    const { _environmentId, _organizationId, identifier, providerId } = command.integration;
 
     // A session-validated context is carried as trusted keys; drop the raw payload
     // so a mismatched body.context can never ride along in the signed state.
@@ -161,7 +142,7 @@ export class GenerateWebexOauthUrl {
       mode,
       connectionMode,
       autoLinkUser,
-      sharedConnectionsDenied,
+      canManageSharedConnections: command.canManageSharedConnections,
     };
 
     const payload = JSON.stringify(stateData);

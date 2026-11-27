@@ -13,9 +13,30 @@ const CONTEXT = { tenant: 'acme' };
 const CONTEXT_KEYS = ['tenant:acme'];
 const SCOPE_REQUIRED = { statusCode: 403, error: 'channels_shared_scope_required' };
 
+type Team = { id: string; name: string };
+
+/** Each OAuth provider that can hold a shared connection, with its token exchange stubbed at the HTTP boundary. */
+const OAUTH_PROVIDERS = [
+  {
+    providerId: ChatProviderIdEnum.Slack,
+    stubProvider: (team: Team) => ({
+      post: sinon.stub(axios, 'post').resolves({ data: { ok: true, access_token: `xoxb-${team.id}`, team } }),
+    }),
+  },
+  {
+    providerId: ChatProviderIdEnum.WebexMessaging,
+    stubProvider: (team: Team) => {
+      sinon.stub(axios, 'get').resolves({ data: { orgId: team.id, displayName: team.name } });
+
+      return { post: sinon.stub(axios, 'post').resolves({ data: { access_token: `webex-${team.id}` } }) };
+    },
+  },
+] as const;
+
 describe('Shared channel connections need the channels:shared scope - /inbox/channel-connections #novu-v2', () => {
   let session: UserSession;
   let slackIdentifier: string;
+  let webexIdentifier: string;
   let previousFlag: string | undefined;
 
   before(() => {
@@ -45,7 +66,22 @@ describe('Shared channel connections need the channels:shared scope - /inbox/cha
       active: true,
       identifier: slackIdentifier,
     });
+
+    webexIdentifier = `webex-scope-${Date.now()}`;
+    await integrationRepository.create({
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+      providerId: ChatProviderIdEnum.WebexMessaging,
+      channel: ChannelTypeEnum.CHAT,
+      credentials: encryptCredentials({ clientId: 'webex-client-id', secretKey: 'webex-client-secret' }),
+      active: true,
+      identifier: webexIdentifier,
+    });
   });
+
+  function integrationIdentifierFor(providerId: ChatProviderIdEnum) {
+    return providerId === ChatProviderIdEnum.WebexMessaging ? webexIdentifier : slackIdentifier;
+  }
 
   afterEach(() => {
     sinon.restore();
@@ -87,22 +123,32 @@ describe('Shared channel connections need the channels:shared scope - /inbox/cha
       .set('Authorization', `Bearer ${token}`);
   }
 
-  async function completeConnect(token: string, body: Record<string, unknown>, team: { id: string; name: string }) {
-    const res = await connectUrl(token, body);
+  /** Runs the connect URL and the OAuth callback; returns the callback and the provider token-exchange stub. */
+  async function completeConnect(
+    token: string,
+    body: Record<string, unknown>,
+    team: Team,
+    provider: (typeof OAUTH_PROVIDERS)[number] = OAUTH_PROVIDERS[0]
+  ) {
+    const res = await connectUrl(token, {
+      integrationIdentifier: integrationIdentifierFor(provider.providerId),
+      ...body,
+    });
     expect(res.status, JSON.stringify(res.body)).to.equal(201);
     const state = new URL(res.body.data.url).searchParams.get('state');
-    sinon.stub(axios, 'post').resolves({ data: { ok: true, access_token: `xoxb-${team.id}`, team } });
+    const { post: tokenExchange } = provider.stubProvider(team);
+    const callback = await session.testAgent.get('/v1/integrations/chat/oauth/callback').query({ code: 'code', state });
 
-    return session.testAgent.get('/v1/integrations/chat/oauth/callback').query({ code: 'code', state });
+    return { callback, tokenExchange };
   }
 
-  function seedSharedConnection() {
+  function seedSharedConnection(providerId: ChatProviderIdEnum = ChatProviderIdEnum.Slack) {
     return channelConnectionRepository.create({
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
       identifier: `shared-${Date.now()}`,
-      integrationIdentifier: slackIdentifier,
-      providerId: ChatProviderIdEnum.Slack,
+      integrationIdentifier: integrationIdentifierFor(providerId),
+      providerId,
       channel: ChannelTypeEnum.CHAT,
       contextKeys: CONTEXT_KEYS,
       workspace: { id: 'T-ORIGINAL', name: 'Original' },
@@ -132,34 +178,42 @@ describe('Shared channel connections need the channels:shared scope - /inbox/cha
       expect(adminRes.status, JSON.stringify(adminRes.body)).to.equal(201);
     });
 
-    it('should not let a member replace a shared connection by naming it in a subscriber-mode connect', async () => {
-      const shared = await seedSharedConnection();
+    for (const provider of OAUTH_PROVIDERS) {
+      describe(`through the ${provider.providerId} OAuth callback`, () => {
+        it('should not let a member replace a shared connection by naming it in a subscriber-mode connect', async () => {
+          const shared = await seedSharedConnection(provider.providerId);
 
-      const callback = await completeConnect(
-        await member(),
-        { connectionIdentifier: shared.identifier },
-        { id: 'T-MEMBER', name: 'Member' }
-      );
+          const { callback, tokenExchange } = await completeConnect(
+            await member(),
+            { connectionIdentifier: shared.identifier },
+            { id: 'T-MEMBER', name: 'Member' },
+            provider
+          );
 
-      expect(callback.status).to.equal(403);
-      const stored = await findConnection(shared.identifier);
-      expect(stored?.workspace).to.deep.include({ id: 'T-ORIGINAL' });
-      expect(stored?.auth).to.deep.equal(shared.auth);
-    });
+          expect(callback.status).to.equal(403);
+          // Refused before the provider code exchange, so no provider token is ever issued for the member.
+          expect(tokenExchange.called).to.equal(false);
+          const stored = await findConnection(shared.identifier);
+          expect(stored?.workspace).to.deep.include({ id: 'T-ORIGINAL' });
+          expect(stored?.auth).to.deep.equal(shared.auth);
+        });
 
-    it('should let an admin replace a shared connection', async () => {
-      const shared = await seedSharedConnection();
+        it('should let an admin replace a shared connection', async () => {
+          const shared = await seedSharedConnection(provider.providerId);
 
-      const callback = await completeConnect(
-        await admin(),
-        { connectionIdentifier: shared.identifier, connectionMode: 'shared' },
-        { id: 'T-ADMIN', name: 'Admin' }
-      );
+          const { callback } = await completeConnect(
+            await admin(),
+            { connectionIdentifier: shared.identifier, connectionMode: 'shared' },
+            { id: 'T-ADMIN', name: 'Admin' },
+            provider
+          );
 
-      expect(callback.status, callback.text).to.equal(200);
-      const stored = await findConnection(shared.identifier);
-      expect(stored?.workspace).to.deep.include({ id: 'T-ADMIN', name: 'Admin' });
-    });
+          expect(callback.status, callback.text).to.equal(200);
+          const stored = await findConnection(shared.identifier);
+          expect(stored?.workspace).to.deep.include({ id: 'T-ADMIN', name: 'Admin' });
+        });
+      });
+    }
 
     it('should let only an admin delete a shared connection', async () => {
       const shared = await seedSharedConnection();
@@ -178,7 +232,7 @@ describe('Shared channel connections need the channels:shared scope - /inbox/cha
       const token = await member();
       const identifier = `personal-${Date.now()}`;
 
-      const callback = await completeConnect(
+      const { callback } = await completeConnect(
         token,
         { connectionIdentifier: identifier, connectionMode: 'subscriber' },
         { id: 'T-PERSONAL', name: 'Personal' }

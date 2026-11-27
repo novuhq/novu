@@ -51,5 +51,5 @@ export class GenerateWebexOauthUrlCommand extends EnvironmentCommand {
 
   @IsOptional()
   @IsBoolean()
-  readonly sharedConnectionsDenied?: boolean;
+  readonly canManageSharedConnections?: boolean;
 }
