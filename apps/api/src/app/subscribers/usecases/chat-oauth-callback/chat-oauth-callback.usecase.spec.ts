@@ -38,6 +38,7 @@ function buildState(overrides: Record<string, unknown> = {}, signingKey = API_KE
       environmentId: ENVIRONMENT_ID,
       subscriberId: SUBSCRIBER_ID,
       providerId: ChatProviderIdEnum.Slack,
+      subscriberVerified: false,
       timestamp: Date.now(),
       ...overrides,
     },
@@ -127,7 +128,7 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
       buildCommand({
         state: buildState({
           integrationIdentifier: 'victim-slack',
-          hmacHash: createHash(API_KEY, SUBSCRIBER_ID) as string,
+          subscriberVerified: true,
         }),
       })
     );
@@ -146,7 +147,7 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
         integrationIdentifier: 'attacker-supplied',
         state: buildState({
           integrationIdentifier: 'victim-slack',
-          hmacHash: createHash(API_KEY, SUBSCRIBER_ID) as string,
+          subscriberVerified: true,
         }),
       })
     );
@@ -175,18 +176,40 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
     expect(createChannelEndpoint.execute.called).to.equal(false);
   });
 
-  it('completes an HMAC-protected flow using the hash carried in the state', async () => {
-    await usecase.execute(
-      buildCommand({ state: buildState({ hmacHash: createHash(API_KEY, SUBSCRIBER_ID) as string }) })
-    );
+  it('completes an HMAC-protected flow from a state that says the subscriber was verified', async () => {
+    await usecase.execute(buildCommand({ state: buildState({ subscriberVerified: true }) }));
 
     expect(createChannelEndpoint.execute.calledOnce).to.equal(true);
   });
 
-  it('rejects an HMAC-protected flow whose state carries no hash', async () => {
+  it('rejects an HMAC-protected flow whose state does not say the subscriber was verified', async () => {
     await expectRejection(usecase.execute(buildCommand({ state: buildState() })), BadRequestException);
 
     expect(createChannelEndpoint.execute.called).to.equal(false);
+  });
+
+  it('rejects an HMAC-protected flow whose state carries only a hash, as states minted before this change did', async () => {
+    await expectRejection(
+      usecase.execute(buildCommand({ state: buildState({ hmacHash: createHash(API_KEY, SUBSCRIBER_ID) as string }) })),
+      BadRequestException
+    );
+
+    expect(createChannelEndpoint.execute.called).to.equal(false);
+  });
+
+  it('does not take a query hash in place of the verification a signed state lacks', async () => {
+    await expectRejection(
+      usecase.execute(buildCommand({ state: buildState(), hmacHash: createHash(API_KEY, SUBSCRIBER_ID) as string })),
+      BadRequestException
+    );
+
+    expect(createChannelEndpoint.execute.called).to.equal(false);
+  });
+
+  it('completes a stateless HMAC-protected callback with a valid hash in the query', async () => {
+    await usecase.execute(buildCommand({ hmacHash: createHash(API_KEY, SUBSCRIBER_ID) as string }));
+
+    expect(createChannelEndpoint.execute.calledOnce).to.equal(true);
   });
 
   it('still accepts a stateless callback for allowlisted legacy organizations', async () => {

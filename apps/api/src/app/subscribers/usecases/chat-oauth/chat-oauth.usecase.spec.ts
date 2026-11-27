@@ -114,14 +114,27 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
     expect(decoded.integrationIdentifier).to.equal('victim-slack');
   });
 
-  it('carries the validated HMAC hash in the state so it survives the provider round trip', async () => {
+  it('keeps the HMAC hash out of the authorization URL and records that the subscriber was verified', async () => {
     stubIntegration({ clientId: CLIENT_ID, hmac: true });
     const hmacHash = createHash(API_KEY, SUBSCRIBER_ID) as string;
 
     const url = await usecase.execute(buildCommand({ hmacHash }));
     const state = new URL(url).searchParams.get('state') as string;
+    const decodedState = Buffer.from(state, 'base64url').toString();
 
-    expect(decodeLegacyChatOauthState(state, API_KEY).hmacHash).to.equal(hmacHash);
+    expect(url).to.not.include(hmacHash);
+    expect(decodedState).to.not.include(hmacHash);
+    expect(decodeLegacyChatOauthState(state, API_KEY)).to.include({ subscriberVerified: true });
+  });
+
+  it('does not record a verified subscriber when the start checked no hash', async () => {
+    stubHmacRequiredEnabled(false);
+
+    const url = await usecase.execute(buildCommand({ hmacHash: 'unchecked-hash' }));
+    const state = new URL(url).searchParams.get('state') as string;
+
+    expect(decodeLegacyChatOauthState(state, API_KEY)).to.include({ subscriberVerified: false });
+    expect(Buffer.from(state, 'base64url').toString()).to.not.include('unchecked-hash');
   });
 
   it('rejects a wrong HMAC hash when the integration enables HMAC', async () => {

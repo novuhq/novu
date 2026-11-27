@@ -23,7 +23,7 @@ import {
 import { encodeLegacyChatOauthState } from './legacy-chat-oauth-state';
 
 /**
- * @deprecated Use `POST /v1/integrations/chat/oauth`.
+ * @deprecated See {@link LEGACY_CHAT_OAUTH_MIGRATION_HINT}.
  * @see apps/api/src/app/integrations/usecases/generate-chat-oath-url
  */
 @Injectable()
@@ -60,9 +60,10 @@ export class ChatOauth {
     assertLegacyChatOauthIntegrationHmacEnabled(hmacRequiredEnabled, integrationHmacEnabled);
 
     const apiKeys = await this.getEnvironmentApiKeys(command.environmentId);
+    const isHmacRequired = resolveLegacyChatOauthHmacRequired(hmacRequiredEnabled, integrationHmacEnabled);
 
     assertLegacyChatOauthHmac({
-      isHmacRequired: resolveLegacyChatOauthHmacRequired(hmacRequiredEnabled, integrationHmacEnabled),
+      isHmacRequired,
       apiKeys: await this.apiKeyRevocationService.getSigningKeys({
         organizationId: integration._organizationId,
         environmentId: command.environmentId,
@@ -90,7 +91,7 @@ export class ChatOauth {
         subscriberId: command.subscriberId,
         providerId: command.providerId,
         integrationIdentifier: command.integrationIdentifier,
-        hmacHash: command.hmacHash,
+        subscriberVerified: isHmacRequired,
         timestamp: Date.now(),
       },
       apiKeys[0].key

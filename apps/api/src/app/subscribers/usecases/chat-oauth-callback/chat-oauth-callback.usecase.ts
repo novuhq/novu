@@ -35,19 +35,13 @@ import {
 import { ChatOauthCallbackCommand } from './chat-oauth-callback.command';
 import { ChatOauthCallbackResult, ResponseTypeEnum } from './chat-oauth-callback.result';
 
-/**
- * Routing fields the callback acts on. When the provider echoes back a `state`
- * minted by `ChatOauth`, they come from that signed payload; otherwise they fall
- * back to the query string, which is the pre-`state` behavior kept alive for
- * authorization URLs that were built by hand rather than by our own endpoint.
- */
 type ResolvedCallbackRouting = {
   environmentId: string;
   subscriberId: string;
   providerId: ChatProviderIdEnum;
   integrationIdentifier?: string;
+  subscriberVerified: boolean;
   hmacHash?: string;
-  isStateVerified: boolean;
 };
 
 /**
@@ -93,7 +87,8 @@ export class ChatOauthCallback {
     const { _organizationId, apiKeys } = await this.getEnvironment(routing.environmentId);
 
     assertLegacyChatOauthHmac({
-      isHmacRequired: resolveLegacyChatOauthHmacRequired(hmacRequiredEnabled, integrationHmacEnabled),
+      isHmacRequired:
+        !routing.subscriberVerified && resolveLegacyChatOauthHmacRequired(hmacRequiredEnabled, integrationHmacEnabled),
       apiKeys: await this.apiKeyRevocationService.getSigningKeys({
         organizationId: _organizationId,
         environmentId: routing.environmentId,
@@ -134,8 +129,8 @@ export class ChatOauthCallback {
         subscriberId: command.subscriberId,
         providerId: command.providerId,
         integrationIdentifier: command.integrationIdentifier,
+        subscriberVerified: false,
         hmacHash: command.hmacHash,
-        isStateVerified: false,
       };
     }
 
@@ -152,8 +147,7 @@ export class ChatOauthCallback {
       subscriberId: state.subscriberId,
       providerId: state.providerId,
       integrationIdentifier: state.integrationIdentifier,
-      hmacHash: state.hmacHash,
-      isStateVerified: true,
+      subscriberVerified: state.subscriberVerified === true,
     };
   }
 

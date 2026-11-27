@@ -19,6 +19,7 @@ function buildState(overrides: Partial<LegacyChatOauthStateData> = {}): LegacyCh
     subscriberId: 'victim-subscriber',
     providerId: ChatProviderIdEnum.Slack,
     integrationIdentifier: 'victim-slack',
+    subscriberVerified: false,
     timestamp: Date.now(),
     ...overrides,
   };
@@ -30,7 +31,7 @@ describe('legacy chat OAuth state', () => {
   });
 
   it('round-trips the signed payload', () => {
-    const data = buildState({ hmacHash: 'deadbeef' });
+    const data = buildState({ subscriberVerified: true });
 
     const decoded = decodeLegacyChatOauthState(encodeLegacyChatOauthState(data, VICTIM_API_KEY), VICTIM_API_KEY);
 
