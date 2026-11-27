@@ -45,7 +45,7 @@ const isAllowedVariable = (variable: { name: string }) => getAccessRuleFieldIssu
 const toFormValues = ({ polarity, query }: AccessRuleDraft) => ({ polarity, query: { ...query } });
 
 const CONTEXT_PLATFORMS_WARNING =
-  'Context is only known on Slack, Teams, Telegram and web chat. On WhatsApp, SMS, iMessage and email, conditions on context never match.';
+  'Context is only set on Slack, Teams, Telegram and web chat. On WhatsApp, SMS, iMessage and email it is missing, so "equals" never matches there and "does not equal" always does. Add a channel.platform condition if that matters.';
 
 function StartingPoints({ onPick }: { onPick: (point: (typeof ACCESS_RULE_STARTING_POINTS)[number]) => void }) {
   return (

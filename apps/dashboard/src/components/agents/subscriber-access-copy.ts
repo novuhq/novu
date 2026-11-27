@@ -14,7 +14,7 @@ export function getSubscriberAccess(agent: AgentResponse): AgentSubscriberAccess
 export const SUBSCRIBER_ACCESS_MODES: Record<AgentSubscriberAccess, { label: string; description: string }> = {
   open: {
     label: 'Open',
-    description: 'Anyone can message. Unknown senders become subscribers.',
+    description: 'Anyone can message. Managed agents create a subscriber for unknown senders; custom code gets none.',
   },
   restricted: {
     label: 'Restricted',
