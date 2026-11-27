@@ -103,4 +103,14 @@ describe('opening a rule written through the API', () => {
     expect(opened).not.toBeNull();
     expect(toAccessRule(opened as RuleGroupType, subscriberVariablesOnly)).toEqual(saved);
   });
+
+  it.each([
+    { name: 'field', change: { field: 'subscriber.email' }, saved: { '==': [email, '5'] } },
+    { name: 'operator', change: { operator: 'in' }, saved: { in: [seats, ['5']] } },
+  ])('types the value afresh when the $name of an opened condition changes', ({ change, saved }) => {
+    const opened = parseAccessRule({ '==': [seats, 5] }) as RuleGroupType;
+    const edited = { ...opened, rules: [{ ...opened.rules[0], ...change }] };
+
+    expect(toAccessRule(edited, subscriberVariablesOnly)).toEqual({ and: [saved] });
+  });
 });

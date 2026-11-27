@@ -69,7 +69,11 @@ function withStoredValues(group: RuleGroupTypeAny): RuleGroupTypeAny {
       if (isRuleGroup(rule)) return withStoredValues(rule);
       if (!['string', 'number', 'boolean'].includes(typeof rule.value)) return rule;
 
-      return { ...rule, value: String(rule.value), storedValue: rule.value };
+      return {
+        ...rule,
+        value: String(rule.value),
+        stored: { field: rule.field, operator: rule.operator, value: rule.value },
+      };
     }),
   } as RuleGroupTypeAny;
 }
@@ -80,8 +84,8 @@ export function toAccessRule(query: RuleGroupType, variables: EnhancedConditionV
   const logic = formatQuery(query, {
     format: 'jsonlogic',
     ruleProcessor: (rule, options) => {
-      if ('storedValue' in rule && rule.value === String(rule.storedValue)) {
-        return customRuleProcessor({ ...rule, value: rule.storedValue }, { ...options, parseNumbers: false });
+      if (isUnchanged(rule)) {
+        return customRuleProcessor({ ...rule, value: rule.stored.value }, { ...options, parseNumbers: false });
       }
 
       const dataType = dataTypes.get(rule.field);
@@ -91,6 +95,19 @@ export function toAccessRule(query: RuleGroupType, variables: EnhancedConditionV
   });
 
   return logic && typeof logic === 'object' ? (logic as AgentAccessRule) : null;
+}
+
+type StoredCondition = { field: string; operator: string; value: string | number | boolean };
+
+function isUnchanged(rule: RuleType): rule is RuleType & { stored: StoredCondition } {
+  const stored = (rule as { stored?: StoredCondition }).stored;
+
+  return (
+    stored !== undefined &&
+    stored.field === rule.field &&
+    stored.operator === rule.operator &&
+    String(stored.value) === rule.value
+  );
 }
 
 function withBooleanValue(rule: RuleType, dataType: ConditionFieldDataType | undefined): RuleType {
