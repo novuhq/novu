@@ -141,6 +141,21 @@ export async function getDashboardInboxHashes({
   return data;
 }
 
+export async function createDashboardInboxToken({
+  environment,
+  signal,
+}: {
+  environment: IEnvironment;
+  signal?: AbortSignal;
+}): Promise<string> {
+  const { data } = await post<{ data: { token: string; expiresAt: string } }>(
+    `/environments/me/dashboard-inbox-token`,
+    { environment, signal }
+  );
+
+  return data.token;
+}
+
 export async function getTags({ environment }: { environment: IEnvironment }): Promise<ITagsResponse> {
   const { data } = await getV2<{ data: ITagsResponse }>(`/environments/${environment._id}/tags`);
   return data;

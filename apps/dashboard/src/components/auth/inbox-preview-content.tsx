@@ -1,6 +1,6 @@
-import { useUser } from '@clerk/react';
 import { Inbox, InboxContent, InboxProps } from '@novu/react';
 import { SOCKET_OPTIONS } from '@/config';
+import { useDashboardInboxIdentity } from '@/hooks/use-dashboard-inbox-identity';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
 import { useAuth } from '../../context/auth/hooks';
 import { useFetchEnvironments } from '../../context/environment/hooks';
@@ -22,17 +22,17 @@ const defaultTabs = [
 
 export function InboxPreviewContent() {
   const auth = useAuth();
-  const { user } = useUser();
   const { environments } = useFetchEnvironments({ organizationId: auth?.currentOrganization?._id });
-  const currentEnvironment = environments?.find((env) => !env._parentId);
+  const developmentEnvironment = environments?.find((env) => !env._parentId);
+  const inboxIdentity = useDashboardInboxIdentity(developmentEnvironment);
 
-  if (!currentEnvironment || !user) {
+  if (!developmentEnvironment || inboxIdentity.status !== 'ready') {
     return null;
   }
 
   const configuration: InboxProps = {
-    applicationIdentifier: currentEnvironment?.identifier,
-    subscriberId: user?.externalId as string,
+    ...inboxIdentity.identity,
+    applicationIdentifier: developmentEnvironment.identifier,
     backendUrl: apiHostnameManager.getHostname(),
     socketUrl: apiHostnameManager.getWebSocketHostname(),
     socketOptions: SOCKET_OPTIONS,
@@ -72,7 +72,7 @@ export function InboxPreviewContent() {
 
   return (
     <div className="hide-inbox-footer nv-no-scrollbar mt-1 h-full w-full overflow-y-auto overflow-x-hidden">
-      <Inbox {...configuration}>
+      <Inbox key={inboxIdentity.remountKey} {...configuration}>
         <InboxContent />
       </Inbox>
     </div>

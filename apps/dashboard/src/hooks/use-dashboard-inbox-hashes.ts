@@ -6,7 +6,6 @@ import { requireEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 
 /**
- * HMAC hashes for the Inbox and web chat sessions the dashboard opens in `environment`.
  * `isSettled` is true after success or failure: without hashes a session still works while HMAC is off.
  */
 export function useDashboardInboxHashes(environment: IEnvironment | undefined, { enabled = true } = {}) {
