@@ -16,7 +16,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { FeatureFlagsService } from '@novu/application-generic';
-import { DirectionEnum } from '@novu/shared';
+import { DirectionEnum, SubscriberSessionAuthMethodEnum } from '@novu/shared';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import {
   SubscriberSession,
@@ -183,6 +183,7 @@ export class WebChatController {
         contextKeys: subscriberSession.contextKeys ?? [],
         conversationIdentifier: identifier,
         agentIdentifier: body?.agentId?.trim() || undefined,
+        contextVerified: subscriberSession.authMethod === SubscriberSessionAuthMethodEnum.TOKEN,
       })
     );
   }

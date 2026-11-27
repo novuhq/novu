@@ -106,6 +106,7 @@ describe('CancelConversationTurn', () => {
       organizationId: ORG_ID,
       conversationId: CONVERSATION_ID,
       contextKeys: ['tenant:org-x'],
+      contextVerified: true,
     });
 
   it('marks the active turn aborted and finishes its open run as aborted under the run finish identifier', async () => {
@@ -151,7 +152,7 @@ describe('CancelConversationTurn', () => {
     expect(conversationService.persistRunLifecycle.firstCall.args[0].runId).to.equal(`stopped_${TURN.turnId}`);
   });
 
-  it('stops typing and sends onAbort with the stopped turn and the session context', async () => {
+  it('stops typing and sends onAbort with the stopped turn and the session context, keeping its signed trust', async () => {
     const { usecase, bridgeExecutor, outboundGateway, connectionContextResolver } = setup();
 
     await usecase.execute(command());
@@ -159,7 +160,10 @@ describe('CancelConversationTurn', () => {
     expect(
       outboundGateway.stopTypingInConversation.calledOnceWith('agent-db-1', 'web-chat-integration', 'thread-1')
     ).to.equal(true);
-    expect(connectionContextResolver.resolve.firstCall.args[1]).to.deep.equal({ contextKeys: ['tenant:org-x'] });
+    expect(connectionContextResolver.resolve.firstCall.args[1]).to.deep.equal({
+      contextKeys: ['tenant:org-x'],
+      contextVerified: true,
+    });
     const params = bridgeExecutor.execute.firstCall.args[0];
     expect(params.event).to.equal(AgentEventEnum.ON_ABORT);
     expect(params.abortedTurn).to.deep.equal(TURN);

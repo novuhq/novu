@@ -1,4 +1,4 @@
-import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
 export class CancelConversationTurnCommand extends EnvironmentCommand {
@@ -12,4 +12,8 @@ export class CancelConversationTurnCommand extends EnvironmentCommand {
   @IsArray()
   @IsString({ each: true })
   contextKeys?: string[];
+
+  /** The session's context was signed (a subscriber token session), so it resolves without in-app HMAC. */
+  @IsBoolean()
+  contextVerified: boolean;
 }
