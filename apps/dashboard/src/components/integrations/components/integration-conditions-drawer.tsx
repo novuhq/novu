@@ -5,6 +5,11 @@ import { RiArrowRightSLine, RiGuideFill, RiInputField } from 'react-icons/ri';
 import { formatQuery, RQBJsonLogic, RuleGroupType } from 'react-querybuilder';
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
 import { ConditionsEditor } from '@/components/conditions-editor/conditions-editor';
+import {
+  createEmptyConditionsQuery,
+  mergeConditionVariables,
+  toConditionField,
+} from '@/components/conditions-editor/conditions-variables';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Button } from '@/components/primitives/button';
 import { Form, FormField } from '@/components/primitives/form/form';
@@ -18,10 +23,8 @@ import { cn } from '@/utils/ui';
 import { IntegrationFormData } from '../types';
 import {
   countLegacyIntegrationConditions,
-  createEmptyConditionsQuery,
   INTEGRATION_CONDITION_VARIABLES,
   isAllowedIntegrationConditionVariable,
-  mergeIntegrationConditionVariables,
 } from '../utils/integration-conditions';
 import { IntegrationConditionValueInput } from './integration-condition-value-input';
 
@@ -67,16 +70,10 @@ export function IntegrationConditionsDrawer({
   const [isOpen, setIsOpen] = useState(false);
   const contextTypeVariables = useContextTypeVariables();
   const integrationConditionVariables = useMemo(() => {
-    return mergeIntegrationConditionVariables([...INTEGRATION_CONDITION_VARIABLES, ...contextTypeVariables]);
+    return mergeConditionVariables([...INTEGRATION_CONDITION_VARIABLES, ...contextTypeVariables]);
   }, [contextTypeVariables]);
   const integrationConditionFields = useMemo(
-    () =>
-      integrationConditionVariables.map((variable) => ({
-        name: variable.name,
-        label: variable.displayLabel || variable.name,
-        value: variable.name,
-        dataType: variable.dataType,
-      })),
+    () => integrationConditionVariables.map(toConditionField),
     [integrationConditionVariables]
   );
   const rulesRef = useDataRef(rules);

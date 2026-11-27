@@ -8,6 +8,7 @@ import { AddGroupAction } from '@/components/conditions-editor/add-group-action'
 import { CombinatorSelector } from '@/components/conditions-editor/combinator-selector';
 import { increasesGroupBeyondLimit } from '@/components/conditions-editor/conditions-editor-policy';
 import { ConditionsEditorProvider } from '@/components/conditions-editor/conditions-editor-provider';
+import { toConditionField } from '@/components/conditions-editor/conditions-variables';
 import { FieldSelector } from '@/components/conditions-editor/field-selector';
 import {
   getHelpTextForField,
@@ -98,19 +99,7 @@ function InternalConditionsEditor({
   const fieldDataMap = useMemo(() => {
     if (!enhancedVariables) return new Map();
 
-    return new Map(
-      enhancedVariables.map((variable) => [
-        variable.name,
-        {
-          name: variable.name,
-          label: variable.displayLabel || variable.name,
-          value: variable.name,
-          dataType: variable.dataType,
-          inputType: variable.inputType,
-          format: variable.format,
-        },
-      ])
-    );
+    return new Map(enhancedVariables.map((variable) => [variable.name, toConditionField(variable)]));
   }, [enhancedVariables]);
 
   const getOperators = useCallback(

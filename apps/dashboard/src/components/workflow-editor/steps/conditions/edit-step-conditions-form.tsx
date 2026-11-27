@@ -2,11 +2,12 @@ import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { ContentIssueEnum, EnvironmentTypeEnum, type StepUpdateDto } from '@novu/shared';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
-import { formatQuery, generateID, RQBJsonLogic, RuleGroupType } from 'react-querybuilder';
+import { formatQuery, RQBJsonLogic, RuleGroupType } from 'react-querybuilder';
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
 
 import { ConditionsEditor } from '@/components/conditions-editor/conditions-editor';
 import { getConditionsSchema } from '@/components/conditions-editor/conditions-schema';
+import { createEmptyConditionsQuery, toConditionField } from '@/components/conditions-editor/conditions-variables';
 import { Form, FormField } from '@/components/primitives/form/form';
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import { updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
@@ -65,7 +66,7 @@ export const EditStepConditionsForm = () => {
             generateIDs: true,
             ...parseJsonLogicOptions,
           })
-        : { id: generateID(), combinator: 'and', rules: [] },
+        : createEmptyConditionsQuery(),
     [hasConditions, step]
   );
 
@@ -95,14 +96,7 @@ export const EditStepConditionsForm = () => {
 
   const filteredEnhancedVariables = enhancedVariables.filter(isVariableAllowedInConditions);
 
-  const fields = filteredEnhancedVariables.map((enhancedVariable: EnhancedLiquidVariable) => ({
-    name: enhancedVariable.name,
-    label: enhancedVariable.displayLabel || enhancedVariable.name,
-    value: enhancedVariable.name,
-    dataType: enhancedVariable.dataType,
-    inputType: enhancedVariable.inputType,
-    format: enhancedVariable.format,
-  }));
+  const fields = filteredEnhancedVariables.map(toConditionField);
 
   const form = useForm({
     mode: 'onSubmit',
@@ -111,7 +105,7 @@ export const EditStepConditionsForm = () => {
         getFieldIssue: (field) =>
           isRuleFieldAllowed(
             field,
-            fields.map(({ value }) => value),
+            fields.map(({ name }) => name),
             isAllowedVariable
           )
             ? null

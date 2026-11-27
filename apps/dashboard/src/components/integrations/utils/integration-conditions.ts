@@ -3,7 +3,6 @@ import {
   INTEGRATION_CONDITION_NAMESPACES,
   INTEGRATION_CONDITION_VARIABLES as INTEGRATION_CONDITION_VARIABLE_NAMES,
 } from '@novu/shared';
-import { generateID, RuleGroupType } from 'react-querybuilder';
 import type { EnhancedConditionVariable } from '@/components/conditions-editor/types';
 import { type FieldDataType, type IsAllowedVariable } from '@/utils/parseStepVariables';
 
@@ -34,33 +33,6 @@ export const INTEGRATION_CONDITION_VARIABLES: EnhancedConditionVariable[] = INTE
   })
 );
 
-export function mergeIntegrationConditionVariables(
-  variables: EnhancedConditionVariable[]
-): EnhancedConditionVariable[] {
-  const variablesByName = new Map<string, EnhancedConditionVariable>();
-
-  for (const variable of variables) {
-    const existingVariable = variablesByName.get(variable.name);
-
-    if (!existingVariable) {
-      variablesByName.set(variable.name, variable);
-      continue;
-    }
-
-    if (existingVariable.dataType !== variable.dataType) {
-      variablesByName.set(variable.name, {
-        ...existingVariable,
-        displayLabel: `${variable.name} (mixed types)`,
-        dataType: 'mixed',
-        format: undefined,
-        inputType: undefined,
-      });
-    }
-  }
-
-  return Array.from(variablesByName.values());
-}
-
 export const isAllowedIntegrationConditionVariable: IsAllowedVariable = (variable) => {
   if ((INTEGRATION_CONDITION_VARIABLE_NAMES as readonly string[]).includes(variable.name)) {
     return true;
@@ -77,8 +49,4 @@ export function countLegacyIntegrationConditions(conditions?: IMessageFilter[]):
   }
 
   return conditions.reduce((sum, group) => sum + (group.children?.length ?? 0), 0);
-}
-
-export function createEmptyConditionsQuery(): RuleGroupType {
-  return { id: generateID(), combinator: 'and', rules: [] };
 }

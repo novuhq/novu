@@ -7,7 +7,6 @@ import type { RuleGroupType } from 'react-querybuilder';
 import { type AgentResponse, getAgentDetailQueryKey, updateAgent } from '@/api/agents';
 import {
   ACCESS_RULE_SUBSCRIBER_VARIABLES,
-  createEmptyAccessRuleQuery,
   getAccessRuleFieldIssue,
   getAccessRuleOperatorIssue,
   hasConditions,
@@ -17,7 +16,11 @@ import {
 import { SUBSCRIBER_ACCESS_MODES } from '@/components/agents/subscriber-access-copy';
 import { ConditionsEditor } from '@/components/conditions-editor/conditions-editor';
 import { getConditionsSchema } from '@/components/conditions-editor/conditions-schema';
-import { mergeIntegrationConditionVariables } from '@/components/integrations/utils/integration-conditions';
+import {
+  createEmptyConditionsQuery,
+  mergeConditionVariables,
+  toConditionField,
+} from '@/components/conditions-editor/conditions-variables';
 import { Button } from '@/components/primitives/button';
 import { Form, FormField } from '@/components/primitives/form/form';
 import { Panel, PanelContent, PanelHeader } from '@/components/primitives/panel';
@@ -50,19 +53,10 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
   const { currentEnvironment } = useEnvironment();
   const contextTypeVariables = useContextTypeVariables();
   const variables = useMemo(
-    () => mergeIntegrationConditionVariables([...ACCESS_RULE_SUBSCRIBER_VARIABLES, ...contextTypeVariables]),
+    () => mergeConditionVariables([...ACCESS_RULE_SUBSCRIBER_VARIABLES, ...contextTypeVariables]),
     [contextTypeVariables]
   );
-  const fields = useMemo(
-    () =>
-      variables.map((variable) => ({
-        name: variable.name,
-        label: variable.displayLabel || variable.name,
-        value: variable.name,
-        dataType: variable.dataType,
-      })),
-    [variables]
-  );
+  const fields = useMemo(() => variables.map(toConditionField), [variables]);
 
   const savedRule = agent.behavior?.accessRule;
   const [savedQuery] = useState(() => parseAccessRule(savedRule));
@@ -71,7 +65,7 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
   const form = useForm({
     mode: 'onSubmit',
     resolver: standardSchemaResolver(conditionsSchema),
-    defaultValues: { query: { ...(savedQuery ?? createEmptyAccessRuleQuery()) } },
+    defaultValues: { query: { ...(savedQuery ?? createEmptyConditionsQuery()) } },
   });
   const queryError = form.formState.errors.query?.message;
   const emptyRuleError = typeof queryError === 'string' ? queryError : undefined;

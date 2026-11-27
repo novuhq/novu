@@ -2,7 +2,6 @@ import { ACCESS_RULE_SUBSCRIBER_FIELDS, isAccessRuleField } from '@novu/shared';
 import isEqual from 'lodash.isequal';
 import {
   formatQuery,
-  generateID,
   isRuleGroup,
   type RQBJsonLogic,
   type RuleGroupType,
@@ -11,6 +10,7 @@ import {
 } from 'react-querybuilder';
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
 import { isArrayItemOperator } from '@/components/conditions-editor/array-item-condition';
+import { createEmptyConditionsQuery } from '@/components/conditions-editor/conditions-variables';
 import { isRelativeDateOperator } from '@/components/conditions-editor/field-type-operators';
 import type { ConditionFieldDataType, EnhancedConditionVariable } from '@/components/conditions-editor/types';
 import { customRuleProcessor, parseJsonLogicOptions } from '@/utils/conditions';
@@ -33,20 +33,13 @@ export function getAccessRuleOperatorIssue(operator: string): string | null {
   return isRelativeDateOperator(operator) || isArrayItemOperator(operator) ? OPERATOR_ISSUE : null;
 }
 
-export function createEmptyAccessRuleQuery(): RuleGroupType {
-  return { id: generateID(), combinator: 'and', rules: [] };
-}
-
-/**
- * Returns null when the editor can't show the rule as stored, so saving it from the editor would change it.
- */
 export function hasConditions(group: RuleGroupTypeAny): boolean {
   return group.rules.some((rule) => typeof rule !== 'string' && (!isRuleGroup(rule) || hasConditions(rule)));
 }
 
 export function parseAccessRule(rule: AgentAccessRule | undefined): RuleGroupType | null {
   if (!rule) {
-    return createEmptyAccessRuleQuery();
+    return createEmptyConditionsQuery();
   }
 
   const query = withStoredValues(
