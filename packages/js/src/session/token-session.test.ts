@@ -484,10 +484,9 @@ describe('when the token source fails', () => {
     backend.advanceTime(MINUTE_MS);
     await novu.notifications.list();
 
-    const tokenWarnings = warn.mock.calls.filter(([message]: unknown[]) => String(message).includes(TOKEN_ENDPOINT));
+    const expected = `[Novu] The token endpoint ${TOKEN_ENDPOINT} answered 401. The Inbox stays signed out until getting a token succeeds.`;
     expect(backend.state.tokenRequests).toHaveLength(2);
-    expect(tokenWarnings).toHaveLength(1);
-    expect(String(tokenWarnings[0][0])).toContain('401');
+    expect(warn.mock.calls.filter(([message]: unknown[]) => message === expected)).toHaveLength(1);
   });
 
   it('signs in on the first call after the cooldown when the first token fetch failed', async () => {
