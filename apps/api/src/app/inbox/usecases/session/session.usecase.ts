@@ -538,12 +538,7 @@ export class Session {
 
     const contexts =
       auth.method === SubscriberSessionAuthMethodEnum.TOKEN
-        ? await this.contextRepository.upsertContextsFromPayload(
-            environmentId,
-            organizationId,
-            context,
-            new Date(auth.issuedAt * 1000)
-          )
+        ? await this.contextRepository.upsertContextsFromPayload(environmentId, organizationId, context, auth.issuedAt)
         : await this.contextRepository.findOrCreateContextsFromPayload(environmentId, organizationId, context);
 
     return contexts.map((context) => context.key);

@@ -518,6 +518,39 @@ describe('Agent access rule #novu-v2', () => {
         await waitForBridgeCalls(0);
       });
 
+      it('stores the data of a token issued in the same second as the last update', async () => {
+        const tenantId = `token-same-second-${Date.now()}`;
+        const minted = await ctx.session.testAgent
+          .post(`/v2/subscribers/${ctx.session.subscriberId}/tokens`)
+          .set('Authorization', `ApiKey ${ctx.session.apiKey}`)
+          .send({ context: { tenant: { id: tenantId, data: { plan: 'pro' } } } });
+        expect(minted.status, JSON.stringify(minted.body)).to.equal(201);
+        const { iat } = JSON.parse(Buffer.from(minted.body.data.token.split('.')[1], 'base64url').toString());
+        const contextRepository = new ContextRepository();
+        const scope = { _environmentId: ctx.session.environment._id, _organizationId: ctx.session.organization._id };
+        await contextRepository.create({
+          ...scope,
+          type: 'tenant',
+          id: tenantId,
+          key: `tenant:${tenantId}`,
+          data: { plan: 'free' },
+        });
+        await contextRepository.update(
+          { ...scope, type: 'tenant', id: tenantId },
+          { $set: { updatedAt: new Date(iat * 1000 + 500) } },
+          { timestamps: false }
+        );
+
+        const res = await ctx.session.testAgent.post('/v1/inbox/session').send({
+          applicationIdentifier: ctx.session.environment.identifier,
+          subscriberToken: minted.body.data.token,
+        });
+        expect(res.status, JSON.stringify(res.body)).to.equal(201);
+
+        const stored = await ctx.session.testAgent.get(`/v2/contexts/tenant/${tenantId}`);
+        expect(stored.body.data.data).to.deep.equal({ plan: 'pro' });
+      });
+
       it("refuses a session from another environment on the agent's webhook", async () => {
         const integrationIdentifier = await linkWebChat();
         const webhook = `/v1/agents/${ctx.agentId}/webhook/${integrationIdentifier}`;
