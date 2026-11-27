@@ -569,7 +569,11 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         return {
           web_chat: createWebChatAdapter({
             userName: config.agentName,
-            verifySession: (request) => this.webChatSessionVerifier.verifySession(request),
+            verifySession: (request) =>
+              this.webChatSessionVerifier.verifySessionIn(request, {
+                environmentId: cached.config.environmentId,
+                organizationId: cached.config.organizationId,
+              }),
             authorizeResume: ({ conversationId, session }) =>
               this.webChatResumeAuthorization.canResume({ conversationId, session, agentId }),
             checkAcceptLimits: ({ isNewThread, conversationId }) =>

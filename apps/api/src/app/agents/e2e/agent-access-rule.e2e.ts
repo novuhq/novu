@@ -9,7 +9,7 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, type ContextPayload, InAppProviderIdEnum } from '@novu/shared';
-import { testServer } from '@novu/testing';
+import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentConfigResolver } from '../channels/agent-config-resolver.service';
@@ -218,6 +218,8 @@ describe('Agent access rule #novu-v2', () => {
         providerId: ChatProviderIdEnum.NovuWebChat,
       });
       expect(res.status).to.equal(201);
+
+      return res.body.data.integration.identifier as string;
     }
 
     async function enforceInboxHmac() {
@@ -363,15 +365,19 @@ describe('Agent access rule #novu-v2', () => {
         );
       }
 
-      async function openTokenSession(subscriberId: string, body: Record<string, unknown> = {}) {
-        const minted = await ctx.session.testAgent
+      async function openTokenSession(
+        subscriberId: string,
+        body: Record<string, unknown> = {},
+        owner: UserSession = ctx.session
+      ) {
+        const minted = await owner.testAgent
           .post(`/v2/subscribers/${subscriberId}/tokens`)
-          .set('Authorization', `ApiKey ${ctx.session.apiKey}`)
+          .set('Authorization', `ApiKey ${owner.apiKey}`)
           .send(body);
         expect(minted.status, JSON.stringify(minted.body)).to.equal(201);
 
-        const res = await ctx.session.testAgent.post('/v1/inbox/session').send({
-          applicationIdentifier: ctx.session.environment.identifier,
+        const res = await owner.testAgent.post('/v1/inbox/session').send({
+          applicationIdentifier: owner.environment.identifier,
           subscriberToken: minted.body.data.token,
         });
         expect(res.status, JSON.stringify(res.body)).to.equal(201);
@@ -451,6 +457,28 @@ describe('Agent access rule #novu-v2', () => {
         const flagOff = await post(token, { text: 'Hello with the flag off', conversationIdentifier: identifier });
         expect(flagOff.status, JSON.stringify(flagOff.body)).to.equal(400);
         await waitForBridgeCalls(2);
+      });
+
+      it("refuses a session from another environment on the agent's webhook", async () => {
+        const integrationIdentifier = await linkWebChat();
+        const webhook = `/v1/agents/${ctx.agentId}/webhook/${integrationIdentifier}`;
+        const other = new UserSession();
+        await other.initialize();
+        const foreign = await openTokenSession(other.subscriberId, {}, other);
+
+        const refused = await ctx.session.testAgent
+          .post(webhook)
+          .set('Authorization', `Bearer ${foreign}`)
+          .send({ text: 'Hello from another environment' });
+        expect(refused.status, JSON.stringify(refused.body)).to.equal(401);
+
+        const own = await ctx.session.testAgent
+          .post(webhook)
+          .set('Authorization', `Bearer ${await openTokenSession(ctx.session.subscriberId)}`)
+          .send({ text: 'Hello from this environment' });
+        expect(own.status, JSON.stringify(own.body)).to.equal(201);
+        await waitForBridgeCalls(1);
+        expect(bridgeCalls[0].subscriber?.subscriberId).to.equal(ctx.session.subscriberId);
       });
 
       it('ignores contextVerified sent by the client of an unsigned session', async () => {

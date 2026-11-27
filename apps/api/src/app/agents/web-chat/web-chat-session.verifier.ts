@@ -9,6 +9,20 @@ import { AuthService } from '../../auth/services/auth.service';
 export class WebChatSessionVerifier {
   constructor(private readonly authService: AuthService) {}
 
+  /** For an agent's webhook: the session must belong to the agent's environment and organization. */
+  async verifySessionIn(
+    request: Request,
+    scope: { environmentId: string; organizationId: string }
+  ): Promise<WebChatSession | null> {
+    const session = await this.verifySession(request);
+    if (session?.environmentId !== scope.environmentId || session.organizationId !== scope.organizationId) {
+      return null;
+    }
+
+    return session;
+  }
+
+  /** Any valid session; the caller binds it to the session's own environment. */
   async verifySession(request: Request): Promise<WebChatSession | null> {
     const header = request.headers.get('authorization');
     if (!header?.toLowerCase().startsWith('bearer ')) {
