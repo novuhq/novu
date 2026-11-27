@@ -5,11 +5,12 @@ import {
   ContextRepository,
   ConversationActivitySenderTypeEnum,
   ConversationActivityTypeEnum,
+  type EnvironmentEntity,
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, type ContextPayload, InAppProviderIdEnum } from '@novu/shared';
-import { testServer, UserSession } from '@novu/testing';
+import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentConfigResolver } from '../channels/agent-config-resolver.service';
@@ -368,16 +369,16 @@ describe('Agent access rule #novu-v2', () => {
       async function openTokenSession(
         subscriberId: string,
         body: Record<string, unknown> = {},
-        owner: UserSession = ctx.session
+        environment: EnvironmentEntity = ctx.session.environment
       ) {
-        const minted = await owner.testAgent
+        const minted = await ctx.session.testAgent
           .post(`/v2/subscribers/${subscriberId}/tokens`)
-          .set('Authorization', `ApiKey ${owner.apiKey}`)
+          .set('Authorization', `ApiKey ${environment.apiKeys[0].key}`)
           .send(body);
         expect(minted.status, JSON.stringify(minted.body)).to.equal(201);
 
-        const res = await owner.testAgent.post('/v1/inbox/session').send({
-          applicationIdentifier: owner.environment.identifier,
+        const res = await ctx.session.testAgent.post('/v1/inbox/session').send({
+          applicationIdentifier: environment.identifier,
           subscriberToken: minted.body.data.token,
         });
         expect(res.status, JSON.stringify(res.body)).to.equal(201);
@@ -486,9 +487,9 @@ describe('Agent access rule #novu-v2', () => {
       it("refuses a session from another environment on the agent's webhook", async () => {
         const integrationIdentifier = await linkWebChat();
         const webhook = `/v1/agents/${ctx.agentId}/webhook/${integrationIdentifier}`;
-        const other = new UserSession();
-        await other.initialize();
-        const foreign = await openTokenSession(other.subscriberId, {}, other);
+        const otherEnvironment = await ctx.session.createEnvironment('Other');
+        await ctx.session.createIntegrations([otherEnvironment]);
+        const foreign = await openTokenSession(ctx.session.subscriberId, {}, otherEnvironment);
 
         const refused = await ctx.session.testAgent
           .post(webhook)
