@@ -150,7 +150,7 @@ export class Session {
       ? await this.resolveTokenIdentity(subscriberToken, command.requestData.applicationIdentifier)
       : await this.resolveHashIdentity(command);
 
-    const contextKeys = await this.resolveContexts(environment._id, environment._organizationId, context);
+    const contextKeys = await this.resolveContexts(environment._id, environment._organizationId, context, auth);
 
     const subscriberEntity = await this.createSubscriber.execute(
       CreateOrUpdateSubscriberCommand.create({
@@ -529,17 +529,18 @@ export class Session {
   private async resolveContexts(
     environmentId: string,
     organizationId: string,
-    context?: ContextPayload
+    context: ContextPayload | undefined,
+    auth: SessionAuth
   ): Promise<string[]> {
     if (!context) {
       return [];
     }
 
-    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
-      environmentId,
-      organizationId,
-      context
-    );
+    // The customer signed a token's context, so its data replaces what an earlier unsigned session saved.
+    const contexts =
+      auth.method === SubscriberSessionAuthMethodEnum.TOKEN
+        ? await this.contextRepository.upsertContextsFromPayload(environmentId, organizationId, context)
+        : await this.contextRepository.findOrCreateContextsFromPayload(environmentId, organizationId, context);
 
     return contexts.map((context) => context.key);
   }

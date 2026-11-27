@@ -31,6 +31,52 @@ export class ContextRepository extends BaseRepository<ContextDBModel, ContextEnt
     return contexts.sort((a, b) => a.key.localeCompare(b.key));
   }
 
+  /**
+   * For a signed payload: an entry with `data` replaces the stored record's data (created when missing),
+   * so the signer's data wins over data an unsigned session saved first. An entry with only an id is
+   * found or created as in `findOrCreateContextsFromPayload`.
+   */
+  async upsertContextsFromPayload(
+    environmentId: string,
+    organizationId: string,
+    contextPayload: ContextPayload
+  ): Promise<ContextEntity[]> {
+    const contexts = await Promise.all(
+      Object.entries(contextPayload).flatMap(([type, value]) => {
+        if (!value) return [];
+        if (typeof value === 'string' || value.data === undefined) {
+          const id = typeof value === 'string' ? value : value.id;
+
+          return [this.findOrCreateContext(environmentId, organizationId, type, id)];
+        }
+
+        return [this.upsertContextData(environmentId, organizationId, type, value.id, value.data)];
+      })
+    );
+
+    return contexts.sort((a, b) => a.key.localeCompare(b.key));
+  }
+
+  /** The query matches the unique index exactly, so MongoDB retries a concurrent duplicate-key upsert itself. */
+  private async upsertContextData(
+    environmentId: string,
+    organizationId: string,
+    type: ContextType,
+    id: ContextId,
+    data: ContextData
+  ): Promise<ContextEntity> {
+    const context = await this.findOneAndUpdate(
+      { _environmentId: environmentId, _organizationId: organizationId, type, id },
+      { $set: { data }, $setOnInsert: { key: createContextKey(type, id) } },
+      { upsert: true, new: true }
+    );
+    if (!context) {
+      throw new Error(`Upserting context ${type}:${id} returned no record`);
+    }
+
+    return context;
+  }
+
   async findOrCreateContext(
     environmentId: string,
     organizationId: string,

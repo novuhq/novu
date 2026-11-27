@@ -459,6 +459,30 @@ describe('Agent access rule #novu-v2', () => {
         await waitForBridgeCalls(2);
       });
 
+      it('stores the data the token signed over data an unsigned session saved first', async () => {
+        await linkWebChat();
+        await setRule(PAID_PLAN_RULE);
+        const tenantId = `token-overwrite-${Date.now()}`;
+        const unsigned = await ctx.session.testAgent.post('/v1/inbox/session').send({
+          applicationIdentifier: ctx.session.environment.identifier,
+          subscriberId: ctx.session.subscriberId,
+          context: { tenant: { id: tenantId, data: { plan: 'pro' } } },
+        });
+        expect(unsigned.status, JSON.stringify(unsigned.body)).to.equal(201);
+
+        const token = await openTokenSession(ctx.session.subscriberId, {
+          context: { tenant: { id: tenantId, data: { plan: 'free' } } },
+        });
+
+        const stored = await ctx.session.testAgent.get(`/v2/contexts/tenant/${tenantId}`);
+        expect(stored.status, JSON.stringify(stored.body)).to.equal(200);
+        expect(stored.body.data.data).to.deep.equal({ plan: 'free' });
+
+        const identifier = await send(token, 'Hi, I am on Pro');
+        await waitForRefusal(identifier);
+        await waitForBridgeCalls(0);
+      });
+
       it("refuses a session from another environment on the agent's webhook", async () => {
         const integrationIdentifier = await linkWebChat();
         const webhook = `/v1/agents/${ctx.agentId}/webhook/${integrationIdentifier}`;
