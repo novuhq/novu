@@ -6,28 +6,17 @@ import { useRouter as useAppRouter } from 'next/navigation';
 
 function AppRouterInbox(props: InboxProps) {
   const router = useAppRouter();
-  const inboxProps = {
-    ...props,
-    applicationIdentifier: props.applicationIdentifier!,
-    routerPush: router.push,
-  };
-
-  return <RInbox {...inboxProps} />;
+  return <RInbox {...props} routerPush={router.push} />;
 }
 
 export function Inbox(props: InboxProps) {
   const router = useRouter();
 
-  const inboxProps = {
-    ...props,
-    applicationIdentifier: props.applicationIdentifier!,
-  };
-
   if (!router) {
-    return <AppRouterInbox {...inboxProps} />;
+    return <AppRouterInbox {...props} />;
   }
 
-  return <RInbox {...inboxProps} />;
+  return <RInbox {...props} />;
 }
 
 export { Bell, InboxContent, Notifications, NovuProvider, Preferences } from '@novu/react';

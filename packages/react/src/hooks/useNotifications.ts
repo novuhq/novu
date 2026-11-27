@@ -1,6 +1,7 @@
 import { checkNotificationMatchesFilter, isSameFilter, Notification, NotificationFilter, NovuError } from '@novu/js';
 import { useCallback, useEffect, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
+import { useIdentitySwitch } from './internal/useIdentitySwitch';
 import { useWebSocketEvent } from './internal/useWebsocketEvent';
 import { useNovu, useRealtime } from './NovuProvider';
 
@@ -209,6 +210,12 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     novu.notifications.clearCache({ filter: filterRef.current });
     return fetchNotifications({ refetch: true });
   }, [filterRef, novu, fetchNotifications]);
+
+  useIdentitySwitch(novu, () => {
+    setData(undefined);
+    setHasMore(false);
+    void refetch();
+  });
 
   const fetchMore = useCallback(async () => {
     if (!hasMore || isFetching) return;

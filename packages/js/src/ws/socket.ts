@@ -1,6 +1,6 @@
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import io, { Socket as SocketIO } from 'socket.io-client';
-import type { InboxService, SessionRefresher } from '../api';
+import type { InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import {
   NotificationReceivedEvent,
@@ -11,20 +11,10 @@ import {
   WebChatAgentEvent,
 } from '../event-emitter';
 import { Notification } from '../notifications';
-import {
-  ActionTypeEnum,
-  InboxNotification,
-  NotificationActionStatus,
-  Result,
-  Session,
-  Subscriber,
-  TODO,
-  WebSocketEvent,
-} from '../types';
+import { Result, Session, WebSocketEvent } from '../types';
 import { NovuError } from '../utils/errors';
-import { sanitizeInAppRedirect } from '../utils/in-app-redirect-url';
-import { isJwtExpired } from '../utils/jwt';
-import type { BaseSocketInterface } from './base-socket';
+import type { BaseSocketInterface, SocketSession } from './base-socket';
+import { mapToNotification, type SocketMessage, subscriberIdOfToken } from './map-to-notification';
 
 const PRODUCTION_SOCKET_URL = 'https://ws.novu.co';
 const NOTIFICATION_RECEIVED: NotificationReceivedEvent = 'notifications.notification_received';
@@ -32,95 +22,14 @@ const UNSEEN_COUNT_CHANGED: NotificationUnseenEvent = 'notifications.unseen_coun
 const UNREAD_COUNT_CHANGED: NotificationUnreadEvent = 'notifications.unread_count_changed';
 const WEB_CHAT_AGENT_EVENT: WebChatAgentEvent = 'web_chat.agent_event';
 
-const mapToNotification = ({
-  _id,
-  transactionId,
-  content,
-  read,
-  seen,
-  archived,
-  snoozedUntil,
-  deliveredAt,
-  createdAt,
-  lastReadDate,
-  firstSeenDate,
-  archivedAt,
-  channel,
-  subscriber,
-  subject,
-  avatar,
-  cta,
-  tags,
-  data,
-  workflow,
-  severity,
-}: TODO): InboxNotification => {
-  const to: Subscriber = {
-    id: subscriber?._id,
-    subscriberId: subscriber?.subscriberId,
-    firstName: subscriber?.firstName,
-    lastName: subscriber?.lastName,
-    avatar: subscriber?.avatar,
-    locale: subscriber?.locale,
-    data: subscriber?.data,
-    timezone: subscriber?.timezone,
-    email: subscriber?.email,
-    phone: subscriber?.phone,
-  };
-  const primaryCta = cta.action?.buttons?.find((button: { type?: string }) => button.type === ActionTypeEnum.PRIMARY);
-  const secondaryCta = cta.action?.buttons?.find(
-    (button: { type?: string }) => button.type === ActionTypeEnum.SECONDARY
-  );
-  const actionType = cta.action?.result?.type;
-  const actionStatus = cta.action?.status;
-
-  return {
-    id: _id,
-    transactionId,
-    subject,
-    body: content as string,
-    to,
-    isRead: read,
-    isSeen: seen,
-    isArchived: archived,
-    isSnoozed: !!snoozedUntil,
-    ...(deliveredAt && {
-      deliveredAt,
-    }),
-    ...(snoozedUntil && {
-      snoozedUntil,
-    }),
-    createdAt,
-    readAt: lastReadDate,
-    firstSeenAt: firstSeenDate,
-    archivedAt,
-    avatar,
-    primaryAction: primaryCta && {
-      label: primaryCta.content,
-      isCompleted: actionType === ActionTypeEnum.PRIMARY && actionStatus === NotificationActionStatus.DONE,
-      redirect: sanitizeInAppRedirect(primaryCta.url, primaryCta.target),
-    },
-    secondaryAction: secondaryCta && {
-      label: secondaryCta.content,
-      isCompleted: actionType === ActionTypeEnum.SECONDARY && actionStatus === NotificationActionStatus.DONE,
-      redirect: sanitizeInAppRedirect(secondaryCta.url, secondaryCta.target),
-    },
-    channelType: channel,
-    tags,
-    redirect: sanitizeInAppRedirect(cta.data?.url, cta.data?.target),
-    data,
-    workflow,
-    severity,
-  };
-};
-
 export class Socket extends BaseModule implements BaseSocketInterface {
   #token: string;
+  #subscriberId = '';
   #emitter: NovuEventEmitter;
   #socketIo: SocketIO | undefined;
   #socketUrl: string;
   #socketOptions?: Record<string, unknown>;
-  #refreshSession?: SessionRefresher;
+  #session?: SocketSession;
   /** The token sent with the latest connection attempt. */
   #handshakeToken: string | undefined;
   #tokenRetryTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -130,13 +39,13 @@ export class Socket extends BaseModule implements BaseSocketInterface {
     socketOptions,
     inboxServiceInstance,
     eventEmitterInstance,
-    refreshSession,
+    session,
   }: {
     socketUrl?: string;
     socketOptions?: Record<string, unknown>;
     inboxServiceInstance: InboxService;
     eventEmitterInstance: NovuEventEmitter;
-    refreshSession?: SessionRefresher;
+    session?: SocketSession;
   }) {
     super({
       eventEmitterInstance,
@@ -145,16 +54,17 @@ export class Socket extends BaseModule implements BaseSocketInterface {
     this.#emitter = eventEmitterInstance;
     this.#socketUrl = socketUrl ?? PRODUCTION_SOCKET_URL;
     this.#socketOptions = socketOptions;
-    this.#refreshSession = refreshSession;
+    this.#session = session;
   }
 
   protected onSessionSuccess({ token }: Session): void {
     this.#token = token;
+    this.#subscriberId = subscriberIdOfToken(token);
   }
 
-  #notificationReceived = ({ message }: { message: TODO }) => {
+  #notificationReceived = ({ message }: { message: SocketMessage }) => {
     this.#emitter.emit(NOTIFICATION_RECEIVED, {
-      result: new Notification(mapToNotification(message), this.#emitter, this._inboxService),
+      result: new Notification(mapToNotification(message, this.#subscriberId), this.#emitter, this._inboxService),
     });
   };
 
@@ -188,23 +98,35 @@ export class Socket extends BaseModule implements BaseSocketInterface {
    */
   async #reconnectWithFreshToken(socket: SocketIO): Promise<void> {
     this.#tokenRetryTimeout = undefined;
-    const refreshSession = this.#refreshSession;
-    if (!refreshSession || socket !== this.#socketIo || !isJwtExpired(this.#handshakeToken)) {
+    const session = this.#session;
+    if (!session || socket !== this.#socketIo) {
       return;
     }
 
-    const hasFreshToken = !isJwtExpired(this.#token) || (await refreshSession().catch(() => false));
+    // socket.io stopped retrying after the server disconnect, so keep checking here. The browser's estimate of the
+    // expiry can trail the server's by a moment, so a token that still looks valid is checked again later.
+    const retryLater = () => {
+      this.#tokenRetryTimeout = setTimeout(
+        () => void this.#reconnectWithFreshToken(socket),
+        socket.io.reconnectionDelayMax()
+      );
+    };
+
+    if (!session.isExpired(this.#handshakeToken)) {
+      retryLater();
+
+      return;
+    }
+
+    const hasFreshToken =
+      !session.isExpired(this.#token) || (await session.refresh().catch(() => undefined)) !== undefined;
 
     if (socket !== this.#socketIo) {
       return;
     }
 
     if (!hasFreshToken) {
-      // socket.io stopped retrying after the server disconnect, so keep trying here until a token comes back.
-      this.#tokenRetryTimeout = setTimeout(
-        () => void this.#reconnectWithFreshToken(socket),
-        socket.io.reconnectionDelayMax()
-      );
+      retryLater();
 
       return;
     }
@@ -236,13 +158,15 @@ export class Socket extends BaseModule implements BaseSocketInterface {
     socket.io.on('reconnect_attempt', () => {
       this.#useCurrentToken(socket);
 
-      if (this.#refreshSession && isJwtExpired(this.#token)) {
+      if (this.#session?.isExpired(this.#token)) {
         // This attempt still carries the expired token; the next one picks up the new token.
-        this.#refreshSession().catch(() => false);
+        this.#session.refresh().catch(() => undefined);
       }
     });
 
     this.#socketIo.on('connect', () => {
+      clearTimeout(this.#tokenRetryTimeout);
+      this.#tokenRetryTimeout = undefined;
       this.#emitter.emit('socket.connect.resolved', { args });
     });
 

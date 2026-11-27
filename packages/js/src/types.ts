@@ -1,4 +1,5 @@
 import type { RulesLogic } from 'json-logic-js';
+import type { GetToken } from './session/token-source';
 import { NovuError } from './utils/errors';
 
 export type { FiltersCountResponse, ListNotificationsResponse } from './notifications';
@@ -301,8 +302,6 @@ export type SubscriptionResponse = {
   preferences?: Array<SubscriptionPreferenceResponse>;
 };
 
-export type TODO = any;
-
 export type Options = {
   refetch?: boolean;
   useCache?: boolean;
@@ -315,12 +314,9 @@ export type Result<D = undefined, E = NovuError> = Promise<{
 
 type KeylessNovuOptions = {} & { [K in string]?: never }; // empty object,disallows all unknown keys
 
-export type StandardNovuOptions = {
+type CommonNovuOptions = {
   /** @deprecated Use apiUrl instead  */
   backendUrl?: string;
-  applicationIdentifier: string;
-  subscriberHash?: string;
-  contextHash?: string;
   apiUrl?: string;
   socketUrl?: string;
   /**
@@ -332,20 +328,93 @@ export type StandardNovuOptions = {
   socketOptions?: NovuSocketOptions;
   useCache?: boolean;
   defaultSchedule?: DefaultSchedule;
-  context?: Context;
-} & (
-  | {
-      // TODO: Backward compatibility support - remove in future versions (see NV-5801)
-      /** @deprecated Use subscriber prop instead */
-      subscriberId: string;
-      subscriber?: never;
-    }
-  | {
-      subscriber: Subscriber | string;
-      subscriberId?: never;
-    }
-);
+};
 
-export type NovuOptions = KeylessNovuOptions | StandardNovuOptions;
+export type StandardNovuOptions = CommonNovuOptions & {
+  applicationIdentifier: string;
+  subscriberHash?: string;
+  contextHash?: string;
+  context?: Context;
+  /** Pass `tokenEndpoint` or `getToken` to sign in with subscriber tokens; then drop `subscriberHash`. */
+  tokenEndpoint?: never;
+  /** Pass `tokenEndpoint` or `getToken` to sign in with subscriber tokens; then drop `subscriberHash`. */
+  getToken?: never;
+  /** `initialToken` needs `tokenEndpoint` or `getToken`. */
+  initialToken?: never;
+} & (
+    | {
+        // TODO: Backward compatibility support - remove in future versions (see NV-5801)
+        /** @deprecated Use subscriber prop instead */
+        subscriberId: string;
+        subscriber?: never;
+      }
+    | {
+        subscriber: Subscriber | string;
+        subscriberId?: never;
+      }
+  );
+
+type TokenSourceOptions =
+  | {
+      /**
+       * Your backend route that answers `POST` with `{ token }` for the signed-in user, called whenever a new token is
+       * needed. Only `token` is read: its own expiry decides when it is renewed.
+       *
+       * The request sends the browser's cookies (`credentials: 'include'`), so an endpoint on another origin needs
+       * CORS that allows credentials. If it needs a header (a CSRF token, a bearer token), use `getToken` instead.
+       * A failed request surfaces as a session error.
+       */
+      tokenEndpoint: string;
+      /** Pass either `tokenEndpoint` or `getToken`, not both. */
+      getToken?: never;
+    }
+  | {
+      /**
+       * Returns a subscriber token from your backend whenever one is needed. Use it when your endpoint needs custom
+       * headers (CSRF, bearer).
+       *
+       * Return a newly minted token on every call. A cached token keeps failing with 401 once it expires, and the
+       * client asks again every 10 seconds. An error thrown here surfaces as a session error.
+       */
+      getToken: GetToken;
+      /** Pass either `tokenEndpoint` or `getToken`, not both. */
+      tokenEndpoint?: never;
+    };
+
+/**
+ * Signs in with subscriber tokens minted by your backend, renewed before they expire.
+ *
+ * A token is renewed 60 seconds before it expires, so mint tokens that live well over 2 minutes (`expiresIn`);
+ * shorter ones are renewed on almost every request.
+ *
+ * When getting a token fails, calls made in the next 10 seconds fail at once with a session error and a console
+ * warning. The first call after that tries again, so an Inbox mounted before the user finished signing in recovers on
+ * its own. A route that answers 401 after sign-out is retried the same way, every 10 seconds.
+ *
+ * On sign-out, drop the `Novu` instance (in React, unmount `NovuProvider` or change its `key`). The client learns of
+ * a new user only at the next renewal, and until then it keeps the previous user's session.
+ */
+export type TokenNovuOptions = CommonNovuOptions &
+  TokenSourceOptions & {
+    applicationIdentifier: string;
+    /**
+     * A subscriber token your server rendered with the page: the same kind of token `getToken` returns. It is used
+     * once, for the first session, so the Inbox loads without a round trip; later tokens come from `getToken` or
+     * `tokenEndpoint`. An expired or rejected one is skipped.
+     */
+    initialToken?: string;
+    /** Ignored with a warning: the token decides who the user is. */
+    subscriber?: Subscriber | string;
+    /** Ignored with a warning: the token decides who the user is. */
+    subscriberId?: string;
+    /** Ignored with a warning: the token decides the context. */
+    context?: Context;
+    /** Ignored with a warning: the token replaces HMAC hashes. */
+    subscriberHash?: string;
+    /** Ignored with a warning: the token replaces HMAC hashes. */
+    contextHash?: string;
+  };
+
+export type NovuOptions = KeylessNovuOptions | StandardNovuOptions | TokenNovuOptions;
 
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};

@@ -134,6 +134,11 @@ export class InboxService {
     this.#httpClient = httpClient ?? new HttpClient(httpClientOptions);
   }
 
+  /** Signs in again after a token source failed to; see `Session.retrySignIn`. */
+  retrySignIn(): boolean {
+    return this.#httpClient.retrySignIn();
+  }
+
   async initializeSession({
     applicationIdentifier,
     subscriberHash,
@@ -141,8 +146,10 @@ export class InboxService {
     subscriber,
     defaultSchedule,
     context,
+    subscriberToken,
   }: {
     applicationIdentifier?: string;
+    subscriberToken?: string;
     subscriberHash?: string;
     contextHash?: string;
     subscriber?: Subscriber;
@@ -158,6 +165,7 @@ export class InboxService {
         subscriber,
         defaultSchedule,
         context,
+        subscriberToken,
       },
       { skipSessionRefresh: true }
     )) as Session;

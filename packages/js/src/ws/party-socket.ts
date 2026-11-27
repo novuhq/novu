@@ -1,7 +1,7 @@
 import 'event-target-polyfill';
 import type { AgentEventEnvelope } from '@novu/agent-event-protocol';
 import { WebSocket } from 'partysocket';
-import type { InboxService, SessionRefresher } from '../api';
+import type { InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import {
   NotificationReceivedEvent,
@@ -12,20 +12,10 @@ import {
   WebChatAgentEvent,
 } from '../event-emitter';
 import { Notification } from '../notifications';
-import {
-  ActionTypeEnum,
-  InboxNotification,
-  NotificationActionStatus,
-  Result,
-  Session,
-  Subscriber,
-  TODO,
-  WebSocketEvent,
-} from '../types';
+import { Result, Session, WebSocketEvent } from '../types';
 import { NovuError } from '../utils/errors';
-import { sanitizeInAppRedirect } from '../utils/in-app-redirect-url';
-import { isJwtExpired } from '../utils/jwt';
-import type { BaseSocketInterface } from './base-socket';
+import type { BaseSocketInterface, SocketSession } from './base-socket';
+import { mapToNotification, subscriberIdOfToken } from './map-to-notification';
 
 export const PRODUCTION_SOCKET_URL = 'wss://socket.novu.co';
 
@@ -37,90 +27,9 @@ const UNSEEN_COUNT_CHANGED: NotificationUnseenEvent = 'notifications.unseen_coun
 const UNREAD_COUNT_CHANGED: NotificationUnreadEvent = 'notifications.unread_count_changed';
 const WEB_CHAT_AGENT_EVENT: WebChatAgentEvent = 'web_chat.agent_event';
 
-const mapToNotification = ({
-  _id,
-  transactionId,
-  content,
-  read,
-  seen,
-  archived,
-  snoozedUntil,
-  deliveredAt,
-  createdAt,
-  lastReadDate,
-  firstSeenDate,
-  archivedAt,
-  channel,
-  subscriber,
-  subject,
-  avatar,
-  cta,
-  tags,
-  data,
-  workflow,
-  severity,
-}: TODO): InboxNotification => {
-  const to: Subscriber = {
-    id: subscriber?._id,
-    subscriberId: subscriber?.subscriberId,
-    firstName: subscriber?.firstName,
-    lastName: subscriber?.lastName,
-    avatar: subscriber?.avatar,
-    locale: subscriber?.locale,
-    data: subscriber?.data,
-    timezone: subscriber?.timezone,
-    email: subscriber?.email,
-    phone: subscriber?.phone,
-  };
-  const primaryCta = cta.action?.buttons?.find((button: { type?: string }) => button.type === ActionTypeEnum.PRIMARY);
-  const secondaryCta = cta.action?.buttons?.find(
-    (button: { type?: string }) => button.type === ActionTypeEnum.SECONDARY
-  );
-  const actionType = cta.action?.result?.type;
-  const actionStatus = cta.action?.status;
-
-  return {
-    id: _id,
-    transactionId,
-    subject,
-    body: content as string,
-    to,
-    isRead: read,
-    isSeen: seen,
-    isArchived: archived,
-    isSnoozed: !!snoozedUntil,
-    ...(deliveredAt && {
-      deliveredAt,
-    }),
-    ...(snoozedUntil && {
-      snoozedUntil,
-    }),
-    createdAt,
-    readAt: lastReadDate,
-    firstSeenAt: firstSeenDate,
-    archivedAt,
-    avatar,
-    primaryAction: primaryCta && {
-      label: primaryCta.content,
-      isCompleted: actionType === ActionTypeEnum.PRIMARY && actionStatus === NotificationActionStatus.DONE,
-      redirect: sanitizeInAppRedirect(primaryCta.url, primaryCta.target),
-    },
-    secondaryAction: secondaryCta && {
-      label: secondaryCta.content,
-      isCompleted: actionType === ActionTypeEnum.SECONDARY && actionStatus === NotificationActionStatus.DONE,
-      redirect: sanitizeInAppRedirect(secondaryCta.url, secondaryCta.target),
-    },
-    channelType: channel,
-    tags,
-    redirect: sanitizeInAppRedirect(cta.data?.url, cta.data?.target),
-    data,
-    workflow,
-    severity,
-  };
-};
-
 export class PartySocketClient extends BaseModule implements BaseSocketInterface {
   #token: string;
+  #subscriberId = '';
   #emitter: NovuEventEmitter;
   #partySocket: WebSocket | undefined;
   #socketUrl: string;
@@ -131,20 +40,20 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
   #hasGivenUp = false;
   /** Set once 'socket.disconnect.resolved' went out for the current outage, cleared on 'open' */
   #disconnectEmitted = false;
-  #refreshSession?: SessionRefresher;
+  #session?: SocketSession;
 
   constructor({
     socketUrl,
     socketOptions,
     inboxServiceInstance,
     eventEmitterInstance,
-    refreshSession,
+    session,
   }: {
     socketUrl?: string;
     socketOptions?: Record<string, unknown>;
     inboxServiceInstance: InboxService;
     eventEmitterInstance: NovuEventEmitter;
-    refreshSession?: SessionRefresher;
+    session?: SocketSession;
   }) {
     super({
       eventEmitterInstance,
@@ -153,11 +62,12 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
     this.#emitter = eventEmitterInstance;
     this.#socketUrl = socketUrl ?? PRODUCTION_SOCKET_URL;
     this.#socketOptions = socketOptions;
-    this.#refreshSession = refreshSession;
+    this.#session = session;
   }
 
   protected onSessionSuccess({ token }: Session): void {
     this.#token = token;
+    this.#subscriberId = subscriberIdOfToken(token);
   }
 
   #notificationReceived = (event: MessageEvent) => {
@@ -165,7 +75,11 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
       const data = JSON.parse(event.data);
       if (data.event === WebSocketEvent.RECEIVED) {
         this.#emitter.emit(NOTIFICATION_RECEIVED, {
-          result: new Notification(mapToNotification(data.data.message), this.#emitter, this._inboxService),
+          result: new Notification(
+            mapToNotification(data.data.message, this.#subscriberId),
+            this.#emitter,
+            this._inboxService
+          ),
         });
       }
     } catch (error) {
@@ -288,8 +202,8 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
    * A reconnect with the expired token would be rejected on every attempt, so get a new token first.
    */
   #getSocketUrl = async (): Promise<string> => {
-    if (this.#refreshSession && isJwtExpired(this.#token)) {
-      await this.#refreshSession().catch(() => false);
+    if (this.#session?.isExpired(this.#token)) {
+      await this.#session.refresh().catch(() => undefined);
     }
 
     const url = new URL(this.#socketUrl);

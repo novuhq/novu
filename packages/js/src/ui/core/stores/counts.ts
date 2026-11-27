@@ -4,7 +4,7 @@ import type { Novu } from '../../../novu';
 import { Notification, NotificationFilter, SeverityLevelEnum } from '../../../types';
 import { checkNotificationMatchesFilter } from '../../../utils/notification-utils';
 import type { Tab } from '../../types';
-import { createNovuEventEffect, createWebSocketEventEffect } from './events';
+import { createIdentitySwitchEffect, createNovuEventEffect, createWebSocketEventEffect } from './events';
 import { getTagsFromTab, type InboxStore } from './inbox';
 
 const MIN_AMOUNT_OF_NOTIFICATIONS = 1;
@@ -218,6 +218,11 @@ export const createCountsStore = ({ novu, inbox }: { novu: Accessor<Novu>; inbox
         );
 
         onCleanup(() => cleanups.forEach((cleanup) => cleanup()));
+      });
+
+      createIdentitySwitchEffect(novu, () => {
+        setNewNotificationCounts(new Map());
+        void refreshCounts();
       });
 
       createNovuEventEffect(novu, 'session.initialize.resolved', ({ data }) => {

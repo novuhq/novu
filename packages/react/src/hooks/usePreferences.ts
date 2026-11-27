@@ -1,5 +1,6 @@
 import { NovuError, Preference, SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/js';
 import { useEffect, useState } from 'react';
+import { useIdentitySwitch } from './internal/useIdentitySwitch';
 import { useNovu } from './NovuProvider';
 
 export type UsePreferencesProps = {
@@ -23,7 +24,8 @@ export type UsePreferencesResult = {
 export const usePreferences = (props?: UsePreferencesProps): UsePreferencesResult => {
   const { onSuccess, onError } = props || {};
   const [data, setData] = useState<Preference[]>();
-  const { preferences, on } = useNovu();
+  const novu = useNovu();
+  const { preferences, on } = novu;
   const [error, setError] = useState<NovuError>();
   const [isLoading, setIsLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
@@ -68,6 +70,11 @@ export const usePreferences = (props?: UsePreferencesProps): UsePreferencesResul
 
     return fetchPreferences();
   };
+
+  useIdentitySwitch(novu, () => {
+    setData(undefined);
+    void refetch();
+  });
 
   return {
     preferences: data,

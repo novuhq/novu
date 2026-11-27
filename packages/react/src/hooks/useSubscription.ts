@@ -1,6 +1,7 @@
 import { NovuError, TopicSubscription } from '@novu/js';
 import { buildSubscriptionIdentifier } from '@novu/js/internal';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useIdentitySwitch } from './internal/useIdentitySwitch';
 import { useNovu } from './NovuProvider';
 
 export type UseSubscriptionProps = {
@@ -24,11 +25,13 @@ export type UseSubscriptionResult = {
 export const useSubscription = (props: UseSubscriptionProps): UseSubscriptionResult => {
   const novu = useNovu();
   const propsRef = useRef<UseSubscriptionProps>(props);
-  propsRef.current = {
-    ...props,
-    identifier:
-      props.identifier ?? buildSubscriptionIdentifier({ topicKey: props.topicKey, subscriberId: novu.subscriberId }),
-  };
+  propsRef.current = props;
+  const currentIdentifier = useCallback(
+    () =>
+      propsRef.current.identifier ??
+      buildSubscriptionIdentifier({ topicKey: propsRef.current.topicKey, subscriberId: novu.subscriberId }),
+    [novu]
+  );
   const [subscription, setSubscription] = useState<TopicSubscription | null>();
   const subscriptionRef = useRef<TopicSubscription | null>(null);
   subscriptionRef.current = subscription ?? null;
@@ -46,12 +49,15 @@ export const useSubscription = (props: UseSubscriptionProps): UseSubscriptionRes
 
       setIsFetching(true);
 
-      const response = await novu.subscriptions.get(
-        {
-          topicKey,
-          identifier,
-        },
-        { refetch: options?.refetch }
+      // The default identifier names the subscriber, which a token source tells only once the session resolves.
+      const response = await novu.subscriptions.callWithSession(() =>
+        novu.subscriptions.get(
+          {
+            topicKey,
+            identifier: identifier ?? currentIdentifier(),
+          },
+          { refetch: options?.refetch }
+        )
       );
 
       if (response.error) {
@@ -64,13 +70,13 @@ export const useSubscription = (props: UseSubscriptionProps): UseSubscriptionRes
       setIsLoading(false);
       setIsFetching(false);
     },
-    [novu]
+    [novu, currentIdentifier]
   );
 
   useEffect(() => {
     const listener = ({ data: subscription }: { data?: TopicSubscription }) => {
-      const { topicKey, identifier } = propsRef.current;
-      if (!subscription || subscription.topicKey !== topicKey || subscription.identifier !== identifier) {
+      const { topicKey } = propsRef.current;
+      if (!subscription || subscription.topicKey !== topicKey || subscription.identifier !== currentIdentifier()) {
         return;
       }
 
@@ -79,16 +85,16 @@ export const useSubscription = (props: UseSubscriptionProps): UseSubscriptionRes
     };
 
     const cleanupGetPending = novu.on('subscription.get.pending', ({ args }) => {
-      const { topicKey, identifier } = propsRef.current;
-      if (!args || args.topicKey !== topicKey || args.identifier !== identifier) {
+      const { topicKey } = propsRef.current;
+      if (!args || args.topicKey !== topicKey || args.identifier !== currentIdentifier()) {
         return;
       }
       setIsFetching(true);
     });
 
     const cleanupGetResolved = novu.on('subscription.get.resolved', ({ args, data, error }) => {
-      const { topicKey, identifier, onSuccess, onError } = propsRef.current;
-      if (!args || args.topicKey !== topicKey || args.identifier !== identifier) {
+      const { topicKey, onSuccess, onError } = propsRef.current;
+      if (!args || args.topicKey !== topicKey || args.identifier !== currentIdentifier()) {
         return;
       }
       if (error) {
@@ -102,8 +108,8 @@ export const useSubscription = (props: UseSubscriptionProps): UseSubscriptionRes
     });
 
     const cleanupCreatePending = novu.on('subscription.create.pending', ({ args }) => {
-      const { topicKey, identifier } = propsRef.current;
-      if (!args || args.topicKey !== topicKey || args.identifier !== identifier) {
+      const { topicKey } = propsRef.current;
+      if (!args || args.topicKey !== topicKey || args.identifier !== currentIdentifier()) {
         return;
       }
       setIsFetching(true);
@@ -163,9 +169,14 @@ export const useSubscription = (props: UseSubscriptionProps): UseSubscriptionRes
       cleanupDeletePending();
       cleanupDeleteResolved();
     };
-  }, [novu, fetchSubscription]);
+  }, [novu, fetchSubscription, currentIdentifier]);
 
   const refetch = useCallback(() => fetchSubscription({ refetch: true }), [fetchSubscription]);
+
+  useIdentitySwitch(novu, () => {
+    setSubscription(undefined);
+    void refetch();
+  });
 
   return {
     subscription,

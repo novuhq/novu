@@ -295,6 +295,36 @@ describe('session refresh after the subscriber token expires', () => {
   });
 });
 
+describe('changing the subscriber or context', () => {
+  it('drops the previous subscriber cached data before listeners hear of the new one, and reconnects the socket', async () => {
+    const api = createFakeApi();
+    const novu = new Novu({
+      applicationIdentifier: 'app',
+      subscriber: { subscriberId: 'subscriber_1' },
+      socketOptions: { minReconnectionDelay: 10, maxReconnectionDelay: 20 },
+    });
+    await novu.socket.connect();
+    await novu.notifications.list();
+    await wait();
+    const cachedOnResolve: unknown[] = [];
+    novu.on('session.initialize.resolved', ({ data }) => {
+      if (data) {
+        cachedOnResolve.push(novu.notifications.cache.getAll({ limit: 10 }));
+      }
+    });
+
+    await novu.changeSubscriber({ subscriber: { subscriberId: 'subscriber_2' } });
+    await novu.changeContext({ context: { tenant: 'org_2' } });
+    await wait();
+
+    expect(cachedOnResolve).toEqual([undefined, undefined]);
+    const openSockets = FakeWebSocket.instances.filter((ws) => ws.readyState !== FakeWebSocket.CLOSED);
+    expect(openSockets.map((ws) => tokenOf(ws.url))).toEqual([api.issuedTokens[2]]);
+
+    await novu.socket.disconnect();
+  });
+});
+
 describe('the resolved session', () => {
   it('stays readable after session.initialize.resolved has fired', async () => {
     const api = createFakeApi();

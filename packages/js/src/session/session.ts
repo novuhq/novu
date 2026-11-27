@@ -1,61 +1,115 @@
 import type { InboxService } from '../api';
+import { HttpError } from '../api/http-client';
 import { NovuEventEmitter } from '../event-emitter';
-import type { Session as SessionData } from '../types';
+import type { DefaultSchedule, Session as SessionResponse } from '../types';
+import { buildContextKey } from '../utils/build-context-key';
+import { NovuError } from '../utils/errors';
 import { isBrowser } from '../utils/is-browser';
-import { InitializeSessionArgs } from './types';
+import { decodeJwtPayload, EXPIRY_SKEW_MS, getJwtExpiresAt, isJwtExpired } from '../utils/jwt';
+import { type SessionIdentity, type SubscriberIdentity, type TokenIdentity, warnOnce } from './identity';
+import type { InitializeSessionArgs } from './types';
+
+type TokenSessionClaims = {
+  subscriberId: string | undefined;
+  /**
+   * Browser time at which the session token is renewed before it is sent: `exp` on the server's clock (from `iat`),
+   * minus the skew, or minus nothing for a lifetime under the skew. `undefined` when the token looked expired on
+   * arrival (a clock the offset could not correct): it is never renewed early, only after the server rejects it.
+   */
+  renewAt: number | undefined;
+};
+
+/**
+ * How long a token source is left alone after a sign-in or renewal failed. Requests made meanwhile fail at once
+ * instead of each calling the customer's token endpoint again; 10 s matches socket.io's longest reconnect delay, so a
+ * dead endpoint sees about one call per tab every 10 s, and a user who signs in again gets a working Inbox within 10 s.
+ */
+const RENEWAL_COOLDOWN_MS = 10_000;
 
 export class Session {
   #emitter: NovuEventEmitter;
   #inboxService: InboxService;
-  #options: InitializeSessionArgs;
-  #inFlight: Promise<boolean> | undefined;
-  /** The latest token issued for the current subscriber and context. */
-  #token: string | undefined;
+  #identity: SessionIdentity;
+  #defaultSchedule: DefaultSchedule | undefined;
+  #initialToken: string | undefined;
+  #inFlight: Promise<string | undefined> | undefined;
+  /** What the server returned for the current subscriber and context; cleared when either changes. */
+  #session: SessionResponse | undefined;
+  #claims: TokenSessionClaims | undefined;
   /** Every token issued for the current subscriber and context; cleared when either changes. */
   #tokens = new Set<string>();
-  /** What the server returned for the current subscriber and context; cleared when either changes. */
-  #data: SessionData | undefined;
+  /** Who the client was last signed in as; kept across `changeIdentity`, so a switch is noticed when it resolves. */
+  #signedInAs: { subscriberId: string | undefined; contextKey: string } | undefined;
+  #lastFailure: { at: number; error: unknown } | undefined;
+  #onSubscriberChange: () => void;
 
   constructor(
-    options: InitializeSessionArgs,
+    {
+      identity,
+      defaultSchedule,
+      onSubscriberChange,
+    }: {
+      identity: SessionIdentity;
+      defaultSchedule?: DefaultSchedule;
+      /**
+       * Called when a session signed in another subscriber or context than the one before it, whether through
+       * `changeIdentity` or a renewal, before `session.initialize.resolved` reaches any listener.
+       */
+      onSubscriberChange: () => void;
+    },
     inboxServiceInstance: InboxService,
     eventEmitterInstance: NovuEventEmitter
   ) {
     this.#emitter = eventEmitterInstance;
     this.#inboxService = inboxServiceInstance;
-    this.#options = options;
+    this.#identity = identity;
+    this.#defaultSchedule = defaultSchedule;
+    this.#onSubscriberChange = onSubscriberChange;
+    this.#initialToken = identity.kind === 'token' ? identity.initialToken : undefined;
   }
 
   public get applicationIdentifier() {
-    return this.#options.applicationIdentifier;
+    return this.#identity.applicationIdentifier;
   }
 
-  public get subscriberId() {
-    return this.#options.subscriber?.subscriberId;
+  public get subscriberId(): string | undefined {
+    if (this.#identity.kind === 'subscriber') {
+      return this.#identity.subscriber.subscriberId;
+    }
+
+    return this.#claims?.subscriberId;
+  }
+
+  public get contextKey(): string {
+    if (this.#identity.kind === 'subscriber') {
+      return buildContextKey(this.#identity.context);
+    }
+
+    return [...(this.#session?.contextKeys ?? [])].sort().join(',');
   }
 
   public get context() {
-    return this.#options.context;
-  }
-
-  public get subscriberHash() {
-    return this.#options.subscriberHash;
+    return this.#identity.kind === 'subscriber' ? this.#identity.context : undefined;
   }
 
   public get contextHash() {
-    return this.#options.contextHash;
+    return this.#identity.kind === 'subscriber' ? this.#identity.contextHash : undefined;
+  }
+
+  public get subscriberHash() {
+    return this.#identity.kind === 'subscriber' ? this.#identity.subscriberHash : undefined;
   }
 
   public get subscriber() {
-    return this.#options.subscriber;
+    return this.#identity.kind === 'subscriber' ? this.#identity.subscriber : undefined;
   }
 
   /**
    * The latest session the server returned for the current subscriber and context, or `undefined` until one has
    * resolved. Lets code that starts after `session.initialize.resolved` has fired read what it missed.
    */
-  public get data(): SessionData | undefined {
-    return this.#data;
+  public get data(): SessionResponse | undefined {
+    return this.#session;
   }
 
   private handleApplicationIdentifier(method: 'get' | 'store' | 'delete', identifier?: string): string | null {
@@ -87,22 +141,31 @@ export class Session {
     }
   }
 
-  public async initialize(options?: InitializeSessionArgs): Promise<void> {
-    const subscriberUnchanged = this.#options.subscriber?.subscriberId === options?.subscriber?.subscriberId;
-    const contextUnchanged = JSON.stringify(this.#options.context) === JSON.stringify(options?.context);
+  public start(): void {
+    void this.#start(false);
+  }
 
+  public async changeIdentity(change: (current: SubscriberIdentity) => SubscriberIdentity): Promise<void> {
+    const current = this.#identity;
+    if (current.kind !== 'subscriber') {
+      throw new NovuError(
+        'Changing the subscriber or context is not supported with a token source; the token decides the subscriber',
+        undefined
+      );
+    }
+    const identity = change(current);
+
+    const subscriberUnchanged = current.subscriber.subscriberId === identity.subscriber.subscriberId;
+    const contextUnchanged = JSON.stringify(current.context) === JSON.stringify(identity.context);
     if (subscriberUnchanged && contextUnchanged) {
       return;
     }
 
     // Record the change right away, so a later change compares against it and the tokens of the old
     // subscriber or context stop counting as renewable.
-    if (options) {
-      this.#options = options;
-      this.#tokens.clear();
-      this.#data = undefined;
-    }
-    const requested = this.#options;
+    this.#identity = identity;
+    this.#tokens.clear();
+    this.#session = undefined;
 
     // Let a request that is already running finish first, so its token cannot overwrite the new one.
     while (this.#inFlight) {
@@ -110,7 +173,7 @@ export class Session {
     }
 
     // A newer change was made while this one waited; that one sends the request.
-    if (requested !== this.#options) {
+    if (identity !== this.#identity) {
       return;
     }
 
@@ -118,29 +181,123 @@ export class Session {
   }
 
   /**
-   * Asks the server for a new token for the current subscriber and context, for example after the old one expired.
-   * Callers that ask while a session request is already running share that request.
-   *
-   * Pass `staleToken` (the token a failed request was sent with) to renew only that session: when it belonged to
-   * a subscriber or context that has been replaced since, nothing is requested and the result is `false`.
-   *
-   * Resolves to `true` when the current token is newer than the stale one.
+   * Rejects with a `NovuError` when the request must not go out, because it would run as the wrong subscriber.
+   * Only a token source renews here (see `isExpired`); a subscriber session renews after a 401.
    */
-  public refresh(staleToken?: string): Promise<boolean> {
-    if (staleToken !== undefined) {
-      if (!this.#tokens.has(staleToken)) {
-        return Promise.resolve(false);
+  public async tokenForRequest(currentToken: string | undefined): Promise<string | undefined> {
+    if (this.#identity.kind !== 'token' || currentToken === undefined) {
+      return currentToken;
+    }
+    // A session request in flight may be about to record `currentToken`, or to replace the subscriber it belongs to.
+    while (this.#inFlight) {
+      await this.#inFlight;
+    }
+    const session = this.#session;
+    if (session && this.#tokens.has(currentToken)) {
+      if (!this.isExpired(session.token)) {
+        return session.token;
       }
-
-      if (staleToken !== this.#token) {
-        return Promise.resolve(true);
+      const renewed = await this.refresh(session.token);
+      if (renewed) {
+        return renewed;
+      }
+      if (this.#tokens.has(currentToken)) {
+        throw new NovuError('The session could not be renewed, so the request was not sent', this.#lastFailure?.error);
       }
     }
 
-    return this.#inFlight ?? this.#start(true);
+    throw new NovuError(
+      'The request was made with a session that is no longer current, for example because another subscriber or context signed in, so it was not sent',
+      undefined
+    );
   }
 
-  #start(renew: boolean): Promise<boolean> {
+  /**
+   * Whether `token` must be renewed before it is sent. The one expiry rule for requests and sockets.
+   * - A subscriber session judges it on the browser clock, a little before the real expiry.
+   * - A token source judges it on the server's clock, so a browser clock that is off neither keeps an expired token
+   *   nor renews a fresh one (see `renewAt`). A token it has replaced counts as expired.
+   */
+  public isExpired(token: string | undefined): boolean {
+    const claims = this.#claims;
+    if (this.#identity.kind === 'subscriber' || !claims) {
+      return isJwtExpired(token);
+    }
+    if (token === undefined) {
+      return false;
+    }
+    if (token !== this.#session?.token) {
+      return true;
+    }
+
+    return claims.renewAt !== undefined && Date.now() >= claims.renewAt;
+  }
+
+  public isCurrentToken(token: string): boolean {
+    return this.#tokens.has(token);
+  }
+
+  /**
+   * Asks the server for a new token for the current subscriber and context, for example after the old one expired.
+   * Callers that ask while a session request is already running share that request.
+   *
+   * Pass `staleToken` (the token a failed request was sent with) to renew only that session:
+   * - a token of a subscriber or context that has been replaced since → nothing is requested, `undefined`;
+   * - a token older than the current one → nothing is requested, the current token (someone else renewed it);
+   * - the current token of a subscriber session that has not expired → `undefined`: the 401 has another cause, and
+   *   a new token would not fix it;
+   * - otherwise the session is renewed. A token source always renews: its 401 can come from clock skew. Within
+   *   `RENEWAL_COOLDOWN_MS` of its last failed renewal it resolves to `undefined` without asking again.
+   *
+   * Resolves to the token to use instead: newer than the stale one, for the same subscriber and context. A renewal
+   * that fails or signs in someone else resolves to `undefined`, so the request is not resent as them.
+   */
+  public refresh(staleToken?: string): Promise<string | undefined> {
+    if (staleToken !== undefined) {
+      if (!this.#tokens.has(staleToken)) {
+        return Promise.resolve(undefined);
+      }
+
+      if (staleToken !== this.#session?.token) {
+        return Promise.resolve(this.#session?.token);
+      }
+
+      if (this.#identity.kind === 'subscriber' && !isJwtExpired(staleToken)) {
+        return Promise.resolve(undefined);
+      }
+    }
+
+    if (this.#inFlight) {
+      return this.#inFlight;
+    }
+    if (this.#inCooldown()) {
+      return Promise.resolve(undefined);
+    }
+
+    return this.#start(true);
+  }
+
+  /**
+   * Signs in again after a token source failed to, once `RENEWAL_COOLDOWN_MS` has passed since the failure.
+   * Returns whether a session request is running, so `session.initialize.resolved` will follow. A subscriber session
+   * is not retried.
+   */
+  public retrySignIn(): boolean {
+    if (this.#identity.kind !== 'token' || this.#inCooldown()) {
+      return false;
+    }
+    if (!this.#inFlight) {
+      void this.#start(false);
+    }
+
+    return true;
+  }
+
+  #inCooldown(): boolean {
+    return this.#lastFailure !== undefined && Date.now() - this.#lastFailure.at < RENEWAL_COOLDOWN_MS;
+  }
+
+  #start(renew: boolean): Promise<string | undefined> {
     const request = this.#requestSession(renew).finally(() => {
       this.#inFlight = undefined;
     });
@@ -149,66 +306,164 @@ export class Session {
     return request;
   }
 
-  /**
-   * With `renew`, only the subscriber's identity is sent: the profile fields given at start-up would otherwise
-   * overwrite changes made on the server since then.
-   */
-  async #requestSession(renew: boolean): Promise<boolean> {
-    const options = this.#options;
+  async #requestSession(renew: boolean): Promise<string | undefined> {
+    const identity = this.#identity;
+    const args = this.#eventArgs(identity);
     try {
-      const { subscriber, subscriberHash, contextHash, applicationIdentifier, defaultSchedule, context } = options;
-      let currentTimezone: string | undefined;
-      if (isBrowser()) {
-        currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      }
+      this.#emitter.emit('session.initialize.pending', { args });
 
-      let finalApplicationIdentifier = applicationIdentifier;
-      if (!finalApplicationIdentifier) {
-        const storedAppId = this.handleApplicationIdentifier('get');
-        if (storedAppId) {
-          finalApplicationIdentifier = storedAppId;
+      const response =
+        identity.kind === 'token'
+          ? await this.#exchangeLoginToken(identity, renew)
+          : await this.#initializeSubscriberSession(identity, renew);
+
+      let subscriberChanged = false;
+      if (identity === this.#identity) {
+        this.#session = response;
+        this.#claims = identity.kind === 'token' ? this.#readClaims(response.token) : undefined;
+        /*
+         * A token source can sign in someone else on renewal (a logout and login in the same tab). The old
+         * tokens then belong to the previous subscriber: a request sent with one must not be resent as the new one.
+         */
+        subscriberChanged = this.#recordSignedIn();
+        if (subscriberChanged) {
+          this.#tokens.clear();
         }
-      } else {
-        this.handleApplicationIdentifier('delete');
-      }
-      this.#emitter.emit('session.initialize.pending', { args: options });
-
-      const response = await this.#inboxService.initializeSession({
-        applicationIdentifier: finalApplicationIdentifier,
-        subscriberHash,
-        contextHash,
-        subscriber: renew
-          ? { subscriberId: subscriber?.subscriberId ?? '' }
-          : {
-              ...subscriber,
-              subscriberId: subscriber?.subscriberId ?? '',
-              timezone: subscriber?.timezone ?? currentTimezone,
-            },
-        defaultSchedule: renew ? undefined : defaultSchedule,
-        context,
-      });
-
-      if (options === this.#options) {
-        this.#token = response.token;
         this.#tokens.add(response.token);
-        this.#data = response;
+        this.#lastFailure = undefined;
       }
 
       if (response?.applicationIdentifier?.startsWith('pk_keyless_')) {
         this.handleApplicationIdentifier('store', response.applicationIdentifier);
-      }
-
-      if (!response?.applicationIdentifier?.startsWith('pk_keyless_')) {
+      } else {
         this.handleApplicationIdentifier('delete');
       }
 
-      this.#emitter.emit('session.initialize.resolved', { args: options, data: response });
+      // Listeners of the new subscriber must not find the previous one's data.
+      if (subscriberChanged) {
+        this.#onSubscriberChange();
+      }
+      this.#emitter.emit('session.initialize.resolved', { args, data: response });
 
-      return true;
+      return identity === this.#identity && !subscriberChanged ? response.token : undefined;
     } catch (error) {
-      this.#emitter.emit('session.initialize.resolved', { args: options, error });
+      if (identity === this.#identity) {
+        this.#recordFailure(identity, error);
+      }
+      this.#emitter.emit('session.initialize.resolved', { args, error });
 
-      return false;
+      return undefined;
+    }
+  }
+
+  #recordFailure(identity: SessionIdentity, error: unknown): void {
+    if (identity.kind === 'token') {
+      this.#lastFailure = { at: Date.now(), error };
+    }
+    // A subscriber identity is known without a session, so the previous one's data goes even when this failed.
+    if (identity.kind === 'subscriber' && this.#recordSignedIn()) {
+      this.#onSubscriberChange();
+    }
+  }
+
+  #recordSignedIn(): boolean {
+    const previous = this.#signedInAs;
+    const current = { subscriberId: this.subscriberId, contextKey: this.contextKey };
+    this.#signedInAs = current;
+
+    return (
+      previous !== undefined &&
+      (previous.subscriberId !== current.subscriberId || previous.contextKey !== current.contextKey)
+    );
+  }
+
+  #readClaims(token: string): TokenSessionClaims {
+    const payload = decodeJwtPayload(token);
+    const issuedAt = payload?.iat;
+    const expiresAt = getJwtExpiresAt(token) ?? Number.POSITIVE_INFINITY;
+    const clockOffsetMs = typeof issuedAt === 'number' ? issuedAt * 1000 - Date.now() : 0;
+    const serverNow = Date.now() + clockOffsetMs;
+    let renewAt: number | undefined;
+    if (serverNow < expiresAt - EXPIRY_SKEW_MS) {
+      renewAt = expiresAt - EXPIRY_SKEW_MS - clockOffsetMs;
+    } else if (serverNow < expiresAt) {
+      renewAt = expiresAt - clockOffsetMs;
+    }
+
+    return {
+      subscriberId: typeof payload?.subscriberId === 'string' ? payload.subscriberId : undefined,
+      renewAt,
+    };
+  }
+
+  #eventArgs(identity: SessionIdentity): InitializeSessionArgs {
+    const defaultSchedule = this.#defaultSchedule;
+    if (identity.kind === 'token') {
+      return { applicationIdentifier: identity.applicationIdentifier, defaultSchedule };
+    }
+    const { kind: _, ...subscriberArgs } = identity;
+
+    return { ...subscriberArgs, defaultSchedule };
+  }
+
+  /**
+   * With `renew`, only the subscriber's identity is sent: the profile fields given at start-up would otherwise
+   * overwrite changes made on the server since then.
+   */
+  async #initializeSubscriberSession(identity: SubscriberIdentity, renew: boolean): Promise<SessionResponse> {
+    const { subscriber, subscriberHash, contextHash, applicationIdentifier, context } = identity;
+    const currentTimezone = isBrowser() ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined;
+    let finalApplicationIdentifier = applicationIdentifier;
+    if (finalApplicationIdentifier) {
+      this.handleApplicationIdentifier('delete');
+    } else {
+      finalApplicationIdentifier = this.handleApplicationIdentifier('get') ?? '';
+    }
+
+    return this.#inboxService.initializeSession({
+      applicationIdentifier: finalApplicationIdentifier,
+      subscriberHash,
+      contextHash,
+      subscriber: renew
+        ? { subscriberId: subscriber.subscriberId }
+        : { ...subscriber, timezone: subscriber.timezone ?? currentTimezone },
+      defaultSchedule: renew ? undefined : this.#defaultSchedule,
+      context,
+    });
+  }
+
+  async #exchangeLoginToken(identity: TokenIdentity, renew: boolean): Promise<SessionResponse> {
+    const exchange = (subscriberToken: string) =>
+      this.#inboxService.initializeSession({
+        applicationIdentifier: identity.applicationIdentifier,
+        subscriberToken,
+        defaultSchedule: renew ? undefined : this.#defaultSchedule,
+      });
+
+    const initialToken = this.#initialToken;
+    this.#initialToken = undefined;
+    if (initialToken && !isJwtExpired(initialToken)) {
+      try {
+        return await exchange(initialToken);
+      } catch (error) {
+        // An expired (401) or otherwise rejected (400, e.g. a rotated signing key) server-rendered token is replaced.
+        if (!(error instanceof HttpError) || error.status < 400 || error.status >= 500) {
+          throw error;
+        }
+      }
+    }
+
+    return exchange(await this.#fetchLoginToken(identity));
+  }
+
+  /** The customer sees nothing in the Inbox while their token source fails, so the reason goes to the console. */
+  async #fetchLoginToken(identity: TokenIdentity): Promise<string> {
+    try {
+      return await identity.getToken();
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      warnOnce(`[Novu] ${reason}. The Inbox stays signed out until getting a token succeeds.`);
+      throw error;
     }
   }
 }

@@ -1,6 +1,7 @@
-import { Accessor, createEffect, onCleanup } from 'solid-js';
+import { Accessor, createEffect, createMemo, createSignal, onCleanup } from 'solid-js';
 import type { EventHandler, EventNames, Events, SocketEventNames } from '../../../event-emitter';
 import type { Novu } from '../../../novu';
+import { getIdentityKey, subscribeToIdentity, subscribeToIdentitySwitch } from '../../internal/identity';
 import { isWebLocksSupported, requestLock } from '../browser';
 
 /** Subscribes to a client event for as long as the owning reactive scope lives, following the current `Novu` instance. */
@@ -18,6 +19,26 @@ export const createNovuEventEffect = <E extends EventNames>(
   });
 };
 
+/** Runs `onSwitch` when another subscriber or context signs in on the current `Novu` instance. */
+export const createIdentitySwitchEffect = (novu: Accessor<Novu>, onSwitch: () => void) => {
+  createEffect(() => {
+    onCleanup(subscribeToIdentitySwitch(novu(), onSwitch));
+  });
+};
+
+const createIdentityKey = (novu: Accessor<Novu>) => {
+  const [sessionVersion, setSessionVersion] = createSignal(0);
+  createEffect(() => {
+    onCleanup(subscribeToIdentity(novu(), () => setSessionVersion((version) => version + 1)));
+  });
+
+  return createMemo(() => {
+    sessionVersion();
+
+    return getIdentityKey(novu());
+  });
+};
+
 /**
  * Subscribes to a websocket event once per browser, not once per tab: the tab holding the web lock listens and
  * fans the event out to the others over a `BroadcastChannel`.
@@ -27,9 +48,14 @@ export const createWebSocketEventEffect = <E extends SocketEventNames>(
   webSocketEvent: E,
   onMessage: (args: Events[E]) => void
 ) => {
+  const identityKey = createIdentityKey(novu);
   createEffect(() => {
     const currentNovu = novu();
-    const channelName = `nv_ws_connection:a=${currentNovu.applicationIdentifier}:s=${currentNovu.subscriberId}:c=${currentNovu.contextKey}:e=${webSocketEvent}`;
+    const currentIdentityKey = identityKey();
+    if (currentIdentityKey === undefined) {
+      return;
+    }
+    const channelName = `nv_ws_connection:${currentIdentityKey}:e=${webSocketEvent}`;
 
     const tabsChannel = new BroadcastChannel(channelName);
     const listener = (event: MessageEvent<Events[E]>) => {

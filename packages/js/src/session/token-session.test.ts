@@ -1,0 +1,816 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const fakeSocketIo = vi.hoisted(() => {
+  type Handler = (...args: unknown[]) => void;
+  const create = () => {
+    const handlers = new Map<string, Handler>();
+    const managerHandlers = new Map<string, Handler>();
+    const connectedWith: Array<string | undefined> = [];
+
+    return {
+      handlers,
+      managerHandlers,
+      connectedWith,
+      on: (event: string, handler: Handler) => handlers.set(event, handler),
+      connect: () => {},
+      disconnect: () => {},
+      io: {
+        opts: {} as { query?: Record<string, string> },
+        on: (event: string, handler: Handler) => managerHandlers.set(event, handler),
+        reconnectionDelayMax: () => 10,
+      },
+    };
+  };
+
+  return { create, current: undefined as ReturnType<typeof create> | undefined };
+});
+
+vi.mock('socket.io-client', () => ({
+  __esModule: true,
+  default: vi.fn((_url: string, options: { query: Record<string, string> }) => {
+    const socket = fakeSocketIo.create();
+    socket.io.opts.query = options.query;
+    socket.connect = () => socket.connectedWith.push(socket.io.opts.query?.token);
+    fakeSocketIo.current = socket;
+
+    return socket;
+  }),
+}));
+
+import { Novu } from '../novu';
+import type { NovuOptions } from '../types';
+import { NovuError } from '../utils/errors';
+
+const MINUTE_MS = 60 * 1000;
+const HOUR_MS = 60 * MINUTE_MS;
+const TOKEN_ENDPOINT = 'https://customer.example.com/api/novu-token';
+
+const toBase64Url = (value: object) =>
+  btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(value))))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+const claimsOf = (token: string) => {
+  const binary = atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'));
+
+  return JSON.parse(new TextDecoder().decode(Uint8Array.from(binary, (char) => char.charCodeAt(0))));
+};
+
+const createJwt = (claims: Record<string, unknown>, expiresAtMs: number) =>
+  `${toBase64Url({ alg: 'HS256', typ: 'JWT' })}.${toBase64Url({ ...claims, exp: Math.floor(expiresAtMs / 1000) })}.sig`;
+
+const expOf = (token: string) => JSON.parse(atob(token.split('.')[1])).exp * 1000;
+
+class FakeWebSocket extends EventTarget {
+  static CONNECTING = 0;
+  static OPEN = 1;
+  static CLOSING = 2;
+  static CLOSED = 3;
+  static instances: FakeWebSocket[] = [];
+
+  CONNECTING = 0;
+  OPEN = 1;
+  CLOSING = 2;
+  CLOSED = 3;
+  readyState = FakeWebSocket.CONNECTING;
+  binaryType = 'blob';
+  url: string;
+
+  constructor(url: string) {
+    super();
+    this.url = url;
+    FakeWebSocket.instances.push(this);
+    setTimeout(() => {
+      if (this.readyState !== FakeWebSocket.CONNECTING) return;
+      this.readyState = FakeWebSocket.OPEN;
+      this.dispatchEvent(new Event('open'));
+    }, 0);
+  }
+
+  send() {}
+
+  close(code = 1000, reason = '') {
+    if (this.readyState === FakeWebSocket.CLOSED) return;
+    this.readyState = FakeWebSocket.CLOSED;
+    setTimeout(() => this.dispatchEvent(Object.assign(new Event('close'), { code, reason, wasClean: true })), 0);
+  }
+
+  closeFromServer() {
+    this.readyState = FakeWebSocket.CLOSED;
+    this.dispatchEvent(Object.assign(new Event('close'), { code: 4001, reason: 'session expired', wasClean: true }));
+  }
+}
+
+const wait = (ms = 50) => new Promise((resolve) => setTimeout(resolve, ms));
+
+type SessionBody = {
+  applicationIdentifier?: string;
+  subscriberToken?: string;
+  subscriber?: unknown;
+  subscriberHash?: string;
+  context?: unknown;
+  contextHash?: string;
+  defaultSchedule?: unknown;
+};
+
+const createFakeBackend = ({ subscriberId = 'user_1', contextKeys = ['tenant:org_1'] } = {}) => {
+  let now = Date.now();
+  const state = {
+    signedInUser: subscriberId,
+    contextKeys,
+    apiDelayMs: 0,
+    apiBodyDelayMs: 0,
+    apiCalls: [] as Array<{ path: string; subscriberId: string }>,
+    loginTokens: [] as string[],
+    sessionTokens: [] as string[],
+    revoked: new Set<string>(),
+    sessionBodies: [] as SessionBody[],
+    tokenRequests: [] as RequestInit[],
+    apiRequests: [] as string[],
+    tokenEndpointStatus: 200,
+    sessionDelayMs: 0,
+    loginTokenLifetimeMs: 10 * MINUTE_MS,
+    clientClockAheadMs: 0,
+    invalidLoginTokens: new Set<string>(),
+  };
+
+  vi.spyOn(Date, 'now').mockImplementation(() => now + state.clientClockAheadMs);
+
+  const json = (status: number, body: unknown) =>
+    ({ ok: status < 400, status, json: async () => body }) as unknown as Response;
+
+  const mintLoginToken = (lifetimeMs = state.loginTokenLifetimeMs) => {
+    const token = createJwt(
+      { sub: state.signedInUser, aud: 'novu', n: state.loginTokens.length + 1 },
+      now + lifetimeMs
+    );
+    state.loginTokens.push(token);
+
+    return token;
+  };
+
+  const fetchMock = vi.fn(async (url: string, init: RequestInit) => {
+    if (url === TOKEN_ENDPOINT) {
+      state.tokenRequests.push(init);
+      if (state.tokenEndpointStatus !== 200) {
+        return json(state.tokenEndpointStatus, { message: 'nope' });
+      }
+      const token = mintLoginToken();
+
+      return json(200, { token, expiresAt: new Date(expOf(token)).toISOString() });
+    }
+
+    if (url.includes('/inbox/session')) {
+      const body = JSON.parse(init.body as string) as SessionBody;
+      state.sessionBodies.push(body);
+      await wait(state.sessionDelayMs);
+      const loginToken = body.subscriberToken;
+      if (loginToken && state.invalidLoginTokens.has(loginToken)) {
+        return json(400, { statusCode: 400, message: 'Please provide a valid HMAC hash' });
+      }
+      if (!loginToken || now >= expOf(loginToken)) {
+        return json(401, { statusCode: 401, error: 'subscriber_token_expired' });
+      }
+      const token = createJwt(
+        {
+          subscriberId: claimsOf(loginToken).sub,
+          contextKeys: state.contextKeys,
+          iat: Math.floor(now / 1000),
+          n: state.sessionTokens.length + 1,
+        },
+        expOf(loginToken)
+      );
+      state.sessionTokens.push(token);
+
+      return json(200, { data: { token, contextKeys: state.contextKeys, unreadCount: { total: 0, severity: {} } } });
+    }
+
+    const token = ((init.headers as Record<string, string>).Authorization ?? '').replace(/^Bearer /, '');
+    state.apiRequests.push(token);
+    if (!state.sessionTokens.includes(token) || state.revoked.has(token) || now >= expOf(token)) {
+      return json(401, { message: 'Unauthorized', statusCode: 401 });
+    }
+    const caller = claimsOf(token).subscriberId as string;
+    state.apiCalls.push({ path: new URL(url).pathname, subscriberId: caller });
+    await wait(state.apiDelayMs);
+    const bodyDelayMs = state.apiBodyDelayMs;
+    const body = { data: [{ id: `${caller}_notification` }], hasMore: false, filter: {} };
+
+    return {
+      ok: true,
+      status: 200,
+      json: async () => {
+        await wait(bodyDelayMs);
+
+        return body;
+      },
+    } as unknown as Response;
+  });
+  vi.stubGlobal('fetch', fetchMock);
+
+  return {
+    state,
+    mintLoginToken,
+    advanceTime: (ms: number) => {
+      now += ms;
+    },
+  };
+};
+
+const createNovu = (options: Partial<NovuOptions> = {}) =>
+  new Novu({
+    applicationIdentifier: 'app',
+    tokenEndpoint: TOKEN_ENDPOINT,
+    defaultSchedule: { isEnabled: true },
+    useCache: false,
+    socketOptions: { minReconnectionDelay: 10, maxReconnectionDelay: 20 },
+    ...options,
+  } as NovuOptions);
+
+let warn: ReturnType<typeof vi.spyOn>;
+
+beforeEach(() => {
+  FakeWebSocket.instances = [];
+  vi.stubGlobal('WebSocket', FakeWebSocket);
+  warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+describe('signing in with a token endpoint', () => {
+  it('exchanges a token from the endpoint for a session, without sending a subscriber', async () => {
+    const backend = createFakeBackend();
+    const novu = createNovu();
+
+    const { error } = await novu.notifications.list();
+
+    expect(error).toBeUndefined();
+    expect(backend.state.tokenRequests).toHaveLength(1);
+    expect(backend.state.tokenRequests[0]).toMatchObject({ method: 'POST', credentials: 'include', body: '{}' });
+    expect(backend.state.sessionBodies).toEqual([
+      {
+        applicationIdentifier: 'app',
+        subscriberToken: backend.state.loginTokens[0],
+        defaultSchedule: { isEnabled: true },
+      },
+    ]);
+    expect(backend.state.apiRequests).toEqual([backend.state.sessionTokens[0]]);
+  });
+
+  it.each([
+    { subscriberId: 'user_42', contextKeys: ['tenant:org_9', 'app:web'], contextKey: 'app:web,tenant:org_9' },
+    { subscriberId: 'józef', contextKeys: ['tenant:org_1'], contextKey: 'tenant:org_1' },
+  ])(
+    'reads subscriber $subscriberId and its context from the session the token opened',
+    async ({ subscriberId, contextKeys, contextKey }) => {
+      createFakeBackend({ subscriberId, contextKeys });
+      const novu = createNovu();
+      expect(novu.subscriberId).toBeUndefined();
+
+      await novu.notifications.list();
+
+      expect(novu.subscriberId).toBe(subscriberId);
+      expect(novu.contextKey).toBe(contextKey);
+    }
+  );
+
+  it('calls a getToken callback instead of an endpoint', async () => {
+    const backend = createFakeBackend();
+    const getToken = vi.fn(async () => backend.mintLoginToken());
+    const novu = createNovu({ tokenEndpoint: undefined, getToken });
+
+    const { error } = await novu.notifications.list();
+
+    expect(error).toBeUndefined();
+    expect(getToken).toHaveBeenCalledTimes(1);
+    expect(backend.state.sessionBodies[0].subscriberToken).toBe(backend.state.loginTokens[0]);
+  });
+
+  it('uses the server-rendered initial token for the first session without calling the endpoint', async () => {
+    const backend = createFakeBackend();
+    const initialToken = backend.mintLoginToken();
+    const novu = createNovu({ initialToken });
+
+    await novu.notifications.list();
+
+    expect(backend.state.tokenRequests).toHaveLength(0);
+    expect(backend.state.sessionBodies[0].subscriberToken).toBe(initialToken);
+  });
+
+  it('skips an initial token that already expired', async () => {
+    const backend = createFakeBackend();
+    const initialToken = backend.mintLoginToken(-MINUTE_MS);
+    const novu = createNovu({ initialToken });
+
+    const { error } = await novu.notifications.list();
+
+    expect(error).toBeUndefined();
+    expect(backend.state.tokenRequests).toHaveLength(1);
+    expect(backend.state.sessionBodies.map((body) => body.subscriberToken)).toEqual([backend.state.loginTokens[1]]);
+  });
+
+  it.each([
+    {
+      rejection: 'expired (401) while the browser clock thinks it is valid',
+      reject: (backend: ReturnType<typeof createFakeBackend>) => {
+        backend.advanceTime(11 * MINUTE_MS);
+        backend.state.clientClockAheadMs = -11 * MINUTE_MS;
+      },
+    },
+    {
+      rejection: 'invalid (400)',
+      reject: (backend: ReturnType<typeof createFakeBackend>, initialToken: string) => {
+        backend.state.invalidLoginTokens.add(initialToken);
+      },
+    },
+  ])('falls back to the endpoint once when the server rejects the initial token as $rejection', async ({ reject }) => {
+    const backend = createFakeBackend();
+    const initialToken = backend.mintLoginToken();
+    const novu = createNovu({ initialToken });
+    reject(backend, initialToken);
+
+    const { error } = await novu.notifications.list();
+
+    expect(error).toBeUndefined();
+    expect(backend.state.tokenRequests).toHaveLength(1);
+    expect(backend.state.sessionBodies.map((body) => body.subscriberToken)).toEqual([
+      initialToken,
+      backend.state.loginTokens[1],
+    ]);
+  });
+});
+
+describe('keeping the session alive', () => {
+  it('gets a new token a minute before the session expires, before sending the next request', async () => {
+    const backend = createFakeBackend();
+    const novu = createNovu();
+    await novu.notifications.list();
+
+    backend.advanceTime(9 * MINUTE_MS + 30 * 1000);
+    const { error } = await novu.notifications.list();
+
+    expect(error).toBeUndefined();
+    expect(backend.state.tokenRequests).toHaveLength(2);
+    expect(backend.state.sessionBodies[1]).toEqual({
+      applicationIdentifier: 'app',
+      subscriberToken: backend.state.loginTokens[1],
+    });
+    expect(backend.state.apiRequests).toEqual([backend.state.sessionTokens[0], backend.state.sessionTokens[1]]);
+  });
+
+  it('shares one refresh between concurrent requests', async () => {
+    const backend = createFakeBackend();
+    const novu = createNovu();
+    await novu.notifications.list();
+
+    backend.state.sessionDelayMs = 30;
+    backend.advanceTime(HOUR_MS);
+    const results = await Promise.all([
+      novu.notifications.list(),
+      novu.notifications.list(),
+      novu.notifications.list(),
+    ]);
+
+    expect(results.map((result) => result.error)).toEqual([undefined, undefined, undefined]);
+    expect(backend.state.tokenRequests).toHaveLength(2);
+    expect(backend.state.sessionBodies).toHaveLength(2);
+  });
+
+  it('gets a new token and retries once when the server rejects a token the browser thinks is valid', async () => {
+    const backend = createFakeBackend();
+    const novu = createNovu();
+    await novu.notifications.list();
+    backend.state.revoked.add(backend.state.sessionTokens[0]);
+
+    const { error } = await novu.notifications.list();
+
+    expect(error).toBeUndefined();
+    expect(backend.state.tokenRequests).toHaveLength(2);
+    expect(backend.state.apiRequests).toEqual([
+      backend.state.sessionTokens[0],
+      backend.state.sessionTokens[0],
+      backend.state.sessionTokens[1],
+    ]);
+  });
+
+  it('returns a second 401 to the caller instead of refreshing again', async () => {
+    const backend = createFakeBackend();
+    const novu = createNovu();
+    await novu.notifications.list();
+    const revokeEverything = { has: () => true } as unknown as Set<string>;
+    backend.state.revoked = revokeEverything;
+
+    const { error } = await novu.notifications.list();
+
+    expect(error).toBeDefined();
+    expect(backend.state.tokenRequests).toHaveLength(2);
+    expect(backend.state.apiRequests).toHaveLength(3);
+  });
+});
+
+describe('refreshing before expiry on the server clock', () => {
+  it.each([
+    {
+      scenario: 'the browser clock runs 10 minutes ahead',
+      lifetimeMs: 5 * MINUTE_MS,
+      aheadMs: 10 * MINUTE_MS,
+      stepMs: 10_000,
+    },
+    { scenario: 'tokens last 15 seconds', lifetimeMs: 15_000, aheadMs: 0, stepMs: 1000 },
+  ])('fetches one token for five calls when $scenario', async ({ lifetimeMs, aheadMs, stepMs }) => {
+    const backend = createFakeBackend();
+    backend.state.loginTokenLifetimeMs = lifetimeMs;
+    backend.state.clientClockAheadMs = aheadMs;
+    const novu = createNovu();
+
+    for (let i = 0; i < 5; i += 1) {
+      const { error } = await novu.notifications.list();
+      expect(error).toBeUndefined();
+      backend.advanceTime(stepMs);
+    }
+
+    expect(backend.state.tokenRequests).toHaveLength(1);
+  });
+});
+
+describe('when the token source fails', () => {
+  it.each([
+    {
+      source: 'the endpoint answers 500',
+      setup: (backend: ReturnType<typeof createFakeBackend>) => {
+        backend.state.tokenEndpointStatus = 500;
+
+        return { options: {}, calls: () => backend.state.tokenRequests.length };
+      },
+    },
+    {
+      source: 'getToken throws',
+      setup: () => {
+        const getToken = vi.fn(async () => {
+          throw new Error('signed out');
+        });
+
+        return { options: { tokenEndpoint: undefined, getToken }, calls: () => getToken.mock.calls.length };
+      },
+    },
+  ])('returns an error from calls without retrying when $source at sign-in', async ({ setup }) => {
+    const backend = createFakeBackend();
+    const { options, calls } = setup(backend);
+    const novu = createNovu(options);
+    const sessionErrors: unknown[] = [];
+    novu.on('session.initialize.resolved', ({ error }) => error && sessionErrors.push(error));
+
+    const first = await novu.notifications.list();
+    const second = await novu.notifications.list();
+    await wait();
+
+    expect(first.error).toBeInstanceOf(NovuError);
+    expect(second.error).toBeInstanceOf(NovuError);
+    expect(sessionErrors).toHaveLength(1);
+    expect(calls()).toBe(1);
+    expect(backend.state.sessionBodies).toHaveLength(0);
+  });
+
+  it('warns once, naming the route and its status, while the token endpoint keeps failing', async () => {
+    const backend = createFakeBackend();
+    backend.state.tokenEndpointStatus = 401;
+    const novu = createNovu();
+
+    await novu.notifications.list();
+    backend.advanceTime(MINUTE_MS);
+    await novu.notifications.list();
+
+    const expected = `[Novu] The token endpoint ${TOKEN_ENDPOINT} answered 401. The Inbox stays signed out until getting a token succeeds.`;
+    expect(backend.state.tokenRequests).toHaveLength(2);
+    expect(warn.mock.calls.filter(([message]: unknown[]) => message === expected)).toHaveLength(1);
+  });
+
+  it('signs in on the first call after the cooldown when the first token fetch failed', async () => {
+    const backend = createFakeBackend();
+    backend.state.tokenEndpointStatus = 401;
+    const novu = createNovu();
+    const first = await novu.notifications.list();
+    backend.state.tokenEndpointStatus = 200;
+
+    backend.advanceTime(5_000);
+    const insideCooldown = await novu.notifications.list();
+    expect([first.error, insideCooldown.error]).toEqual([expect.any(NovuError), expect.any(NovuError)]);
+    expect(backend.state.tokenRequests).toHaveLength(1);
+
+    backend.advanceTime(5_000);
+    const results = await Promise.all([novu.notifications.list(), novu.notifications.count({})]);
+
+    expect(results.map((result) => result.error)).toEqual([undefined, undefined]);
+    expect(backend.state.tokenRequests).toHaveLength(2);
+    expect(backend.state.apiCalls.map((call) => call.subscriberId)).toEqual(['user_1', 'user_1']);
+  });
+
+  it('does not call the endpoint again for requests made soon after a renewal failed', async () => {
+    const backend = createFakeBackend();
+    const novu = createNovu();
+    await novu.notifications.list();
+    backend.state.tokenEndpointStatus = 503;
+    backend.advanceTime(HOUR_MS);
+    const failed = await novu.notifications.list();
+    expect(backend.state.tokenRequests).toHaveLength(2);
+    expect(backend.state.sessionBodies).toHaveLength(1);
+    expect(failed.error?.originalError?.message).toMatch(/could not be renewed/);
+
+    const results = await Promise.all([
+      novu.notifications.list(),
+      novu.notifications.count({}),
+      novu.notifications.readAll(),
+    ]);
+
+    expect(results.map((result) => result.error)).toEqual([
+      expect.any(NovuError),
+      expect.any(NovuError),
+      expect.any(NovuError),
+    ]);
+    expect(backend.state.tokenRequests).toHaveLength(2);
+    expect(backend.state.apiCalls).toHaveLength(1);
+  });
+
+  it('tries one renewal again once the cooldown after a failed renewal is over', async () => {
+    const backend = createFakeBackend();
+    const novu = createNovu();
+    await novu.notifications.list();
+    backend.state.tokenEndpointStatus = 503;
+    backend.advanceTime(HOUR_MS);
+    await novu.notifications.list();
+    backend.state.tokenEndpointStatus = 200;
+
+    backend.advanceTime(MINUTE_MS);
+    const results = await Promise.all([novu.notifications.list(), novu.notifications.list()]);
+
+    expect(results.map((result) => result.error)).toEqual([undefined, undefined]);
+    expect(backend.state.tokenRequests).toHaveLength(3);
+  });
+});
+
+describe('when the token endpoint signs in another user', () => {
+  const switchToBob = async () => {
+    const backend = createFakeBackend({ subscriberId: 'alice' });
+    const novu = createNovu({ useCache: true });
+    await novu.socket.connect();
+    await novu.notifications.list();
+    await wait();
+    backend.state.signedInUser = 'bob';
+
+    return { backend, novu };
+  };
+
+  it('drops the previous user cached data and reconnects the socket as the new user after expiry', async () => {
+    const { backend, novu } = await switchToBob();
+
+    backend.advanceTime(10 * MINUTE_MS);
+    await novu.notifications.count({});
+    await wait();
+    const { data } = await novu.notifications.list();
+
+    expect(data?.notifications.map((notification) => notification.id)).toEqual(['bob_notification']);
+    const sockets = FakeWebSocket.instances.filter((ws) => ws.readyState !== FakeWebSocket.CLOSED);
+    expect(sockets.map((ws) => claimsOf(new URL(ws.url).searchParams.get('token')!).subscriberId)).toEqual(['bob']);
+
+    await novu.socket.disconnect();
+  });
+
+  it('has dropped the previous user cached data before telling listeners the new user signed in', async () => {
+    const { backend, novu } = await switchToBob();
+    expect(novu.notifications.cache.getAll({ limit: 10 })).toBeDefined();
+    const seenOnResolve: Array<{ subscriberId?: string; cached: unknown }> = [];
+    novu.on('session.initialize.resolved', ({ data }) => {
+      if (data) {
+        seenOnResolve.push({ subscriberId: novu.subscriberId, cached: novu.notifications.cache.getAll({ limit: 10 }) });
+      }
+    });
+
+    backend.advanceTime(10 * MINUTE_MS);
+    await novu.notifications.count({});
+
+    expect(seenOnResolve).toEqual([{ subscriberId: 'bob', cached: undefined }]);
+
+    await novu.socket.disconnect();
+  });
+
+  it('does not send a request started as the previous user after a refresh before expiry signed in the new user', async () => {
+    const { backend, novu } = await switchToBob();
+    backend.advanceTime(10 * MINUTE_MS);
+
+    const { error } = await novu.notifications.readAll();
+
+    expect(error).toBeInstanceOf(NovuError);
+    expect(error?.originalError?.message).toMatch(/another subscriber/i);
+    expect(backend.state.apiCalls.filter((call) => call.path.endsWith('/notifications/read'))).toEqual([]);
+    expect(novu.subscriberId).toBe('bob');
+
+    await novu.socket.disconnect();
+  });
+
+  it.each([
+    { part: 'whole response', delay: 'apiDelayMs' },
+    { part: 'body', delay: 'apiBodyDelayMs' },
+  ] as const)(
+    'drops a response to the previous user whose $part arrives after the new user signed in',
+    async ({ delay }) => {
+      const { backend, novu } = await switchToBob();
+      novu.notifications.cache.clearAll();
+      backend.state[delay] = 100;
+      const aliceList = novu.notifications.list();
+      await wait(10);
+      backend.state[delay] = 0;
+      backend.advanceTime(10 * MINUTE_MS);
+      await novu.notifications.count({});
+      expect(novu.subscriberId).toBe('bob');
+
+      const { error } = await aliceList;
+      const { data } = await novu.notifications.list();
+
+      expect(error).toBeInstanceOf(NovuError);
+      expect(data?.notifications.map((notification) => notification.id)).toEqual(['bob_notification']);
+
+      await novu.socket.disconnect();
+    }
+  );
+
+  it('treats a renewal into a different subscriber and context pair as another user, even if they read alike', async () => {
+    const backend = createFakeBackend({ subscriberId: 'alice:x', contextKeys: ['tenant:org'] });
+    const novu = createNovu();
+    await novu.notifications.list();
+    backend.state.signedInUser = 'alice';
+    backend.state.contextKeys = ['x:tenant:org'];
+    backend.advanceTime(10 * MINUTE_MS);
+
+    const { error } = await novu.notifications.readAll();
+
+    expect(error).toBeInstanceOf(NovuError);
+    expect(backend.state.apiCalls.filter((call) => call.path.endsWith('/notifications/read'))).toEqual([]);
+    expect(novu.subscriberId).toBe('alice');
+  });
+
+  it('does not resend a request rejected for the previous user with the new user token', async () => {
+    const { backend, novu } = await switchToBob();
+    backend.state.revoked.add(backend.state.sessionTokens[0]);
+
+    const { error } = await novu.notifications.readAll();
+
+    expect(error).toBeDefined();
+    expect(backend.state.apiCalls.filter((call) => call.path.endsWith('/notifications/read'))).toEqual([]);
+    expect(novu.subscriberId).toBe('bob');
+
+    await novu.socket.disconnect();
+  });
+});
+
+const tokenOfUrl = (ws: FakeWebSocket) => new URL(ws.url).searchParams.get('token');
+
+const closePartySocketFromServer = () =>
+  FakeWebSocket.instances.find((ws) => ws.readyState !== FakeWebSocket.CLOSED)?.closeFromServer();
+
+const transports = [
+  {
+    transport: 'PartySocket',
+    options: {},
+    serverClose: closePartySocketFromServer,
+    reconnectAttempt: closePartySocketFromServer,
+    liveToken: () => {
+      const open = FakeWebSocket.instances.find((ws) => ws.readyState !== FakeWebSocket.CLOSED);
+
+      return open && tokenOfUrl(open);
+    },
+    reconnectTokens: () => FakeWebSocket.instances.slice(1).map(tokenOfUrl),
+  },
+  {
+    transport: 'socket.io',
+    options: { socketUrl: 'https://ws.self-hosted.example.com' },
+    serverClose: () => fakeSocketIo.current?.handlers.get('disconnect')?.('io server disconnect'),
+    reconnectAttempt: () => fakeSocketIo.current?.managerHandlers.get('reconnect_attempt')?.(),
+    liveToken: () => fakeSocketIo.current?.io.opts.query?.token,
+    reconnectTokens: () => fakeSocketIo.current?.connectedWith,
+  },
+];
+
+describe('the realtime socket with a token source', () => {
+  it.each(
+    transports.flatMap((transport) => [
+      { ...transport, clock: 'on time', clockAheadMs: 0 },
+      { ...transport, clock: '5 minutes behind', clockAheadMs: -5 * MINUTE_MS },
+    ])
+  )(
+    'reconnects $transport once, with a new session, after the server closes it at expiry with the browser clock $clock',
+    async (transport) => {
+      const backend = createFakeBackend();
+      backend.state.clientClockAheadMs = transport.clockAheadMs;
+      const novu = createNovu(transport.options);
+      await novu.socket.connect();
+      await wait();
+      expect(transport.liveToken()).toBe(backend.state.sessionTokens[0]);
+
+      backend.advanceTime(10 * MINUTE_MS);
+      transport.serverClose();
+      await wait();
+
+      expect(backend.state.tokenRequests).toHaveLength(2);
+      expect(transport.reconnectTokens()).toEqual([backend.state.sessionTokens[1]]);
+
+      await novu.socket.disconnect();
+    }
+  );
+
+  it.each(transports)(
+    'does not fetch a token per $transport reconnect when the browser clock runs 10 minutes ahead',
+    async (transport) => {
+      const backend = createFakeBackend();
+      backend.state.loginTokenLifetimeMs = 5 * MINUTE_MS;
+      backend.state.clientClockAheadMs = 10 * MINUTE_MS;
+      const novu = createNovu(transport.options);
+      await novu.socket.connect();
+      await wait();
+
+      for (let i = 0; i < 3; i += 1) {
+        transport.reconnectAttempt();
+        await wait();
+      }
+
+      expect(backend.state.tokenRequests).toHaveLength(1);
+      expect(transport.liveToken()).toBe(backend.state.sessionTokens[0]);
+
+      await novu.socket.disconnect();
+    }
+  );
+});
+
+describe('several tabs waking up after the session expired', () => {
+  it('refreshes only in tabs that make a request, once each', async () => {
+    const backend = createFakeBackend();
+    const tabs = [createNovu(), createNovu(), createNovu(), createNovu()];
+    await Promise.all(tabs.map((tab) => tab.notifications.list()));
+    expect(backend.state.tokenRequests).toHaveLength(4);
+
+    backend.advanceTime(HOUR_MS);
+    const [visible, other] = tabs;
+    const results = await Promise.all([
+      visible.notifications.list(),
+      visible.notifications.list(),
+      other.notifications.list(),
+    ]);
+    await wait();
+
+    expect(results.map((result) => result.error)).toEqual([undefined, undefined, undefined]);
+    expect(backend.state.tokenRequests).toHaveLength(6);
+    expect(backend.state.sessionBodies).toHaveLength(6);
+  });
+});
+
+describe('identity warnings', () => {
+  it('warns once that subscriber props are ignored with a token source, and does not send them', async () => {
+    const backend = createFakeBackend();
+    const options = {
+      subscriber: 'user_1',
+      subscriberHash: 'hash',
+      context: { tenant: 'org_1' },
+    } as Partial<NovuOptions>;
+    createNovu(options);
+    const novu = createNovu(options);
+
+    await novu.notifications.list();
+
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain('subscriber, context, subscriberHash');
+    for (const body of backend.state.sessionBodies) {
+      expect(body).not.toHaveProperty('subscriber');
+      expect(body).not.toHaveProperty('subscriberHash');
+      expect(body).not.toHaveProperty('context');
+    }
+  });
+
+  it('warns once when a subscriber is opened without a hash or a token', () => {
+    createFakeBackend();
+    new Novu({ applicationIdentifier: 'app', subscriber: 'user_no_hash' });
+    new Novu({ applicationIdentifier: 'app', subscriber: 'user_no_hash_2' });
+
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain('tokenEndpoint');
+  });
+
+  it('does not warn for a subscriber with a hash, keyless mode, or a token source alone', () => {
+    createFakeBackend();
+    new Novu({ applicationIdentifier: 'app', subscriber: 'user_1', subscriberHash: 'hash' });
+    new Novu({});
+    createNovu();
+
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('refuses to change the subscriber or context with a token source', async () => {
+    createFakeBackend();
+    const novu = createNovu();
+
+    await expect(novu.changeSubscriber({ subscriber: { subscriberId: 'other' } })).rejects.toBeInstanceOf(NovuError);
+    await expect(novu.changeContext({ context: { tenant: 'org_2' } })).rejects.toBeInstanceOf(NovuError);
+  });
+});

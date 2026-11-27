@@ -1,4 +1,4 @@
-import type { Context, DefaultSchedule, NovuSocketOptions, Subscriber, UnreadCount } from '@novu/js';
+import type { Context, DefaultSchedule, NovuSocketOptions, Subscriber, TokenNovuOptions, UnreadCount } from '@novu/js';
 import type {
   AllIconKey,
   AllTheme,
@@ -82,9 +82,10 @@ export type DefaultInboxProps = {
   placementOffset?: InboxProps['placementOffset'];
 };
 
+/** `Omit` over a union merges its members into one bag of optional props; this keeps each member apart. */
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
+
 type StandardBaseProps = {
-  subscriberHash?: string;
-  contextHash?: string;
   backendUrl?: string;
   socketUrl?: string;
   socketOptions?: NovuSocketOptions;
@@ -96,7 +97,21 @@ type StandardBaseProps = {
   preferencesSort?: PreferencesSort;
   defaultSchedule?: DefaultSchedule;
   routerPush?: RouterPush;
+} & IdentityProps;
+
+/** Who the Inbox signs in as: a subscriber (optionally HMAC-signed), keyless, or a token source. */
+export type IdentityProps = SubscriberIdentityProps | TokenIdentityProps;
+
+type SubscriberIdentityProps = {
+  subscriberHash?: string;
+  contextHash?: string;
   context?: Context;
+  /** Pass `tokenEndpoint` or `getToken` to sign in with subscriber tokens; then drop `subscriberHash`. */
+  tokenEndpoint?: never;
+  /** Pass `tokenEndpoint` or `getToken` to sign in with subscriber tokens; then drop `subscriberHash`. */
+  getToken?: never;
+  /** `initialToken` needs `tokenEndpoint` or `getToken`. */
+  initialToken?: never;
 } & (
   | {
       // TODO: Backward compatibility support - remove in future versions (see NV-5801)
@@ -118,7 +133,10 @@ type StandardBaseProps = {
     }
 );
 
-type InboxBaseProps = Omit<StandardBaseProps, 'appearance'> & {
+/** The Inbox has no `apiUrl` or `useCache` prop; everything else comes from `@novu/js`. */
+type TokenIdentityProps = DistributiveOmit<TokenNovuOptions, 'apiUrl' | 'useCache'>;
+
+type InboxBaseProps = DistributiveOmit<StandardBaseProps, 'appearance'> & {
   appearance?: ReactInboxAppearance;
 };
 

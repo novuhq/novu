@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InboxService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import type { Session } from '../types';
+import { isJwtExpired } from '../utils/jwt';
 import { Socket } from './socket';
 
 type Handler = (...args: unknown[]) => void;
@@ -44,7 +45,7 @@ const HOUR_MS = 60 * 60 * 1000;
 const toBase64Url = (value: object) =>
   btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const createJwt = (name: string, expiresAtMs: number) =>
-  `${toBase64Url({ alg: 'HS256' })}.${toBase64Url({ sub: name, exp: Math.floor(expiresAtMs / 1000) })}.sig`;
+  `${toBase64Url({ alg: 'HS256' })}.${toBase64Url({ sub: name, subscriberId: 'user_1', exp: Math.floor(expiresAtMs / 1000) })}.sig`;
 
 let now = Date.now();
 const oldToken = createJwt('old', now + HOUR_MS);
@@ -58,23 +59,24 @@ const emitSession = (emitter: NovuEventEmitter, token: string) =>
 
 const createClient = () => {
   const emitter = new NovuEventEmitter();
-  const refreshSession = vi.fn(async () => {
+  const refreshSession = vi.fn(async (): Promise<string | undefined> => {
     emitSession(emitter, newToken);
 
-    return true;
+    return newToken;
   });
   const client = new Socket({
     socketUrl: 'https://ws.example.com',
     inboxServiceInstance: new InboxService(),
     eventEmitterInstance: emitter,
-    refreshSession,
+    session: { isExpired: (token) => isJwtExpired(token), refresh: refreshSession },
   });
   emitSession(emitter, oldToken);
 
-  return { client, refreshSession };
+  return { client, emitter, refreshSession };
 };
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 beforeEach(() => {
   now = Date.now();
@@ -109,10 +111,25 @@ describe('Socket (socket.io)', () => {
     const socket = fakeSocketIo.current!;
 
     socket.handlers.get('disconnect')?.('io server disconnect');
-    await flush();
+    await wait(30);
 
     expect(refreshSession).not.toHaveBeenCalled();
     expect(socket.connect).not.toHaveBeenCalled();
+  });
+
+  it('reconnects when the server closed the socket at expiry a moment before the browser counted the token expired', async () => {
+    const { client, refreshSession } = createClient();
+    await client.connect();
+    const socket = fakeSocketIo.current!;
+
+    socket.handlers.get('disconnect')?.('io server disconnect');
+    await flush();
+    now += 2 * HOUR_MS;
+    await wait(30);
+
+    expect(refreshSession).toHaveBeenCalledTimes(1);
+    expect(socket.connect).toHaveBeenCalledTimes(1);
+    expect(socket.io.opts.query?.token).toBe(newToken);
   });
 
   it('sends the newest token with each reconnect attempt', async () => {
@@ -131,7 +148,7 @@ describe('Socket (socket.io)', () => {
   it('keeps trying to get a token when the refresh fails after a server disconnect', async () => {
     const { client, refreshSession } = createClient();
     const refreshesThenRecovers = refreshSession.getMockImplementation()!;
-    refreshSession.mockImplementationOnce(async () => false);
+    refreshSession.mockImplementationOnce(async () => undefined);
     await client.connect();
     const socket = fakeSocketIo.current!;
 
@@ -150,7 +167,7 @@ describe('Socket (socket.io)', () => {
 
   it('stops trying after the socket is disconnected', async () => {
     const { client, refreshSession } = createClient();
-    refreshSession.mockImplementation(async () => false);
+    refreshSession.mockImplementation(async () => undefined);
     await client.connect();
     const socket = fakeSocketIo.current!;
 
@@ -162,5 +179,34 @@ describe('Socket (socket.io)', () => {
 
     expect(refreshSession).toHaveBeenCalledTimes(1);
     expect(socket.connect).not.toHaveBeenCalled();
+  });
+
+  it('emits a received notification whose message has no populated subscriber', async () => {
+    const { client, emitter } = createClient();
+    const received = vi.fn();
+    emitter.on('notifications.notification_received', received);
+    await client.connect();
+
+    fakeSocketIo.current!.handlers.get('notification_received')?.({
+      message: {
+        _id: 'message_1',
+        transactionId: 'tx_1',
+        content: 'Hello',
+        read: false,
+        seen: false,
+        archived: false,
+        createdAt: new Date(now).toISOString(),
+        channel: 'in_app',
+        cta: {},
+        severity: 'none',
+      },
+    });
+
+    expect(received).toHaveBeenCalledTimes(1);
+    expect(received.mock.calls[0][0].result).toMatchObject({
+      id: 'message_1',
+      body: 'Hello',
+      to: { subscriberId: 'user_1' },
+    });
   });
 });

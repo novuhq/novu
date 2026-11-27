@@ -19,6 +19,7 @@ import type {
   WebChatPlanLimitError,
 } from '@novu/js';
 import { NovuError } from '@novu/js';
+import { getIdentityKey } from '@novu/js/internal';
 import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useNovu } from './NovuProvider';
@@ -377,7 +378,7 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
 
     const key = managedRuntimeKey;
     // Only a client for the same app, subscriber and context may resume the saved conversation.
-    const identity = `${novu.applicationIdentifier}\0${novu.subscriberId}\0${novu.contextKey}`;
+    const identity = getIdentityKey(novu);
     const current = ownedRuntimeRef.current;
 
     let runtime: AgentConversationRuntime;
@@ -387,7 +388,9 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
       current?.runtime.dispose();
       const resumeConversationId =
         conversationIdProp ??
-        (createdConversationRef.current?.key === key && createdConversationRef.current.identity === identity
+        (identity !== undefined &&
+        createdConversationRef.current?.key === key &&
+        createdConversationRef.current.identity === identity
           ? createdConversationRef.current.conversationId
           : undefined);
       runtime = resumeConversationId
@@ -400,7 +403,10 @@ export const useWebChat = (props: UseWebChatProps): UseWebChatResult => {
 
     return () => {
       const conversationId = ownedRuntimeRef.current?.runtime.getSnapshot().conversationId;
-      if (conversationId) createdConversationRef.current = { key, identity, conversationId };
+      const createdBy = identity ?? getIdentityKey(novu);
+      if (conversationId && createdBy !== undefined) {
+        createdConversationRef.current = { key, identity: createdBy, conversationId };
+      }
       ownedRuntimeRef.current?.runtime.dispose();
       ownedRuntimeRef.current = null;
       setManagedRuntime(null);

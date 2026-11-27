@@ -69,7 +69,7 @@ describe('callWithSession(fn)', () => {
   test('should return an error if session initialization failed', async () => {
     const emitter = new NovuEventEmitter();
     const bm = new BaseModule({
-      inboxServiceInstance: {} as InboxService,
+      inboxServiceInstance: { retrySignIn: () => false } as unknown as InboxService,
       eventEmitterInstance: emitter,
     });
 

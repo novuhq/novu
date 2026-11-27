@@ -2,7 +2,8 @@ import { InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import { SubscriptionsCache } from '../cache/subscriptions-cache';
 import { NovuEventEmitter } from '../event-emitter';
-import { Options, Result, Subscriber } from '../types';
+import type { Session } from '../session';
+import { Options, Result } from '../types';
 import { buildSubscriptionIdentifier } from '../ui/internal';
 import {
   createSubscription,
@@ -26,22 +27,19 @@ import type {
 
 export class Subscriptions extends BaseModule {
   #useCache: boolean;
-  #subscriber: Subscriber;
-  #contextKey: string;
+  #session: Pick<Session, 'subscriberId' | 'contextKey'>;
   readonly cache: SubscriptionsCache;
 
   constructor({
     useCache,
     inboxServiceInstance,
     eventEmitterInstance,
-    subscriber,
-    contextKey,
+    session,
   }: {
     useCache: boolean;
     inboxServiceInstance: InboxService;
     eventEmitterInstance: NovuEventEmitter;
-    subscriber: Subscriber;
-    contextKey: string;
+    session: Pick<Session, 'subscriberId' | 'contextKey'>;
   }) {
     super({
       eventEmitterInstance,
@@ -53,8 +51,7 @@ export class Subscriptions extends BaseModule {
       useCache,
     });
     this.#useCache = useCache;
-    this.#subscriber = subscriber;
-    this.#contextKey = contextKey;
+    this.#session = session;
   }
 
   async list(args: ListSubscriptionsArgs, options?: Options): Result<TopicSubscription[]> {
@@ -88,8 +85,8 @@ export class Subscriptions extends BaseModule {
             args.identifier ??
             buildSubscriptionIdentifier({
               topicKey: args.topicKey,
-              subscriberId: this.#subscriber.subscriberId,
-              contextKey: this.#contextKey,
+              subscriberId: this.#session.subscriberId,
+              contextKey: this.#session.contextKey,
             }),
         },
       })
