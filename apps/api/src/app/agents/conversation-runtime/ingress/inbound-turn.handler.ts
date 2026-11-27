@@ -2069,7 +2069,7 @@ export class AgentInboundHandler implements OnModuleInit {
         conversation,
         thread,
         platformThreadId: threadId,
-        mentionMessage: message,
+        mentionMessage: event.previousMessage ?? message,
         postCard: false,
       })
     ) {
@@ -2721,9 +2721,12 @@ function agentVisibleText(stored: ConversationActivityEntity | null, platformTex
   return stored.accessRefused ? '' : stored.content;
 }
 
-/** A copy of a platform message with other text. `Message` is a class, so a spread would drop its methods. */
+/**
+ * A platform message cut down to the text the agent may read. The platform's formatting, attachments and raw
+ * payload are dropped: they can belong to a refused version the stored text replaces.
+ */
 function withText(message: Message, text: string): Message {
-  return Object.assign(Object.create(Object.getPrototypeOf(message)), message, { text });
+  return { id: message.id, text, author: message.author, metadata: message.metadata } as Message;
 }
 
 function stubDeletedMessage(event: MessageDeletedEvent, existing: ConversationActivityEntity | null): Message {
