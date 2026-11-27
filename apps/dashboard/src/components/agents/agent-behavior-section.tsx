@@ -163,6 +163,7 @@ type SubscriberAccessSettingProps = {
 function SubscriberAccessSetting({ agent, disabled, readOnly, onAccessChange }: SubscriberAccessSettingProps) {
   const access = getSubscriberAccess(agent);
   const [isRuleSheetOpen, setIsRuleSheetOpen] = useState(false);
+  const [ruleSheetKey, setRuleSheetKey] = useState(0);
   const [pendingAccess, setPendingAccess] = useState<Exclude<AgentSubscriberAccess, 'rule'> | null>(null);
   const accessRule = agent.behavior?.accessRule;
   const conditionsCount = useMemo(
@@ -170,11 +171,16 @@ function SubscriberAccessSetting({ agent, disabled, readOnly, onAccessChange }: 
     [accessRule]
   );
 
+  const openRuleSheet = () => {
+    setRuleSheetKey((key) => key + 1);
+    setIsRuleSheetOpen(true);
+  };
+
   const handleValueChange = (next: AgentSubscriberAccess) => {
     if (next === access) return;
 
     if (next === 'rule') {
-      setIsRuleSheetOpen(true);
+      openRuleSheet();
     } else if (access === 'rule') {
       setPendingAccess(next);
     } else {
@@ -220,7 +226,7 @@ function SubscriberAccessSetting({ agent, disabled, readOnly, onAccessChange }: 
           size="2xs"
           className="self-start"
           trailingIcon={RiArrowRightSLine}
-          onClick={() => setIsRuleSheetOpen(true)}
+          onClick={openRuleSheet}
         >
           {readOnly ? 'View rule' : 'Edit rule'}
           {conditionsCount !== null && (
@@ -232,6 +238,7 @@ function SubscriberAccessSetting({ agent, disabled, readOnly, onAccessChange }: 
       )}
 
       <AgentAccessRuleSheet
+        key={ruleSheetKey}
         agent={agent}
         open={isRuleSheetOpen}
         onOpenChange={setIsRuleSheetOpen}

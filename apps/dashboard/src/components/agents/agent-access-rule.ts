@@ -40,6 +40,10 @@ export function createEmptyAccessRuleQuery(): RuleGroupType {
 /**
  * Returns null when the editor can't show the rule as stored, so saving it from the editor would change it.
  */
+export function hasConditions(group: RuleGroupTypeAny): boolean {
+  return group.rules.some((rule) => typeof rule !== 'string' && (!isRuleGroup(rule) || hasConditions(rule)));
+}
+
 export function parseAccessRule(rule: AgentAccessRule | undefined): RuleGroupType | null {
   if (!rule) {
     return createEmptyAccessRuleQuery();

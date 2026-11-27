@@ -1,6 +1,6 @@
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiInputField, RiShieldUserLine } from 'react-icons/ri';
 import type { RuleGroupType } from 'react-querybuilder';
@@ -10,6 +10,7 @@ import {
   createEmptyAccessRuleQuery,
   getAccessRuleFieldIssue,
   getAccessRuleOperatorIssue,
+  hasConditions,
   parseAccessRule,
   toAccessRule,
 } from '@/components/agents/agent-access-rule';
@@ -23,11 +24,13 @@ import { Panel, PanelContent, PanelHeader } from '@/components/primitives/panel'
 import { NonModalSheet, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useContextTypeVariables } from '@/hooks/use-context-type-variables';
-import { useDataRef } from '@/hooks/use-data-ref';
 
 const conditionsSchema = getConditionsSchema({
   getFieldIssue: getAccessRuleFieldIssue,
   getOperatorIssue: getAccessRuleOperatorIssue,
+}).refine(({ query }) => hasConditions(query as RuleGroupType), {
+  message: 'Add at least one condition.',
+  path: ['query'],
 });
 
 const UNEDITABLE_RULE_NOTICE =
@@ -62,7 +65,7 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
   );
 
   const savedRule = agent.behavior?.accessRule;
-  const savedQuery = useMemo(() => parseAccessRule(savedRule), [savedRule]);
+  const [savedQuery] = useState(() => parseAccessRule(savedRule));
   const isEditable = !readOnly && savedQuery !== null;
 
   const form = useForm({
@@ -70,9 +73,10 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
     resolver: standardSchemaResolver(conditionsSchema),
     defaultValues: { query: { ...(savedQuery ?? createEmptyAccessRuleQuery()) } },
   });
-  const [emptyRuleError, setEmptyRuleError] = useState(false);
+  const queryError = form.formState.errors.query?.message;
+  const emptyRuleError = typeof queryError === 'string' ? queryError : undefined;
 
-  const { mutate, isPending, error, reset } = useMutation({
+  const { mutate, isPending, error } = useMutation({
     mutationFn: (accessRule: Record<string, unknown>) =>
       updateAgent(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, {
         behavior: { subscriberAccess: 'rule', accessRule },
@@ -85,25 +89,10 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
     },
   });
 
-  const savedQueryRef = useDataRef(savedQuery);
-  useEffect(() => {
-    if (!open) return;
-
-    form.reset({ query: { ...(savedQueryRef.current ?? createEmptyAccessRuleQuery()) } });
-    setEmptyRuleError(false);
-    reset();
-  }, [open, form, savedQueryRef, reset]);
-
   const save = form.handleSubmit(({ query }) => {
     const accessRule = toAccessRule(query as RuleGroupType, variables);
 
-    if (!accessRule) {
-      setEmptyRuleError(true);
-
-      return;
-    }
-
-    mutate(accessRule);
+    if (accessRule) mutate(accessRule);
   });
 
   return (
@@ -136,10 +125,7 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
                   render={({ field }) => (
                     <ConditionsEditor
                       query={field.value as RuleGroupType}
-                      onQueryChange={(query) => {
-                        setEmptyRuleError(false);
-                        field.onChange(query);
-                      }}
+                      onQueryChange={field.onChange}
                       fields={fields}
                       variables={variables}
                       enhancedVariables={variables}
@@ -163,7 +149,7 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
       <div className="bg-background flex shrink-0 items-center justify-end gap-2 border-t p-3">
         {(emptyRuleError || error) && (
           <p role="alert" className="text-destructive mr-auto text-xs">
-            {emptyRuleError ? 'Add at least one condition.' : error?.message}
+            {emptyRuleError ?? error?.message}
           </p>
         )}
         <Button type="button" variant="secondary" mode="outline" onClick={() => onOpenChange(false)}>
