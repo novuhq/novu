@@ -508,6 +508,17 @@ describe('Agent access rule #novu-v2', () => {
           .patch(`/v2/contexts/tenant/${tenantId}`)
           .send({ data: { plan: 'free' } });
         expect(downgrade.status, JSON.stringify(downgrade.body)).to.equal(200);
+        const { iat } = JSON.parse(Buffer.from(minted.body.data.token.split('.')[1], 'base64url').toString());
+        await new ContextRepository().update(
+          {
+            _environmentId: ctx.session.environment._id,
+            _organizationId: ctx.session.organization._id,
+            type: 'tenant',
+            id: tenantId,
+          },
+          { $set: { updatedAt: new Date((iat + 1) * 1000) } },
+          { timestamps: false }
+        );
 
         const replayed = await exchange();
 
