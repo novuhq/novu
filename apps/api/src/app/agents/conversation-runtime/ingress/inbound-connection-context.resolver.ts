@@ -109,21 +109,24 @@ export class InboundConnectionContextResolver {
    * Web chat has no connection or endpoint: the subscriber's session token carries the tenant as
    * `contextKeys`, which the adapter stamps on every inbound raw payload (messages and actions).
    *
-   * Session init only verifies the context signature when the environment's in-app integration
-   * enforces HMAC; otherwise any caller can mint a session naming any context of the environment.
-   * The keys are only trusted as the agent's tenant (and bridge URL) when HMAC is enforced.
+   * The keys are trusted as the agent's tenant (and bridge URL) only when they were signed:
+   *  - `contextVerified` (the adapter stamps it from the session): the session came from a
+   *    customer-signed subscriber token, whose context the customer signed.
+   *  - otherwise, session init verified the context hash only when every in-app integration of the
+   *    environment enforces HMAC. Without it any caller can mint a session naming any context.
    */
   private async resolveBySessionContextKeys(
     config: ResolvedAgentConfig,
     rawEvent: unknown
   ): Promise<ResolvedInboundContext> {
-    const contextKeys = (rawEvent as { contextKeys?: unknown } | null | undefined)?.contextKeys;
+    const raw = rawEvent as { contextKeys?: unknown; contextVerified?: unknown } | null | undefined;
+    const contextKeys = raw?.contextKeys;
     if (!Array.isArray(contextKeys) || contextKeys.length === 0) {
       return EMPTY_RESOLVED_CONTEXT;
     }
 
     try {
-      if (!(await this.isSessionContextSigned(config))) {
+      if (raw?.contextVerified !== true && !(await this.isSessionContextSigned(config))) {
         this.logger.warn(
           { integrationIdentifier: config.integrationIdentifier, environmentId: config.environmentId },
           'Ignoring web chat session context: the in-app integration does not enforce HMAC'

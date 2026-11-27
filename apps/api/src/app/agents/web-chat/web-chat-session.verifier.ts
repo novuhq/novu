@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { WebChatSession } from '@novu/chat-adapter-web-chat';
-import type { ISubscriberJwt } from '@novu/shared';
+import { type ISubscriberJwt, SubscriberSessionAuthMethodEnum } from '@novu/shared';
 import jwt from 'jsonwebtoken';
 import { AuthService } from '../../auth/services/auth.service';
 
@@ -36,6 +36,7 @@ export class WebChatSessionVerifier {
         environmentId: subscriber._environmentId,
         organizationId: subscriber._organizationId,
         contextKeys: Array.isArray(payload.contextKeys) ? payload.contextKeys : [],
+        contextVerified: payload.authMethod === SubscriberSessionAuthMethodEnum.TOKEN,
       };
     } catch {
       return null;
