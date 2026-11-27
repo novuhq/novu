@@ -22,10 +22,6 @@ export interface IntegrationRuleEvaluationResult {
 
 export { INTEGRATION_CONDITION_NAMESPACES, INTEGRATION_CONDITION_RUNTIME_NAMESPACES, INTEGRATION_CONDITION_VARIABLES };
 
-type IntegrationConditionNamespace =
-  | (typeof INTEGRATION_CONDITION_NAMESPACES)[number]
-  | (typeof INTEGRATION_CONDITION_RUNTIME_NAMESPACES)[number];
-
 const ALLOWED_RULE_OPERATORS = new Set<string>(INTEGRATION_RULE_OPERATORS);
 
 export function hasIntegrationRules(rules?: unknown): rules is Record<string, unknown> {
@@ -36,11 +32,7 @@ export function hasLegacyIntegrationConditions(conditions?: unknown[] | null): b
   return Array.isArray(conditions) && conditions.length > 0;
 }
 
-function collectDisallowedOperatorIssues(
-  node: unknown,
-  issues: string[],
-  namespaces: readonly IntegrationConditionNamespace[]
-): void {
+function collectDisallowedOperatorIssues(node: unknown, issues: string[], namespaces: readonly string[]): void {
   if (node === null || typeof node !== 'object') {
     return;
   }
@@ -87,7 +79,7 @@ function collectDisallowedOperatorIssues(
   collectDisallowedOperatorIssues(value, issues, namespaces);
 }
 
-function isAllowedIntegrationVar(fieldValue: string, namespaces: readonly IntegrationConditionNamespace[]): boolean {
+function isAllowedIntegrationVar(fieldValue: string, namespaces: readonly string[]): boolean {
   if (!fieldValue) {
     return false;
   }
@@ -105,7 +97,7 @@ function isAllowedIntegrationVar(fieldValue: string, namespaces: readonly Integr
 
 export function getIntegrationRulesIssues(
   logic: Record<string, unknown>,
-  namespaces: readonly IntegrationConditionNamespace[] = INTEGRATION_CONDITION_NAMESPACES
+  namespaces: readonly string[] = INTEGRATION_CONDITION_NAMESPACES
 ): string[] {
   if (!isValidRule(logic as RulesLogic<AdditionalOperation>)) {
     return ['Invalid integration conditions'];

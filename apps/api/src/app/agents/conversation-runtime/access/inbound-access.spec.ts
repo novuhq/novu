@@ -100,6 +100,28 @@ describe('decideInboundAccess', () => {
       }
     });
 
+    it('lets Slack in for everyone and other platforms only for a paid plan', async () => {
+      const config = (platform: AgentPlatformEnum) =>
+        ruleConfig({
+          platform,
+          accessRule: {
+            or: [
+              { '==': [{ var: 'channel.platform' }, 'slack'] },
+              { in: [{ var: 'context.tenant.data.plan' }, ['pro']] },
+            ],
+          },
+        });
+      const noPlan: InboundSender = { subscriber: { subscriberId: 'sub-1' } as never, context: null };
+      const onPro: InboundSender = { ...noPlan, context: { tenant: { id: 'acme', data: { plan: 'pro' } } } };
+
+      expect(await decide({ config: config(AgentPlatformEnum.SLACK), sender: noPlan })).to.deep.equal(ADMIT);
+      expect(await decide({ config: config(AgentPlatformEnum.WHATSAPP), sender: noPlan })).to.deep.equal({
+        verdict: 'refuse',
+        refusal: { kind: 'denied' },
+      });
+      expect(await decide({ config: config(AgentPlatformEnum.WHATSAPP), sender: onPro })).to.deep.equal(ADMIT);
+    });
+
     it('applies the rule to a keyless email demo', async () => {
       const config = ruleConfig({ platform: AgentPlatformEnum.EMAIL, isKeyless: true });
 

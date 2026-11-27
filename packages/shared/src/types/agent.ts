@@ -22,7 +22,19 @@ export enum AgentSubscriberAccessEnum {
   RULE = 'rule',
 }
 
-/** JSON Logic object evaluated over `subscriber.*` and `context.*`. */
+/** The chat platform an agent message arrives on. Access rules can match it as `channel.platform`. */
+export enum AgentPlatformEnum {
+  SLACK = 'slack',
+  WHATSAPP = 'whatsapp',
+  TEAMS = 'teams',
+  EMAIL = 'email',
+  TELEGRAM = 'telegram',
+  SENDBLUE = 'sendblue',
+  PHOTON_IMESSAGE = 'photon_imessage',
+  WEB_CHAT = 'web_chat',
+}
+
+/** JSON Logic object evaluated over `subscriber.*`, `context.*` and `channel.platform`. */
 export type AgentAccessRule = Record<string, unknown>;
 
 /**

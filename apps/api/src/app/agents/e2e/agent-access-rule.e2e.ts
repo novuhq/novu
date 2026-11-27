@@ -534,6 +534,26 @@ describe('Agent access rule #novu-v2', () => {
       expect(replies).to.deep.equal([SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY, SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY]);
     });
 
+    it('admits a Slack sender through a channel.platform rule that refuses other platforms without a paid plan', async () => {
+      const subscriberId = `slack-rule-platform-${Date.now()}`;
+      await subscriberRepository.create({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        subscriberId,
+      });
+      await seedChannelEndpoint(ctx, 'U_RULE_PLATFORM', subscriberId);
+      const platformRule = {
+        or: [{ '==': [{ var: 'channel.platform' }, 'slack'] }, PAID_PLAN_RULE],
+      };
+      await setRule(platformRule);
+      expect((await storedBehavior())?.accessRule).to.deep.equal(platformRule);
+
+      await sendSlack(`D_RULE_PLATFORM_${Date.now()}`, 'U_RULE_PLATFORM', 'hello from Slack');
+
+      expect(bridgeCalls).to.have.length(1);
+      expect(replies).to.deep.equal([]);
+    });
+
     it('refuses an unknown Slack sender like restricted access does, without creating a subscriber', async () => {
       await setRule({ '!': { in: [ctx.agentIdentifier, { var: 'subscriber.data.blockedAgents' }] } });
 
