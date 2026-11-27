@@ -24,7 +24,7 @@ type ConfirmationModalProps = {
   confirmTrailingIcon?: IconType;
   isLoading?: boolean;
   isConfirmDisabled?: boolean;
-  confirmButtonVariant?: 'primary' | 'error';
+  confirmButtonVariant?: 'primary' | 'secondary' | 'error';
 };
 
 export const ConfirmationModal = ({

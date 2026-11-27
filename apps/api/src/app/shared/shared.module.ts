@@ -73,6 +73,7 @@ import { ApiKeyRevocationService } from '../auth/api-key-revocation/api-key-revo
 import { ActivityRetentionService } from './services/activity-retention.service';
 import { NovuTokens } from './services/novu-tokens.service';
 import { SubscriberSessionAuthStatsService } from './services/subscriber-session-auth-stats.service';
+import { SubscriberTokensRequirement } from './services/subscriber-tokens-requirement.service';
 import { getClientIp } from './utils/client-ip';
 
 function getDynamicAuthProviders() {
@@ -163,6 +164,7 @@ const PROVIDERS = [
   ApiKeyRevocationService,
   AgentEmailInboxQuotaService,
   SubscriberSessionAuthStatsService,
+  SubscriberTokensRequirement,
   analyticsService,
   cacheService,
   CacheServiceHealthIndicator,

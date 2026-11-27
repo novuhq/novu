@@ -26,14 +26,18 @@ export class SubscriberJwtStatelessStrategy extends PassportStrategy(Strategy, S
   }
 
   validate(payload: ISubscriberJwt): StatelessSubscriberSession {
-    if (payload.aud !== 'widget_user' || !payload.subscriberId || !payload.environmentId) {
-      throw new UnauthorizedException();
-    }
-
-    return {
-      subscriberId: payload.subscriberId,
-      _environmentId: payload.environmentId,
-      _organizationId: payload.organizationId,
-    };
+    return toStatelessSubscriberSession(payload);
   }
+}
+
+export function toStatelessSubscriberSession(payload: ISubscriberJwt): StatelessSubscriberSession {
+  if (payload.aud !== 'widget_user' || !payload.subscriberId || !payload.environmentId) {
+    throw new UnauthorizedException();
+  }
+
+  return {
+    subscriberId: payload.subscriberId,
+    _environmentId: payload.environmentId,
+    _organizationId: payload.organizationId,
+  };
 }

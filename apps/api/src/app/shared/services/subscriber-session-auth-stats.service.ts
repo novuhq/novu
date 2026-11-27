@@ -3,8 +3,8 @@ import { CacheService, PinoLogger } from '@novu/application-generic';
 import { SubscriberSessionAuthMethodEnum } from '@novu/shared';
 
 const DAY_SECONDS = 24 * 60 * 60;
-const RETENTION_DAYS = 35;
-const TTL_SECONDS = RETENTION_DAYS * DAY_SECONDS;
+export const SUBSCRIBER_SESSION_STATS_RETENTION_DAYS = 35;
+const TTL_SECONDS = SUBSCRIBER_SESSION_STATS_RETENTION_DAYS * DAY_SECONDS;
 const MAX_CLIENTS = 100;
 const OTHER_CLIENT = 'other';
 const FIELD_SEPARATOR = '|';
@@ -54,6 +54,12 @@ export interface SubscriberSessionAuthCount {
   authMethod: SubscriberSessionAuthMethodEnum;
   client: string;
   count: number;
+}
+
+export interface SubscriberSessionDayCounts {
+  /** UTC day, YYYY-MM-DD. */
+  day: string;
+  counts: SubscriberSessionAuthCount[];
 }
 
 export interface RecordSubscriberSessionParams {
@@ -107,36 +113,51 @@ export class SubscriberSessionAuthStatsService {
 
   /** `null` means the counts are unavailable, which callers must not read as zero sessions. */
   async countLastDays(environmentId: string, days: number): Promise<SubscriberSessionAuthCount[] | null> {
+    const byDay = await this.countByDay(environmentId, days);
+    if (!byDay) {
+      return null;
+    }
+
+    const totals = new Map<string, SubscriberSessionAuthCount>();
+    for (const { counts } of byDay) {
+      for (const row of counts) {
+        const key = encodeField(row.authMethod, row.client);
+        const total = totals.get(key);
+        totals.set(key, total ? { ...total, count: total.count + row.count } : { ...row });
+      }
+    }
+
+    return [...totals.values()];
+  }
+
+  /** One entry per UTC day of the window, newest first; `null` means the counts are unavailable. */
+  async countByDay(environmentId: string, days: number): Promise<SubscriberSessionDayCounts[] | null> {
     const client = this.cacheService.client;
     if (!client || !this.cacheService.cacheEnabled()) {
       return null;
     }
 
-    const window = Math.min(RETENTION_DAYS, Math.max(1, Math.trunc(days) || 1));
+    const window = Math.min(SUBSCRIBER_SESSION_STATS_RETENTION_DAYS, Math.max(1, Math.trunc(days) || 1));
     const now = new Date();
-    const keys = Array.from({ length: window }, (_, index) => dayKey(environmentId, utcDayOffset(now, index)));
+    const dates = Array.from({ length: window }, (_, index) => utcDayOffset(now, index));
 
     let hashes: Record<string, string>[];
     try {
-      hashes = await Promise.all(keys.map((key) => client.hgetall(key)));
+      hashes = await Promise.all(dates.map((date) => client.hgetall(dayKey(environmentId, date))));
     } catch (err) {
       this.logger.warn({ err, environmentId }, 'Failed to read subscriber session auth stats');
 
       return null;
     }
 
-    const totals = new Map<string, number>();
-    for (const hash of hashes) {
-      for (const [field, count] of Object.entries(hash)) {
-        totals.set(field, (totals.get(field) ?? 0) + Number(count));
-      }
-    }
+    return hashes.map((hash, index) => ({
+      day: utcDate(dates[index]),
+      counts: Object.entries(hash).flatMap(([field, count]) => {
+        const decoded = decodeField(field);
 
-    return [...totals.entries()].flatMap(([field, count]) => {
-      const decoded = decodeField(field);
-
-      return decoded ? [{ ...decoded, count }] : [];
-    });
+        return decoded ? [{ ...decoded, count: Number(count) }] : [];
+      }),
+    }));
   }
 }
 

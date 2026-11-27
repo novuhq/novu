@@ -58,7 +58,6 @@ import {
   StepTypeEnum,
   SubscriberSessionAuthMethodEnum,
 } from '@novu/shared';
-import { isSubscriberTokensEnabled } from '../../../agents/shared/assert-subscriber-tokens-enabled';
 import { ApiKeyRevocationService } from '../../../auth/api-key-revocation/api-key-revocation.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environment-response.dto';
@@ -75,6 +74,7 @@ import {
   SubscriberSessionAuthStatsService,
   SubscriberSessionSourceEnum,
 } from '../../../shared/services/subscriber-session-auth-stats.service';
+import { isSubscriberTokensEnabled } from '../../../shared/utils/assert-subscriber-tokens-enabled';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import {
