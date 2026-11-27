@@ -64,11 +64,7 @@ export class Socket extends BaseModule implements BaseSocketInterface {
 
   #notificationReceived = ({ message }: { message: SocketMessage }) => {
     this.#emitter.emit(NOTIFICATION_RECEIVED, {
-      result: new Notification(
-        mapToNotification(message, this.#subscriberId),
-        this.#emitter,
-        this._inboxService
-      ),
+      result: new Notification(mapToNotification(message, this.#subscriberId), this.#emitter, this._inboxService),
     });
   };
 
