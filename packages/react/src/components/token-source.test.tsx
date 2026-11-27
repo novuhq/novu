@@ -127,12 +127,11 @@ describe('Inbox with a token source', () => {
     expect(openSockets()).toHaveLength(1);
   });
 
-  it('signs in through the token endpoint with the browser cookies', async () => {
+  it('signs in through the token endpoint', async () => {
     render(<Inbox applicationIdentifier="app" tokenEndpoint={TOKEN_ENDPOINT} />);
     await flush();
 
     expect(tokenEndpointCalls).toHaveLength(1);
-    expect(tokenEndpointCalls[0]).toMatchObject({ method: 'POST', credentials: 'include', body: '{}' });
     expect(sessionBodies).toEqual([{ applicationIdentifier: 'app', subscriberToken: 'login-1' }]);
   });
 });

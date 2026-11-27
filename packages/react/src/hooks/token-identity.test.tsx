@@ -206,32 +206,10 @@ describe('hooks under a token source', () => {
     expect(await refetchesAfterEventFor('bob')).toEqual(['bob']);
   });
 
-  it('reports a failed first sign-in instead of loading forever', async () => {
-    const onError = vi.fn();
-    let state: ReturnType<typeof useSubscription> | undefined;
-    const Probe = () => {
-      state = useSubscription({ topicKey: 'news', onError });
-
-      return null;
-    };
-    render(
-      <NovuProvider
-        applicationIdentifier="app"
-        getToken={async () => {
-          throw new Error('signed out');
-        }}
-      >
-        <Probe />
-      </NovuProvider>
-    );
-    await flush();
-
-    expect(state?.isLoading).toBe(false);
-    expect(state?.error).toBeDefined();
-    expect(onError).toHaveBeenCalledTimes(1);
-  });
-
-  it('reports a sign-in that failed before the hook mounted', async () => {
+  it.each([
+    { when: 'while the hook is mounted', mountedFirst: true },
+    { when: 'before the hook mounted', mountedFirst: false },
+  ])('reports a sign-in that failed $when instead of loading forever', async ({ mountedFirst }) => {
     const onError = vi.fn();
     let state: ReturnType<typeof useSubscription> | undefined;
     const Probe = () => {
@@ -249,7 +227,7 @@ describe('hooks under a token source', () => {
         {showProbe && <Probe />}
       </NovuProvider>
     );
-    const { rerender } = render(<App showProbe={false} />);
+    const { rerender } = render(<App showProbe={mountedFirst} />);
     await flush();
     rerender(<App showProbe />);
     await flush();
