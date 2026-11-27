@@ -11,14 +11,12 @@ import type { InitializeSessionArgs } from './types';
 
 type TokenSessionClaims = {
   subscriberId: string | undefined;
-  /** Server time minus browser time, from the session's `iat`, so expiry is judged on the server's clock. */
-  clockOffsetMs: number;
   /**
-   * How long before `exp` the token counts as expired. The skew normally; zero for a lifetime under the skew, which
-   * would otherwise be renewed for every request. `undefined` when the token looked expired on arrival (a clock the
-   * offset could not correct): it is never renewed early, only after the server rejects it.
+   * Browser time at which the session token is renewed before it is sent: `exp` on the server's clock (from `iat`),
+   * minus the skew, or minus nothing for a lifetime under the skew. `undefined` when the token looked expired on
+   * arrival (a clock the offset could not correct): it is never renewed early, only after the server rejects it.
    */
-  renewalSkewMs: number | undefined;
+  renewAt: number | undefined;
 };
 
 /**
@@ -218,19 +216,21 @@ export class Session {
    * Whether `token` must be renewed before it is sent. The one expiry rule for requests and sockets.
    * - A subscriber session judges it on the browser clock, a little before the real expiry.
    * - A token source judges it on the server's clock, so a browser clock that is off neither keeps an expired token
-   *   nor renews a fresh one (see `renewalSkewMs` for short tokens).
+   *   nor renews a fresh one (see `renewAt`). A token it has replaced counts as expired.
    */
   public isExpired(token: string | undefined): boolean {
     const claims = this.#claims;
     if (this.#identity.kind === 'subscriber' || !claims) {
       return isJwtExpired(token);
     }
-    const expiresAt = getJwtExpiresAt(token);
-    if (expiresAt === undefined || claims.renewalSkewMs === undefined) {
+    if (token === undefined) {
       return false;
     }
+    if (token !== this.#session?.token) {
+      return true;
+    }
 
-    return Date.now() + claims.clockOffsetMs >= expiresAt - claims.renewalSkewMs;
+    return claims.renewAt !== undefined && Date.now() >= claims.renewAt;
   }
 
   public isCurrentToken(token: string): boolean {
@@ -383,17 +383,16 @@ export class Session {
     const expiresAt = getJwtExpiresAt(token) ?? Number.POSITIVE_INFINITY;
     const clockOffsetMs = typeof issuedAt === 'number' ? issuedAt * 1000 - Date.now() : 0;
     const serverNow = Date.now() + clockOffsetMs;
-    let renewalSkewMs: number | undefined;
+    let renewAt: number | undefined;
     if (serverNow < expiresAt - EXPIRY_SKEW_MS) {
-      renewalSkewMs = EXPIRY_SKEW_MS;
+      renewAt = expiresAt - EXPIRY_SKEW_MS - clockOffsetMs;
     } else if (serverNow < expiresAt) {
-      renewalSkewMs = 0;
+      renewAt = expiresAt - clockOffsetMs;
     }
 
     return {
       subscriberId: typeof payload?.subscriberId === 'string' ? payload.subscriberId : undefined,
-      clockOffsetMs,
-      renewalSkewMs,
+      renewAt,
     };
   }
 
