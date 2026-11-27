@@ -151,12 +151,7 @@ export class Novu {
     );
 
     this.#session.start();
-    const refreshSession = (staleToken?: string) => this.#session.refresh(staleToken);
-    this.#httpClient.setSession({
-      tokenForRequest: (currentToken) => this.#session.tokenForRequest(currentToken),
-      refresh: refreshSession,
-      isCurrentToken: (token) => this.#session.isCurrentToken(token),
-    });
+    this.#httpClient.setSession(this.#session);
     this.notifications = new Notifications({
       useCache: options.useCache ?? true,
       inboxServiceInstance: this.#inboxService,
@@ -186,7 +181,7 @@ export class Novu {
       socketOptions: options.socketOptions,
       eventEmitterInstance: this.#emitter,
       inboxServiceInstance: this.#inboxService,
-      refreshSession,
+      refreshSession: (staleToken) => this.#session.refresh(staleToken),
     });
     this.on = (eventName, listener) => {
       if (this.socket.isSocketEvent(eventName)) {
