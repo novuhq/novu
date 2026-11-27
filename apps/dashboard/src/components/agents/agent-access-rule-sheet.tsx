@@ -17,6 +17,7 @@ import {
   parseAccessRule,
   startFrom,
   toAccessRule,
+  usesContext,
 } from '@/components/agents/agent-access-rule';
 import {
   SUBSCRIBER_ACCESS_MODE_SETTING_LABEL,
@@ -42,6 +43,9 @@ const isAllowedVariable = (variable: { name: string }) => getAccessRuleFieldIssu
 
 // The form schema types the query as a plain object, which an interface such as RuleGroupType only matches once spread.
 const toFormValues = ({ polarity, query }: AccessRuleDraft) => ({ polarity, query: { ...query } });
+
+const CONTEXT_PLATFORMS_WARNING =
+  'Context is only known on Slack, Teams, Telegram and web chat. On WhatsApp, SMS, iMessage and email, conditions on context never match.';
 
 function StartingPoints({ onPick }: { onPick: (point: (typeof ACCESS_RULE_STARTING_POINTS)[number]) => void }) {
   return (
@@ -180,6 +184,7 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
                 </PanelContent>
               </Panel>
               <p className="text-foreground-400 text-xs">{ACCESS_RULE_POLARITIES[polarity].outcome}</p>
+              {usesContext(query) && <p className="text-foreground-400 text-xs">{CONTEXT_PLATFORMS_WARNING}</p>}
             </>
           )}
         </div>

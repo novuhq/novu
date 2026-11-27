@@ -156,6 +156,12 @@ export function startFrom({ polarity, condition }: StartingPoint): AccessRuleDra
   return { polarity, query: { ...createEmptyConditionsQuery(), rules: [{ id: generateID(), ...condition }] } };
 }
 
+export function usesContext(group: RuleGroupTypeAny): boolean {
+  return group.rules.some(
+    (rule) => typeof rule !== 'string' && (isRuleGroup(rule) ? usesContext(rule) : rule.field.startsWith('context.'))
+  );
+}
+
 function getNegatedConditions(rule: AgentAccessRule): AgentAccessRule | null {
   const [operator, ...others] = Object.keys(rule);
   const conditions = rule['!'];
