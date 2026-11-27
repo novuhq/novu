@@ -354,15 +354,24 @@ export type StandardNovuOptions = CommonNovuOptions & {
 type TokenSourceOptions =
   | {
       /**
-       * Your backend route that answers `POST` with `{ token }` for the signed-in user. It is called with the
-       * browser's cookies whenever a new token is needed. Only `token` is read: its own expiry decides when it is
-       * renewed, so any other field in the answer is ignored.
+       * Your backend route that answers `POST` with `{ token }` for the signed-in user, called whenever a new token is
+       * needed. Only `token` is read: its own expiry decides when it is renewed.
+       *
+       * The request sends the browser's cookies (`credentials: 'include'`), so an endpoint on another origin needs
+       * CORS that allows credentials. If it needs a header (a CSRF token, a bearer token), use `getToken` instead.
+       * A failed request surfaces as a session error.
        */
       tokenEndpoint: string;
       getToken?: never;
     }
   | {
-      /** Returns a new subscriber token from your backend whenever one is needed. */
+      /**
+       * Returns a subscriber token from your backend whenever one is needed. Use it when your endpoint needs custom
+       * headers (CSRF, bearer).
+       *
+       * Return a newly minted token on every call. A cached token keeps failing with 401 once it expires, and the
+       * client asks again every 10 seconds. An error thrown here surfaces as a session error.
+       */
       getToken: GetToken;
       tokenEndpoint?: never;
     };

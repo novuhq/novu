@@ -1,6 +1,6 @@
 import { NovuError } from '../utils/errors';
 
-/** Returns a Novu subscriber token minted by your backend. */
+/** Returns a Novu subscriber token newly minted by your backend; a cached token fails once it expires. */
 export type GetToken = () => Promise<string>;
 
 export function fromTokenEndpoint(url: string): GetToken {
