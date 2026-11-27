@@ -661,6 +661,18 @@ describe('Agent Inbox listen (the lease, the messages wait, whom it listens to) 
       expect((await readAfter(cursor)).data).to.deep.equal([]);
     });
 
+    it('reads a message only once it has settled, and goes on from before it until then', async () => {
+      await holdLease(MACBOOK);
+      const cursor = await startCursor();
+      await write('just now');
+
+      const early = await waitFor({ after: cursor });
+      expect(early.status).to.equal(200, JSON.stringify(early.body));
+      expect(early.body.data).to.deep.equal([]);
+
+      expect((await readAfter(early.body.next)).data.map((message) => message.text)).to.deep.equal(['just now']);
+    });
+
     it('goes on from the cursor a page at a time, and never repeats a message', async () => {
       await holdLease(MACBOOK);
       const cursor = await startCursor();
