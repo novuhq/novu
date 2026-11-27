@@ -486,6 +486,59 @@ describe('when the token source fails', () => {
     expect(backend.state.sessionBodies).toHaveLength(0);
   });
 
+  it('does not call the endpoint again for requests made soon after a renewal failed', async () => {
+    const backend = createFakeBackend();
+    const novu = createNovu();
+    await novu.notifications.list();
+    backend.state.tokenEndpointStatus = 503;
+    backend.advanceTime(HOUR_MS);
+    await novu.notifications.list();
+    expect(backend.state.tokenRequests).toHaveLength(2);
+
+    const results = await Promise.all([
+      novu.notifications.list(),
+      novu.notifications.count({}),
+      novu.notifications.readAll(),
+    ]);
+
+    expect(results.map((result) => result.error)).toEqual([
+      expect.any(NovuError),
+      expect.any(NovuError),
+      expect.any(NovuError),
+    ]);
+    expect(backend.state.tokenRequests).toHaveLength(2);
+    expect(backend.state.apiCalls).toHaveLength(1);
+  });
+
+  it('tries one renewal again once the cooldown after a failed renewal is over', async () => {
+    const backend = createFakeBackend();
+    const novu = createNovu();
+    await novu.notifications.list();
+    backend.state.tokenEndpointStatus = 503;
+    backend.advanceTime(HOUR_MS);
+    await novu.notifications.list();
+    backend.state.tokenEndpointStatus = 200;
+
+    backend.advanceTime(MINUTE_MS);
+    const results = await Promise.all([novu.notifications.list(), novu.notifications.list()]);
+
+    expect(results.map((result) => result.error)).toEqual([undefined, undefined]);
+    expect(backend.state.tokenRequests).toHaveLength(3);
+  });
+
+  it('says the renewal failed, not that someone else signed in, when the endpoint is down', async () => {
+    const backend = createFakeBackend();
+    const novu = createNovu();
+    await novu.notifications.list();
+    backend.state.tokenEndpointStatus = 503;
+    backend.advanceTime(HOUR_MS);
+
+    const { error } = await novu.notifications.list();
+
+    expect(error?.originalError?.message).toMatch(/could not be renewed/);
+    expect(error?.originalError?.message).not.toMatch(/subscriber/);
+  });
+
   it('returns the 401 when the refresh fails, without looping', async () => {
     const backend = createFakeBackend();
     const novu = createNovu();
@@ -553,6 +606,7 @@ describe('when the token endpoint signs in another user', () => {
     const { error } = await novu.notifications.readAll();
 
     expect(error).toBeInstanceOf(NovuError);
+    expect(error?.originalError?.message).toMatch(/another subscriber/);
     expect(backend.state.apiCalls.filter((call) => call.path.endsWith('/notifications/read'))).toEqual([]);
     expect(novu.subscriberId).toBe('bob');
 
