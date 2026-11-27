@@ -15,7 +15,7 @@ import { Notification } from '../notifications';
 import { Result, Session, WebSocketEvent } from '../types';
 import { NovuError } from '../utils/errors';
 import type { BaseSocketInterface, SocketSession } from './base-socket';
-import { mapToNotification } from './map-to-notification';
+import { mapToNotification, subscriberIdOfToken } from './map-to-notification';
 
 export const PRODUCTION_SOCKET_URL = 'wss://socket.novu.co';
 
@@ -73,7 +73,11 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
       const data = JSON.parse(event.data);
       if (data.event === WebSocketEvent.RECEIVED) {
         this.#emitter.emit(NOTIFICATION_RECEIVED, {
-          result: new Notification(mapToNotification(data.data.message), this.#emitter, this._inboxService),
+          result: new Notification(
+            mapToNotification(data.data.message, subscriberIdOfToken(this.#token)),
+            this.#emitter,
+            this._inboxService
+          ),
         });
       }
     } catch (error) {

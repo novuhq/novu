@@ -14,7 +14,7 @@ import { Notification } from '../notifications';
 import { Result, Session, WebSocketEvent } from '../types';
 import { NovuError } from '../utils/errors';
 import type { BaseSocketInterface, SocketSession } from './base-socket';
-import { mapToNotification, type SocketMessage } from './map-to-notification';
+import { mapToNotification, type SocketMessage, subscriberIdOfToken } from './map-to-notification';
 
 const PRODUCTION_SOCKET_URL = 'https://ws.novu.co';
 const NOTIFICATION_RECEIVED: NotificationReceivedEvent = 'notifications.notification_received';
@@ -62,7 +62,11 @@ export class Socket extends BaseModule implements BaseSocketInterface {
 
   #notificationReceived = ({ message }: { message: SocketMessage }) => {
     this.#emitter.emit(NOTIFICATION_RECEIVED, {
-      result: new Notification(mapToNotification(message), this.#emitter, this._inboxService),
+      result: new Notification(
+        mapToNotification(message, subscriberIdOfToken(this.#token)),
+        this.#emitter,
+        this._inboxService
+      ),
     });
   };
 

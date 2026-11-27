@@ -8,6 +8,7 @@ import {
   type Workflow,
 } from '../types';
 import { sanitizeInAppRedirect } from '../utils/in-app-redirect-url';
+import { decodeJwtPayload } from '../utils/jwt';
 
 type SocketMessageButton = { type?: ActionTypeEnum; content: string; url?: string; target?: unknown };
 
@@ -55,32 +56,46 @@ export type SocketMessage = {
   severity: SeverityLevelEnum;
 };
 
-export const mapToNotification = ({
-  _id,
-  transactionId,
-  content,
-  read,
-  seen,
-  archived,
-  snoozedUntil,
-  deliveredAt,
-  createdAt,
-  lastReadDate,
-  firstSeenDate,
-  archivedAt,
-  channel,
-  subscriber,
-  subject,
-  avatar,
-  cta,
-  tags,
-  data,
-  workflow,
-  severity,
-}: SocketMessage): InboxNotification => {
+/**
+ * The subscriber a socket token was issued for, or `''` when the token names none. A socket connection carries one
+ * subscriber's token, so it names whom every message on it was sent to.
+ */
+export const subscriberIdOfToken = (token: string | undefined): string => {
+  const subscriberId = decodeJwtPayload(token)?.subscriberId;
+
+  return typeof subscriberId === 'string' ? subscriberId : '';
+};
+
+/** `recipientId` fills `to.subscriberId` when the socket server sent the message without a populated subscriber. */
+export const mapToNotification = (
+  {
+    _id,
+    transactionId,
+    content,
+    read,
+    seen,
+    archived,
+    snoozedUntil,
+    deliveredAt,
+    createdAt,
+    lastReadDate,
+    firstSeenDate,
+    archivedAt,
+    channel,
+    subscriber,
+    subject,
+    avatar,
+    cta,
+    tags,
+    data,
+    workflow,
+    severity,
+  }: SocketMessage,
+  recipientId: string
+): InboxNotification => {
   const to: Subscriber = {
     id: subscriber?._id,
-    subscriberId: subscriber?.subscriberId as string,
+    subscriberId: subscriber?.subscriberId ?? recipientId,
     firstName: subscriber?.firstName,
     lastName: subscriber?.lastName,
     avatar: subscriber?.avatar,
