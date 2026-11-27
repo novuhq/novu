@@ -153,8 +153,9 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
             </Panel>
           )}
           <p className="text-foreground-400 text-xs">
-            Senders who are not subscribers are always denied. On <code>subscriber.data</code>, equals matches text and
-            true/false. To compare a stored number, use greater than or less than.
+            Senders who are not subscribers are always denied. On <code>subscriber.data</code>, equals and in compare
+            text, and equals also matches true/false. To compare a number stored on <code>subscriber.data</code>, set
+            the rule through the API.
           </p>
         </div>
       </Form>
