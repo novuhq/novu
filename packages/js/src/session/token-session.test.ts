@@ -475,6 +475,26 @@ describe('when the token source fails', () => {
     expect(backend.state.sessionBodies).toHaveLength(0);
   });
 
+  it('signs in on the first call after the cooldown when the first token fetch failed', async () => {
+    const backend = createFakeBackend();
+    backend.state.tokenEndpointStatus = 401;
+    const novu = createNovu();
+    const first = await novu.notifications.list();
+    backend.state.tokenEndpointStatus = 200;
+
+    backend.advanceTime(5_000);
+    const insideCooldown = await novu.notifications.list();
+    expect([first.error, insideCooldown.error]).toEqual([expect.any(NovuError), expect.any(NovuError)]);
+    expect(backend.state.tokenRequests).toHaveLength(1);
+
+    backend.advanceTime(5_000);
+    const results = await Promise.all([novu.notifications.list(), novu.notifications.count({})]);
+
+    expect(results.map((result) => result.error)).toEqual([undefined, undefined]);
+    expect(backend.state.tokenRequests).toHaveLength(2);
+    expect(backend.state.apiCalls.map((call) => call.subscriberId)).toEqual(['user_1', 'user_1']);
+  });
+
   it('does not call the endpoint again for requests made soon after a renewal failed', async () => {
     const backend = createFakeBackend();
     const novu = createNovu();

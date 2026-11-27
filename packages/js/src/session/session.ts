@@ -22,9 +22,9 @@ type TokenSessionClaims = {
 };
 
 /**
- * How long a token source is left alone after a renewal failed. Requests made meanwhile fail at once instead of each
- * calling the customer's token endpoint again; 10 s matches socket.io's longest reconnect delay, so a dead endpoint
- * sees about one call per tab every 10 s, and a user who signs in again gets a working Inbox within 10 s.
+ * How long a token source is left alone after a sign-in or renewal failed. Requests made meanwhile fail at once
+ * instead of each calling the customer's token endpoint again; 10 s matches socket.io's longest reconnect delay, so a
+ * dead endpoint sees about one call per tab every 10 s, and a user who signs in again gets a working Inbox within 10 s.
  */
 const RENEWAL_COOLDOWN_MS = 10_000;
 
@@ -42,7 +42,7 @@ export class Session {
   #tokens = new Set<string>();
   /** Who the client was last signed in as; kept across `changeIdentity`, so a switch is noticed when it resolves. */
   #signedInAs: { subscriberId: string | undefined; contextKey: string } | undefined;
-  #failedRenewal: { at: number; error: unknown } | undefined;
+  #lastFailure: { at: number; error: unknown } | undefined;
   #onSubscriberChange: () => void;
 
   constructor(
@@ -204,10 +204,7 @@ export class Session {
         return renewed;
       }
       if (this.#tokens.has(currentToken)) {
-        throw new NovuError(
-          'The session could not be renewed, so the request was not sent',
-          this.#failedRenewal?.error
-        );
+        throw new NovuError('The session could not be renewed, so the request was not sent', this.#lastFailure?.error);
       }
     }
 
@@ -273,11 +270,31 @@ export class Session {
     if (this.#inFlight) {
       return this.#inFlight;
     }
-    if (this.#failedRenewal && Date.now() - this.#failedRenewal.at < RENEWAL_COOLDOWN_MS) {
+    if (this.#inCooldown()) {
       return Promise.resolve(undefined);
     }
 
     return this.#start(true);
+  }
+
+  /**
+   * Signs in again after a token source failed to, once `RENEWAL_COOLDOWN_MS` has passed since the failure.
+   * Returns whether a session request is running, so `session.initialize.resolved` will follow. A subscriber session
+   * is not retried.
+   */
+  public retrySignIn(): boolean {
+    if (this.#identity.kind !== 'token' || this.#inCooldown()) {
+      return false;
+    }
+    if (!this.#inFlight) {
+      void this.#start(false);
+    }
+
+    return true;
+  }
+
+  #inCooldown(): boolean {
+    return this.#lastFailure !== undefined && Date.now() - this.#lastFailure.at < RENEWAL_COOLDOWN_MS;
   }
 
   #start(renew: boolean): Promise<string | undefined> {
@@ -313,7 +330,7 @@ export class Session {
           this.#tokens.clear();
         }
         this.#tokens.add(response.token);
-        this.#failedRenewal = undefined;
+        this.#lastFailure = undefined;
       }
 
       if (response?.applicationIdentifier?.startsWith('pk_keyless_')) {
@@ -331,7 +348,7 @@ export class Session {
       return identity === this.#identity && !subscriberChanged ? response.token : undefined;
     } catch (error) {
       if (identity === this.#identity) {
-        this.#recordFailure(identity, renew, error);
+        this.#recordFailure(identity, error);
       }
       this.#emitter.emit('session.initialize.resolved', { args, error });
 
@@ -339,9 +356,9 @@ export class Session {
     }
   }
 
-  #recordFailure(identity: SessionIdentity, renew: boolean, error: unknown): void {
-    if (renew && identity.kind === 'token') {
-      this.#failedRenewal = { at: Date.now(), error };
+  #recordFailure(identity: SessionIdentity, error: unknown): void {
+    if (identity.kind === 'token') {
+      this.#lastFailure = { at: Date.now(), error };
     }
     // A subscriber identity is known without a session, so the previous one's data goes even when this failed.
     if (identity.kind === 'subscriber' && this.#recordSignedIn()) {

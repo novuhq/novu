@@ -5,7 +5,7 @@ import { NovuError } from './utils/errors';
 
 interface CallQueueItem {
   fn: () => Promise<unknown>;
-  resolve: (value: any | PromiseLike<any>) => void;
+  resolve(value: unknown): void;
   reject: (reason?: unknown) => void;
 }
 
@@ -49,6 +49,10 @@ export class BaseModule {
   async callWithSession<T, E = NovuError>(fn: () => Result<T, E>): Result<T, E> {
     if (this._inboxService.isSessionInitialized) {
       return fn();
+    }
+
+    if (this.#sessionError && this._inboxService.retrySignIn()) {
+      this.#sessionError = undefined;
     }
 
     if (this.#sessionError) {

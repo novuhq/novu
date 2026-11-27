@@ -370,6 +370,9 @@ type TokenSourceOptions =
 /**
  * Signs in with subscriber tokens minted by your backend, renewed before they expire.
  *
+ * When getting a token fails, calls made in the next 10 seconds fail at once with a session error. The first call
+ * after that tries again, so an Inbox mounted before the user finished signing in recovers on its own.
+ *
  * On sign-out, drop the `Novu` instance (in React, unmount `NovuProvider` or change its `key`). The client learns of
  * a new user only at the next renewal, and until then it keeps the previous user's session.
  */

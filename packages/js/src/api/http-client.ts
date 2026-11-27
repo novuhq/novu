@@ -12,6 +12,7 @@ export type SessionGuard = {
   tokenForRequest: (currentToken: string | undefined) => Promise<string | undefined>;
   refresh: SessionRefresher;
   isCurrentToken: (token: string) => boolean;
+  retrySignIn: () => boolean;
 };
 
 export type HttpRequestOptions = RequestInit & {
@@ -66,6 +67,10 @@ export class HttpClient {
 
   setSession(session: SessionGuard) {
     this.session = session;
+  }
+
+  retrySignIn(): boolean {
+    return this.session?.retrySignIn() ?? false;
   }
 
   setKeylessHeader(identifier?: string) {
