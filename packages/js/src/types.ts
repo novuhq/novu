@@ -354,8 +354,9 @@ export type StandardNovuOptions = CommonNovuOptions & {
 type TokenSourceOptions =
   | {
       /**
-       * Your backend route that answers `POST` with `{ token, expiresAt }` for the signed-in user.
-       * It is called with the browser's cookies whenever a new token is needed.
+       * Your backend route that answers `POST` with `{ token }` for the signed-in user. It is called with the
+       * browser's cookies whenever a new token is needed. Only `token` is read: its own expiry decides when it is
+       * renewed, so any other field in the answer is ignored.
        */
       tokenEndpoint: string;
       getToken?: never;
