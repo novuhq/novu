@@ -2,6 +2,7 @@ import {
   buildDefaultSubscriptionIdentifier,
   createContextHash,
   createHash,
+  encryptCredentials,
   peekOAuthStatePayload,
 } from '@novu/application-generic';
 import { IntegrationRepository, SubscriberRepository } from '@novu/dal';
@@ -9,14 +10,18 @@ import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   ContextPayload,
+  ICredentialsDto,
   InAppProviderIdEnum,
   SubscriberSessionAuthMethodEnum,
 } from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+import { startTelegramApiStub } from '../../agents/e2e/helpers/telegram-api-stub';
 import { NovuTokens } from '../../shared/services/novu-tokens.service';
 import { SubscriberSessionAuthStatsService } from '../../shared/services/subscriber-session-auth-stats.service';
+import { integrationTelegramLinkScope } from '../../telegram-linking/telegram-link-scope';
+import { TelegramStartCodeService } from '../../telegram-linking/telegram-start-code.service';
 
 const integrationRepository = new IntegrationRepository();
 const subscriberRepository = new SubscriberRepository();
@@ -255,23 +260,26 @@ describe('Session with a subscriber token - /inbox/session (POST) #novu-v2', () 
     const BROWSER_CONTEXT: ContextPayload = { tenant: 'globex' };
     let slackIdentifier: string;
 
-    async function createChatIntegration(providerId: ChatProviderIdEnum) {
+    async function createChatIntegration(
+      providerId: ChatProviderIdEnum,
+      credentials: ICredentialsDto = { clientId: 'test-client-id' }
+    ) {
       const identifier = `${providerId}-token-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      await integrationRepository.create({
+      const integration = await integrationRepository.create({
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
         providerId,
         channel: ChannelTypeEnum.CHAT,
-        credentials: { clientId: 'test-client-id' },
+        credentials,
         active: true,
         identifier,
       });
 
-      return identifier;
+      return { identifier, integrationId: String(integration._id) };
     }
 
     beforeEach(async () => {
-      slackIdentifier = await createChatIntegration(ChatProviderIdEnum.Slack);
+      ({ identifier: slackIdentifier } = await createChatIntegration(ChatProviderIdEnum.Slack));
     });
 
     async function oauthState(path: string, sessionToken: string, body: Record<string, unknown>) {
@@ -282,7 +290,9 @@ describe('Session with a subscriber token - /inbox/session (POST) #novu-v2', () 
       expect(res.status, JSON.stringify(res.body)).to.equal(201);
       const state = new URL(res.body.data.url).searchParams.get('state') as string;
 
-      return peekOAuthStatePayload<{ subscriberId: string; context?: ContextPayload; contextKeys?: string[] }>(state);
+      return peekOAuthStatePayload<
+        { subscriberId: string; context?: ContextPayload; contextKeys?: string[] } & Record<string, unknown>
+      >(state);
     }
 
     async function tokenSession(subscriberId: string, mintBody: Record<string, unknown> = {}) {
@@ -319,7 +329,7 @@ describe('Session with a subscriber token - /inbox/session (POST) #novu-v2', () 
 
     it("should carry the token's context into a Webex link-user state", async () => {
       const token = await tokenSession('sub-webex', { context: CONTEXT });
-      const webexIdentifier = await createChatIntegration(ChatProviderIdEnum.WebexMessaging);
+      const { identifier: webexIdentifier } = await createChatIntegration(ChatProviderIdEnum.WebexMessaging);
 
       const state = await oauthState('/v1/inbox/channel-endpoints/oauth', token, {
         integrationIdentifier: webexIdentifier,
@@ -330,6 +340,84 @@ describe('Session with a subscriber token - /inbox/session (POST) #novu-v2', () 
 
       expect(state.context).to.equal(undefined);
       expect(state.contextKeys).to.have.members(CONTEXT_KEYS);
+    });
+
+    describe('when the chat integration requires a contextHash', () => {
+      let hmacSlackIdentifier: string;
+
+      beforeEach(async () => {
+        ({ identifier: hmacSlackIdentifier } = await createChatIntegration(ChatProviderIdEnum.Slack, {
+          clientId: 'test-client-id',
+          hmac: true,
+        }));
+      });
+
+      it('should accept a token session without a contextHash on connect and link-user', async () => {
+        const token = await tokenSession('sub-connect-hmac', { context: CONTEXT });
+
+        const connect = await oauthState('/v1/inbox/channel-connections/oauth', token, {
+          integrationIdentifier: hmacSlackIdentifier,
+        });
+        const linkUser = await oauthState('/v1/inbox/channel-endpoints/oauth', token, {
+          integrationIdentifier: hmacSlackIdentifier,
+          subscriberId: 'sub-connect-hmac',
+        });
+
+        for (const state of [connect, linkUser]) {
+          expect(state.subscriberId).to.equal('sub-connect-hmac');
+          expect(state.contextKeys).to.have.members(CONTEXT_KEYS);
+          expect(state).to.not.have.any.keys('context', 'contextHash', 'subscriberHash', 'hmacHash');
+        }
+      });
+
+      it('should accept a token session without a contextHash on the Telegram link', async () => {
+        await startTelegramApiStub();
+        const { identifier, integrationId } = await createChatIntegration(
+          ChatProviderIdEnum.Telegram,
+          encryptCredentials({
+            apiToken: '12345678:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+            token: 'session-token-telegram-secret',
+            hmac: true,
+          })
+        );
+        const token = await tokenSession('sub-telegram-hmac', { context: CONTEXT });
+
+        const res = await session.testAgent
+          .post('/v1/inbox/channel-endpoints/link')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ integrationIdentifier: identifier });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(200);
+        const code = new URL(res.body.data.url).searchParams.get('start') as string;
+        const consumed = await testServer.getService(TelegramStartCodeService).consumeIfMatches(code, {
+          environmentId: session.environment._id,
+          organizationId: session.organization._id,
+          integrationId,
+          linkScope: integrationTelegramLinkScope(),
+        });
+        expect(consumed.status).to.equal('consumed');
+        if (consumed.status !== 'consumed') return;
+        expect(consumed.payload.subscriberId).to.equal('sub-telegram-hmac');
+        expect(consumed.payload.contextKeys).to.have.members(CONTEXT_KEYS);
+        expect(consumed.payload.context).to.equal(undefined);
+      });
+
+      it('should refuse a hash session that sends a context without a contextHash', async () => {
+        await setHmac(session, false);
+        const hashSession = await exchange({
+          applicationIdentifier: session.environment.identifier,
+          subscriberId: 'sub-connect-hmac-hash',
+        });
+        expect(hashSession.status).to.equal(201);
+
+        const res = await session.testAgent
+          .post('/v1/inbox/channel-connections/oauth')
+          .set('Authorization', `Bearer ${hashSession.body.data.token}`)
+          .send({ integrationIdentifier: hmacSlackIdentifier, context: BROWSER_CONTEXT });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(400);
+        expect(res.body.message).to.include('contextHash');
+      });
     });
 
     it('should keep using the browser context for a session without a token', async () => {

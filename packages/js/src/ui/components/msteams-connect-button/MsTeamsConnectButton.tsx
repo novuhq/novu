@@ -3,6 +3,7 @@ import type { ConnectionMode } from '../../../channel-connections/types';
 import type { Context } from '../../../types';
 import { useChannelConnection } from '../../api/hooks/useChannelConnection';
 import { useNovu } from '../../context';
+import { isMissingSharedContext, useSignedInIdentity } from '../../helpers/useSignedInIdentity';
 import { useStyle } from '../../helpers/useStyle';
 import { CheckCircleFill } from '../../icons/CheckCircleFill';
 import { Loader } from '../../icons/Loader';
@@ -43,36 +44,42 @@ const POLL_TIMEOUT_MS = 300_000; // 5 minutes
 export const MsTeamsConnectButton = (props: MsTeamsConnectButtonProps) => {
   const style = useStyle();
   const novuAccessor = useNovu();
+  const identity = useSignedInIdentity();
   const integrationIdentifier = () => props.integrationIdentifier;
   const connectionMode = () => props.connectionMode ?? 'subscriber';
-  const resolvedContext = () => props.context ?? novuAccessor().context;
+  const resolvedContext = () => props.context ?? identity().context;
   const resolvedSubscriberId = () =>
-    connectionMode() === 'subscriber' ? (props.subscriberId ?? novuAccessor().subscriberId) : undefined;
+    connectionMode() === 'subscriber' ? (props.subscriberId ?? identity().subscriberId) : undefined;
   const connectionIdentifier = () =>
     props.connectionIdentifier ??
-    buildDefaultConnectionIdentifier(DEFAULT_MSTEAMS_CONNECTION_IDENTIFIER, resolvedSubscriberId());
+    buildDefaultConnectionIdentifier(
+      DEFAULT_MSTEAMS_CONNECTION_IDENTIFIER,
+      connectionMode(),
+      props.subscriberId ?? identity().subscriberId
+    );
 
-  const { connection, loading, disconnect, mutate, generateConnectOAuthUrl } = useChannelConnection({
-    integrationIdentifier: integrationIdentifier(),
-    connectionIdentifier: connectionIdentifier(),
-    subscriberId: props.subscriberId,
-  });
+  const { connection, loading, disconnect, mutate, generateConnectOAuthUrl } =
+    useChannelConnection(connectionIdentifier);
 
   const [actionLoading, setActionLoading] = createSignal(false);
 
-  const isMisconfigured = createMemo(() => connectionMode() === 'shared' && !resolvedContext());
+  const isMisconfigured = createMemo(
+    () => connectionMode() === 'shared' && isMissingSharedContext(identity(), props.context)
+  );
 
   createEffect(() => {
     if (isMisconfigured()) {
       console.warn(
         '[Novu] MsTeamsConnectButton: "context" is required when connectionMode is "shared". ' +
-          'Provide it via the context prop on MsTeamsConnectButton or on NovuProvider.'
+          'Provide it via the context prop on MsTeamsConnectButton or on NovuProvider, or sign in with a token ' +
+          'that carries a context.'
       );
     }
   });
 
   const isConnected = () => !!connection();
   const isLoading = () => loading() || actionLoading();
+  const isIdentityPending = () => connectionIdentifier() === undefined;
 
   const timeoutIdRef: { current: ReturnType<typeof setTimeout> | null } = { current: null };
 
@@ -83,9 +90,7 @@ export const MsTeamsConnectButton = (props: MsTeamsConnectButtonProps) => {
     }
   });
 
-  const startPolling = () => {
-    const connId = connectionIdentifier();
-
+  const startPolling = (connId: string) => {
     if (timeoutIdRef.current !== null) {
       clearTimeout(timeoutIdRef.current);
       timeoutIdRef.current = null;
@@ -140,18 +145,17 @@ export const MsTeamsConnectButton = (props: MsTeamsConnectButtonProps) => {
         props.onDisconnectSuccess?.();
       }
     } else {
+      const connId = connectionIdentifier();
+      if (!connId) return;
+
       setActionLoading(true);
 
       const mode = connectionMode();
-      const ctx = resolvedContext();
-      const resolvedSubscriberId =
-        mode === 'subscriber' ? (props.subscriberId ?? novuAccessor().subscriberId) : undefined;
-
       const result = await generateConnectOAuthUrl({
         integrationIdentifier: integrationIdentifier(),
-        connectionIdentifier: connectionIdentifier(),
-        subscriberId: resolvedSubscriberId,
-        context: ctx,
+        connectionIdentifier: connId,
+        subscriberId: resolvedSubscriberId(),
+        context: resolvedContext(),
         scope: props.scope,
         connectionMode: mode,
         autoLinkUser: mode === 'subscriber' ? (props.autoLinkUser ?? true) : false,
@@ -166,7 +170,7 @@ export const MsTeamsConnectButton = (props: MsTeamsConnectButtonProps) => {
 
       if (result.data?.url) {
         window.open(result.data.url, '_blank', 'noopener,noreferrer');
-        startPolling();
+        startPolling(connId);
       } else {
         setActionLoading(false);
         props.onConnectError?.(new Error('OAuth URL was not returned. Please try again.'));
@@ -267,7 +271,10 @@ export const MsTeamsConnectButton = (props: MsTeamsConnectButtonProps) => {
   );
 
   return (
-    <Show when={!loading()} fallback={<Loader class="nt-text-foreground-alpha-600 nt-size-4 nt-animate-spin" />}>
+    <Show
+      when={!loading() && !isIdentityPending()}
+      fallback={<Loader class="nt-text-foreground-alpha-600 nt-size-4 nt-animate-spin" />}
+    >
       <div
         class={style({
           key: 'channelConnectButtonContainer',

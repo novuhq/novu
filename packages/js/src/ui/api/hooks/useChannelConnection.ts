@@ -1,4 +1,4 @@
-import { createEffect, createResource, createSignal, onCleanup, onMount } from 'solid-js';
+import { type Accessor, createEffect, createResource, createSignal, onCleanup, onMount } from 'solid-js';
 import type {
   ChannelConnectionResponse,
   DeleteChannelConnectionArgs,
@@ -7,24 +7,14 @@ import type {
 } from '../../../channel-connections/types';
 import { useNovu } from '../../context';
 
-export type UseChannelConnectionOptions = {
-  integrationIdentifier: string;
-  connectionIdentifier?: string;
-  subscriberId?: string;
-};
-
-export const useChannelConnection = (options: UseChannelConnectionOptions) => {
+export const useChannelConnection = (connectionIdentifier: Accessor<string | undefined>) => {
   const novuAccessor = useNovu();
   const [loading, setLoading] = createSignal(true);
 
-  const [connection, { mutate, refetch }] = createResource(options, async ({ connectionIdentifier }) => {
+  const [connection, { mutate, refetch }] = createResource(connectionIdentifier, async (identifier) => {
     try {
-      if (!connectionIdentifier) {
-        return null;
-      }
-
       const response = await novuAccessor().channelConnections.get({
-        identifier: connectionIdentifier,
+        identifier,
       });
 
       return response.data ?? null;
@@ -54,7 +44,7 @@ export const useChannelConnection = (options: UseChannelConnectionOptions) => {
     const cleanupGetPending = currentNovu.on(
       'channel-connection.get.pending',
       ({ args }: { args: GetChannelConnectionArgs }) => {
-        if (!args || args.identifier !== options.connectionIdentifier) {
+        if (!args || args.identifier !== connectionIdentifier()) {
           return;
         }
         setLoading(true);
@@ -64,7 +54,7 @@ export const useChannelConnection = (options: UseChannelConnectionOptions) => {
     const cleanupGetResolved = currentNovu.on(
       'channel-connection.get.resolved',
       ({ args, data }: { args: GetChannelConnectionArgs; data?: ChannelConnectionResponse | null }) => {
-        if (!args || args.identifier !== options.connectionIdentifier) {
+        if (!args || args.identifier !== connectionIdentifier()) {
           return;
         }
         mutate(data ?? null);
@@ -75,7 +65,7 @@ export const useChannelConnection = (options: UseChannelConnectionOptions) => {
     const cleanupDeletePending = currentNovu.on(
       'channel-connection.delete.pending',
       ({ args }: { args: DeleteChannelConnectionArgs }) => {
-        if (!args || args.identifier !== options.connectionIdentifier) {
+        if (!args || args.identifier !== connectionIdentifier()) {
           return;
         }
         setLoading(true);
@@ -85,7 +75,7 @@ export const useChannelConnection = (options: UseChannelConnectionOptions) => {
     const cleanupDeleteResolved = currentNovu.on(
       'channel-connection.delete.resolved',
       ({ args }: { args: DeleteChannelConnectionArgs }) => {
-        if (!args || args.identifier !== options.connectionIdentifier) {
+        if (!args || args.identifier !== connectionIdentifier()) {
           return;
         }
         mutate(null);

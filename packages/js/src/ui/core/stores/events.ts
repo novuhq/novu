@@ -26,7 +26,8 @@ export const createIdentitySwitchEffect = (novu: Accessor<Novu>, onSwitch: () =>
   });
 };
 
-const createIdentityKey = (novu: Accessor<Novu>) => {
+/** The current identity key (`getIdentityKey`), re-read on every sign-in; a renewal for the same identity does not notify. */
+export const createIdentityKey = (novu: Accessor<Novu>) => {
   const [sessionVersion, setSessionVersion] = createSignal(0);
   createEffect(() => {
     onCleanup(subscribeToIdentity(novu(), () => setSessionVersion((version) => version + 1)));

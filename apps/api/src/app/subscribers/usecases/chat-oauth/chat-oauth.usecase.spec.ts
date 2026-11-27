@@ -107,21 +107,34 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
     expect(url).to.include(`client_id=${CLIENT_ID}`);
 
     const state = new URL(url).searchParams.get('state') as string;
-    const decoded = decodeLegacyChatOauthState(state, API_KEY);
+    const decoded = decodeLegacyChatOauthState(state, [API_KEY]);
 
     expect(decoded.environmentId).to.equal(ENVIRONMENT_ID);
     expect(decoded.subscriberId).to.equal(SUBSCRIBER_ID);
     expect(decoded.integrationIdentifier).to.equal('victim-slack');
   });
 
-  it('carries the validated HMAC hash in the state so it survives the provider round trip', async () => {
+  it('keeps the HMAC hash out of the authorization URL and records that the subscriber was verified', async () => {
     stubIntegration({ clientId: CLIENT_ID, hmac: true });
     const hmacHash = createHash(API_KEY, SUBSCRIBER_ID) as string;
 
     const url = await usecase.execute(buildCommand({ hmacHash }));
     const state = new URL(url).searchParams.get('state') as string;
+    const decodedState = Buffer.from(state, 'base64url').toString();
 
-    expect(decodeLegacyChatOauthState(state, API_KEY).hmacHash).to.equal(hmacHash);
+    expect(url).to.not.include(hmacHash);
+    expect(decodedState).to.not.include(hmacHash);
+    expect(decodeLegacyChatOauthState(state, [API_KEY])).to.include({ subscriberVerified: true });
+  });
+
+  it('does not record a verified subscriber when the start checked no hash', async () => {
+    stubHmacRequiredEnabled(false);
+
+    const url = await usecase.execute(buildCommand({ hmacHash: 'unchecked-hash' }));
+    const state = new URL(url).searchParams.get('state') as string;
+
+    expect(decodeLegacyChatOauthState(state, [API_KEY])).to.include({ subscriberVerified: false });
+    expect(Buffer.from(state, 'base64url').toString()).to.not.include('unchecked-hash');
   });
 
   it('rejects a wrong HMAC hash when the integration enables HMAC', async () => {
@@ -142,6 +155,13 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
       organizationId: ORGANIZATION_ID,
       environmentId: ENVIRONMENT_ID,
     });
+  });
+
+  it('refuses to start when the revocation policy leaves no key to sign the state with', async () => {
+    stubHmacRequiredEnabled(false);
+    apiKeyRevocationService.getSigningKeys.resolves([]);
+
+    await expectRejection(usecase.execute(buildCommand()), BadRequestException);
   });
 
   it('does not require an HMAC hash for allowlisted legacy organizations without integration HMAC', async () => {

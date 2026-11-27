@@ -17,13 +17,14 @@ import {
   CHAT_INTEGRATION_NOT_FOUND_MESSAGE,
   isLegacySubscriberChatOauthHmacRequired,
   LEGACY_CHAT_OAUTH_MIGRATION_HINT,
+  LEGACY_CHAT_OAUTH_NO_SIGNING_KEY_MESSAGE,
   resolveLegacyChatOauthHmacRequired,
   resolveLegacyChatOauthOrganization,
 } from './legacy-chat-oauth.config';
 import { encodeLegacyChatOauthState } from './legacy-chat-oauth-state';
 
 /**
- * @deprecated Use `POST /v1/integrations/chat/oauth`.
+ * @deprecated See {@link LEGACY_CHAT_OAUTH_MIGRATION_HINT}.
  * @see apps/api/src/app/integrations/usecases/generate-chat-oath-url
  */
 @Injectable()
@@ -59,15 +60,20 @@ export class ChatOauth {
 
     assertLegacyChatOauthIntegrationHmacEnabled(hmacRequiredEnabled, integrationHmacEnabled);
 
-    const apiKeys = await this.getEnvironmentApiKeys(command.environmentId);
+    const signingKeys = await this.apiKeyRevocationService.getSigningKeys({
+      organizationId: integration._organizationId,
+      environmentId: command.environmentId,
+      apiKeys: await this.getEnvironmentApiKeys(command.environmentId),
+    });
+    if (!signingKeys.length) {
+      throw new BadRequestException(LEGACY_CHAT_OAUTH_NO_SIGNING_KEY_MESSAGE);
+    }
+
+    const isHmacRequired = resolveLegacyChatOauthHmacRequired(hmacRequiredEnabled, integrationHmacEnabled);
 
     assertLegacyChatOauthHmac({
-      isHmacRequired: resolveLegacyChatOauthHmacRequired(hmacRequiredEnabled, integrationHmacEnabled),
-      apiKeys: await this.apiKeyRevocationService.getSigningKeys({
-        organizationId: integration._organizationId,
-        environmentId: command.environmentId,
-        apiKeys,
-      }),
+      isHmacRequired,
+      apiKeys: signingKeys,
       subscriberId: command.subscriberId,
       externalHmacHash: command.hmacHash,
     });
@@ -90,10 +96,10 @@ export class ChatOauth {
         subscriberId: command.subscriberId,
         providerId: command.providerId,
         integrationIdentifier: command.integrationIdentifier,
-        hmacHash: command.hmacHash,
+        subscriberVerified: isHmacRequired,
         timestamp: Date.now(),
       },
-      apiKeys[0].key
+      signingKeys[0]
     );
 
     return this.getOAuthUrl(

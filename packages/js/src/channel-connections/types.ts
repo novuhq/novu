@@ -42,6 +42,7 @@ export type GenerateConnectOAuthUrlArgs = {
    * HMAC-SHA256 of the canonicalized `context`, signed with the tenant environment
    * secret key (same "Inbox with context" signing). Required when connecting to a
    * `restricted` agent and the session did not already verify the context.
+   * Not needed with a token source (`tokenEndpoint`/`getToken`): the token's context is already verified.
    */
   contextHash?: string;
   /** Slack only: OAuth bot scopes to request. */
@@ -61,6 +62,7 @@ export type GenerateLinkUserOAuthUrlArgs = {
    * HMAC-SHA256 of the canonicalized `context`, signed with the tenant environment
    * secret key. Required when linking to a `restricted` agent and the session did
    * not already verify the context, so the per-user link carries a trustworthy binding.
+   * Not needed with a token source (`tokenEndpoint`/`getToken`): the token's context is already verified.
    */
   contextHash?: string;
   /** Slack only: user-level OAuth scopes (e.g. identity.basic). */
@@ -148,6 +150,7 @@ export type LinkChannelEndpointArgs = {
    * secret key (the same "Inbox with context" signing). Required when the
    * integration has HMAC validation enabled and the current session did not
    * already verify the context.
+   * Not needed with a token source (`tokenEndpoint`/`getToken`): the token's context is already verified.
    */
   contextHash?: string;
 };

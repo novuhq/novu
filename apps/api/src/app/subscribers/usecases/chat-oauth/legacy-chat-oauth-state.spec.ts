@@ -19,6 +19,7 @@ function buildState(overrides: Partial<LegacyChatOauthStateData> = {}): LegacyCh
     subscriberId: 'victim-subscriber',
     providerId: ChatProviderIdEnum.Slack,
     integrationIdentifier: 'victim-slack',
+    subscriberVerified: false,
     timestamp: Date.now(),
     ...overrides,
   };
@@ -29,10 +30,19 @@ describe('legacy chat OAuth state', () => {
     sinon.restore();
   });
 
-  it('round-trips the signed payload', () => {
-    const data = buildState({ hmacHash: 'deadbeef' });
+  it('accepts a state signed with any key the policy still allows, and refuses one signed with no allowed key', () => {
+    const state = encodeLegacyChatOauthState(buildState(), VICTIM_API_KEY);
 
-    const decoded = decodeLegacyChatOauthState(encodeLegacyChatOauthState(data, VICTIM_API_KEY), VICTIM_API_KEY);
+    expect(decodeLegacyChatOauthState(state, ['rotated-key', VICTIM_API_KEY]).subscriberId).to.equal(
+      'victim-subscriber'
+    );
+    expect(() => decodeLegacyChatOauthState(state, [])).to.throw(BadRequestException);
+  });
+
+  it('round-trips the signed payload', () => {
+    const data = buildState({ subscriberVerified: true });
+
+    const decoded = decodeLegacyChatOauthState(encodeLegacyChatOauthState(data, VICTIM_API_KEY), [VICTIM_API_KEY]);
 
     expect(decoded).to.deep.equal(data);
   });
@@ -48,7 +58,7 @@ describe('legacy chat OAuth state', () => {
   it('rejects a state signed with another environment key', () => {
     const state = encodeLegacyChatOauthState(buildState(), ATTACKER_API_KEY);
 
-    expect(() => decodeLegacyChatOauthState(state, VICTIM_API_KEY)).to.throw(BadRequestException);
+    expect(() => decodeLegacyChatOauthState(state, [VICTIM_API_KEY])).to.throw(BadRequestException);
   });
 
   it('rejects a payload edited after signing', () => {
@@ -57,19 +67,19 @@ describe('legacy chat OAuth state', () => {
     const { signature } = splitForTest(signed);
     const tampered = encodeOAuthState(JSON.stringify({ ...data, subscriberId: 'other-subscriber' }), signature);
 
-    expect(() => decodeLegacyChatOauthState(tampered, VICTIM_API_KEY)).to.throw(BadRequestException);
+    expect(() => decodeLegacyChatOauthState(tampered, [VICTIM_API_KEY])).to.throw(BadRequestException);
   });
 
   it('rejects an unsigned payload', () => {
     const unsigned = Buffer.from(JSON.stringify(buildState())).toString('base64url');
 
-    expect(() => decodeLegacyChatOauthState(unsigned, VICTIM_API_KEY)).to.throw(BadRequestException);
+    expect(() => decodeLegacyChatOauthState(unsigned, [VICTIM_API_KEY])).to.throw(BadRequestException);
   });
 
   it('rejects a state older than the TTL', () => {
     const state = encodeLegacyChatOauthState(buildState({ timestamp: Date.now() - 16 * 60 * 1000 }), VICTIM_API_KEY);
 
-    expect(() => decodeLegacyChatOauthState(state, VICTIM_API_KEY)).to.throw(BadRequestException, 'expired');
+    expect(() => decodeLegacyChatOauthState(state, [VICTIM_API_KEY])).to.throw(BadRequestException, 'expired');
   });
 });
 

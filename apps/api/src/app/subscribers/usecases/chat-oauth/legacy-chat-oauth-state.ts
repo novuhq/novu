@@ -3,22 +3,12 @@ import { createHash, encodeOAuthState, peekOAuthStatePayload, splitOAuthState } 
 import { ChatProviderIdEnum } from '@novu/shared';
 import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
 
-/**
- * Signed `state` carried through the deprecated per-subscriber chat OAuth flow.
- *
- * The legacy flow derived every routing field from the callback's query string,
- * so anyone able to reach the callback could name an arbitrary environment and
- * subscriber. Signing the state with the environment's API key at the point the
- * OAuth URL is minted binds the callback to that exact hand-off, and lets the
- * subscriber HMAC hash survive the provider round trip — the redirect URI is
- * registered with the provider and cannot carry it.
- */
 export type LegacyChatOauthStateData = {
   environmentId: string;
   subscriberId: string;
   providerId: ChatProviderIdEnum;
   integrationIdentifier?: string;
-  hmacHash?: string;
+  subscriberVerified: boolean;
   timestamp: number;
 };
 
@@ -54,14 +44,13 @@ export function peekLegacyChatOauthStateEnvironmentId(state: string): string {
   }
 }
 
-export function decodeLegacyChatOauthState(state: string, environmentApiKey: string): LegacyChatOauthStateData {
+export function decodeLegacyChatOauthState(state: string, signingKeys: string[]): LegacyChatOauthStateData {
   let data: LegacyChatOauthStateData;
 
   try {
     const { payload, signature } = splitOAuthState(state);
-    const expectedSignature = createHash(environmentApiKey, payload);
 
-    if (!areHexDigestsEqual(expectedSignature, signature)) {
+    if (!signingKeys.some((key) => areHexDigestsEqual(createHash(key, payload), signature))) {
       throw new Error('Invalid state signature');
     }
 

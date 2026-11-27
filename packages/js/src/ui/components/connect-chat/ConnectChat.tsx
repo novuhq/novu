@@ -2,7 +2,7 @@ import { createEffect, createMemo, Show } from 'solid-js';
 import type { ConnectionMode } from '../../../channel-connections/types';
 import type { Context } from '../../../types';
 import { useChannelConnection } from '../../api/hooks/useChannelConnection';
-import { useNovu } from '../../context';
+import { isMissingSharedContext, useSignedInIdentity } from '../../helpers/useSignedInIdentity';
 import { useStyle } from '../../helpers/useStyle';
 import { Loader } from '../../icons/Loader';
 import { Button, Motion } from '../primitives';
@@ -23,27 +23,26 @@ export type ConnectChatProps = {
 
 export const ConnectChat = (props: ConnectChatProps) => {
   const style = useStyle();
-  const novuAccessor = useNovu();
+  const identity = useSignedInIdentity();
   const {
     connection,
     loading,
     generateConnectOAuthUrl: connect,
     disconnect,
-  } = useChannelConnection({
-    integrationIdentifier: props.integrationIdentifier,
-    connectionIdentifier: props.connectionIdentifier,
-    subscriberId: props.subscriberId,
-  });
+  } = useChannelConnection(() => props.connectionIdentifier);
 
   const connectionMode = () => props.connectionMode ?? 'subscriber';
-  const resolvedContext = () => props.context ?? novuAccessor().context;
-  const isMisconfigured = createMemo(() => connectionMode() === 'shared' && !resolvedContext());
+  const resolvedContext = () => props.context ?? identity().context;
+  const isMisconfigured = createMemo(
+    () => connectionMode() === 'shared' && isMissingSharedContext(identity(), props.context)
+  );
 
   createEffect(() => {
     if (isMisconfigured()) {
       console.warn(
         '[Novu] ConnectChat: "context" is required when connectionMode is "shared". ' +
-          'Provide it via the context prop on ConnectChat or on NovuProvider.'
+          'Provide it via the context prop on ConnectChat or on NovuProvider, or sign in with a token ' +
+          'that carries a context.'
       );
     }
   });
@@ -64,8 +63,7 @@ export const ConnectChat = (props: ConnectChatProps) => {
     } else {
       const mode = connectionMode();
       const ctx = resolvedContext();
-      const resolvedSubscriberId =
-        mode === 'subscriber' ? (props.subscriberId ?? novuAccessor().subscriberId) : undefined;
+      const resolvedSubscriberId = mode === 'subscriber' ? (props.subscriberId ?? identity().subscriberId) : undefined;
 
       const result = await connect({
         integrationIdentifier: props.integrationIdentifier,

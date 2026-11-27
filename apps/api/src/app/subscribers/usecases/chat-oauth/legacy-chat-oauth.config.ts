@@ -6,8 +6,12 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 export const CHAT_INTEGRATION_NOT_FOUND_MESSAGE = 'Chat integration not found';
 
 export const LEGACY_CHAT_OAUTH_MIGRATION_HINT =
-  'The per-subscriber chat OAuth endpoints are deprecated. Use POST /v1/integrations/chat/oauth to mint an ' +
-  'authenticated OAuth URL instead.';
+  'The per-subscriber chat OAuth endpoints are deprecated. From the browser, use the Novu connect components ' +
+  '(POST /v1/inbox/channel-connections/oauth) with a subscriber token session; from a backend, use ' +
+  'POST /v1/integrations/channel-connections/oauth.';
+
+export const LEGACY_CHAT_OAUTH_NO_SIGNING_KEY_MESSAGE =
+  'The API key revocation policy leaves no key to sign this chat OAuth request. Rotate the API key, then try again.';
 
 export const LEGACY_CHAT_OAUTH_HMAC_REQUIRED_MESSAGE =
   'HMAC must be enabled on the Slack integration to use the per-subscriber chat OAuth endpoints. ' +

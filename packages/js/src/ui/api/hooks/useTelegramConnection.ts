@@ -1,4 +1,4 @@
-import { createEffect, createResource, createSignal } from 'solid-js';
+import { type Accessor, createEffect, createResource, createSignal } from 'solid-js';
 import type { ChannelEndpointResponse, LinkChannelEndpointArgs } from '../../../channel-connections/types';
 import { useNovu } from '../../context';
 
@@ -9,13 +9,7 @@ export type UseTelegramConnectionOptions = {
   subscriberId?: string;
 };
 
-/**
- * Telegram has no workspace-level connection — a subscriber is "connected" once
- * a `telegram_chat` endpoint exists for them. Detection is therefore list-based
- * (filtered by providerId + integrationIdentifier), unlike Slack/MS Teams which
- * look up a single connection by identifier.
- */
-export const useTelegramConnection = (options: UseTelegramConnectionOptions) => {
+export const useTelegramConnection = (options: Accessor<UseTelegramConnectionOptions | undefined>) => {
   const novuAccessor = useNovu();
   const [loading, setLoading] = createSignal(true);
 
@@ -23,10 +17,6 @@ export const useTelegramConnection = (options: UseTelegramConnectionOptions) => 
     options,
     async ({ integrationIdentifier, subscriberId }): Promise<ChannelEndpointResponse | null> => {
       try {
-        if (!integrationIdentifier) {
-          return null;
-        }
-
         const response = await novuAccessor().channelEndpoints.list({
           integrationIdentifier,
           providerId: TELEGRAM_PROVIDER_ID,
