@@ -43,7 +43,7 @@ function getRuleValueIssue(operator: string, value: string | null): string | nul
 
 export type ConditionsSchemaOptions = {
   getFieldIssue: (field: string) => string | null;
-  getOperatorIssue?: (operator: string) => string | null;
+  getOperatorIssue?: (rule: RuleType) => string | null;
 };
 
 function getRuleSchema(options: ConditionsSchemaOptions): z.ZodType<RuleType | RuleGroupType> {
@@ -54,8 +54,9 @@ function getRuleSchema(options: ConditionsSchemaOptions): z.ZodType<RuleType | R
         operator: z.string(),
         value: z.string().nullable(),
       })
-      .superRefine(({ field, operator, value }, ctx) => {
-        const valueIssue = options.getOperatorIssue?.(operator) ?? getRuleValueIssue(operator, value);
+      .superRefine((rule, ctx) => {
+        const { field, operator, value } = rule;
+        const valueIssue = options.getOperatorIssue?.(rule) ?? getRuleValueIssue(operator, value);
 
         if (valueIssue) {
           ctx.addIssue({ code: z.ZodIssueCode.custom, message: valueIssue, path: ['value'] });

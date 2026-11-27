@@ -1,4 +1,4 @@
-import { ACCESS_RULE_SUBSCRIBER_FIELDS, isAccessRuleField } from '@novu/shared';
+import { ACCESS_RULE_SUBSCRIBER_FIELDS, INTEGRATION_RULE_OPERATORS, isAccessRuleField } from '@novu/shared';
 import isEqual from 'lodash.isequal';
 import {
   formatQuery,
@@ -9,9 +9,7 @@ import {
   type RuleType,
 } from 'react-querybuilder';
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
-import { isArrayItemOperator } from '@/components/conditions-editor/array-item-condition';
 import { createEmptyConditionsQuery } from '@/components/conditions-editor/conditions-variables';
-import { isRelativeDateOperator } from '@/components/conditions-editor/field-type-operators';
 import type { ConditionFieldDataType, EnhancedConditionVariable } from '@/components/conditions-editor/types';
 import { customRuleProcessor, parseJsonLogicOptions } from '@/utils/conditions';
 
@@ -29,8 +27,21 @@ export function getAccessRuleFieldIssue(field: string): string | null {
   return isAccessRuleField(field) ? null : FIELD_ISSUE;
 }
 
-export function getAccessRuleOperatorIssue(operator: string): string | null {
-  return isRelativeDateOperator(operator) || isArrayItemOperator(operator) ? OPERATOR_ISSUE : null;
+const ALLOWED_OPERATORS = new Set<string>(INTEGRATION_RULE_OPERATORS);
+
+export function getAccessRuleOperatorIssue(rule: RuleType): string | null {
+  const logic = customRuleProcessor(rule, { parseNumbers: false });
+
+  return emitsOnlyAllowedOperators(logic) ? null : OPERATOR_ISSUE;
+}
+
+function emitsOnlyAllowedOperators(node: unknown): boolean {
+  if (Array.isArray(node)) return node.every(emitsOnlyAllowedOperators);
+  if (node === null || typeof node !== 'object') return true;
+
+  return Object.entries(node).every(
+    ([operator, args]) => ALLOWED_OPERATORS.has(operator) && emitsOnlyAllowedOperators(args)
+  );
 }
 
 export function hasConditions(group: RuleGroupTypeAny): boolean {
