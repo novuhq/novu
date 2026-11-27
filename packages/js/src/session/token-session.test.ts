@@ -664,6 +664,77 @@ describe('the realtime socket with a token source', () => {
   });
 });
 
+describe('the realtime socket when the browser clock is off', () => {
+  it('reconnects socket.io with a new session at expiry when the browser clock runs 5 minutes behind', async () => {
+    const backend = createFakeBackend();
+    backend.state.clientClockAheadMs = -5 * MINUTE_MS;
+    const novu = createNovu({ socketUrl: 'https://ws.self-hosted.example.com' });
+    await novu.socket.connect();
+    const socket = fakeSocketIo.current!;
+
+    backend.advanceTime(10 * MINUTE_MS);
+    socket.handlers.get('disconnect')?.('io server disconnect');
+    await wait();
+
+    expect(backend.state.tokenRequests).toHaveLength(2);
+    expect(socket.connect).toHaveBeenCalledTimes(1);
+    expect(socket.io.opts.query?.token).toBe(backend.state.sessionTokens[1]);
+  });
+
+  it('does not reconnect PartySocket with the expired token when the browser clock runs 5 minutes behind', async () => {
+    const backend = createFakeBackend();
+    backend.state.clientClockAheadMs = -5 * MINUTE_MS;
+    const novu = createNovu();
+    await novu.socket.connect();
+    await wait();
+
+    backend.advanceTime(10 * MINUTE_MS);
+    FakeWebSocket.instances[0].closeFromServer();
+    await wait();
+
+    const reconnectTokens = FakeWebSocket.instances.slice(1).map((ws) => new URL(ws.url).searchParams.get('token'));
+    expect(reconnectTokens).toEqual([backend.state.sessionTokens[1]]);
+
+    await novu.socket.disconnect();
+  });
+
+  it('does not fetch a token per PartySocket reconnect when the browser clock runs 10 minutes ahead', async () => {
+    const backend = createFakeBackend();
+    backend.state.loginTokenLifetimeMs = 5 * MINUTE_MS;
+    backend.state.clientClockAheadMs = 10 * MINUTE_MS;
+    const novu = createNovu();
+    await novu.socket.connect();
+    await wait();
+
+    for (let i = 0; i < 3; i += 1) {
+      FakeWebSocket.instances.at(-1)?.closeFromServer();
+      await wait();
+    }
+
+    expect(FakeWebSocket.instances).toHaveLength(4);
+    expect(backend.state.tokenRequests).toHaveLength(1);
+
+    await novu.socket.disconnect();
+  });
+
+  it('does not fetch a token per socket.io reconnect attempt when the browser clock runs 10 minutes ahead', async () => {
+    const backend = createFakeBackend();
+    backend.state.loginTokenLifetimeMs = 5 * MINUTE_MS;
+    backend.state.clientClockAheadMs = 10 * MINUTE_MS;
+    const novu = createNovu({ socketUrl: 'https://ws.self-hosted.example.com' });
+    await novu.socket.connect();
+    const socket = fakeSocketIo.current!;
+
+    for (let i = 0; i < 3; i += 1) {
+      socket.managerHandlers.get('reconnect_attempt')?.();
+      await wait();
+    }
+
+    expect(backend.state.tokenRequests).toHaveLength(1);
+    expect(socket.io.opts.query?.token).toBe(backend.state.sessionTokens[0]);
+  });
+});
+
 describe('several tabs waking up after the session expired', () => {
   it('refreshes only in tabs that make a request, once each', async () => {
     const backend = createFakeBackend();
