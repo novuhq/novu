@@ -1,6 +1,7 @@
 import { SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import jwt from 'jsonwebtoken';
 
 const subscriberRepository = new SubscriberRepository();
 
@@ -96,6 +97,66 @@ describe('Internal Controller (GET /v1/internal) - #novu-v2', () => {
 
       const offline = await subscriberRepository.findOne(subscriberQuery);
       expect(offline?.isOnline).to.equal(false);
+    });
+
+    describe('with a session that already expired', () => {
+      const INTERNAL_KEY = 'internal-services-key-e2e';
+      let previousKey: string | undefined;
+      let expiredSession: string;
+
+      beforeEach(() => {
+        previousKey = process.env.INTERNAL_SERVICES_API_KEY;
+        process.env.INTERNAL_SERVICES_API_KEY = INTERNAL_KEY;
+        const claims = jwt.decode(session.subscriberToken) as Record<string, unknown>;
+        const { iat: _iat, exp: _exp, ...rest } = claims;
+        expiredSession = jwt.sign({ ...rest, exp: Math.floor(Date.now() / 1000) - 60 }, `${process.env.JWT_SECRET}`);
+      });
+
+      afterEach(() => {
+        process.env.INTERNAL_SERVICES_API_KEY = previousKey;
+      });
+
+      it('should record offline when the socket server sends the internal services key', async () => {
+        const subscriberQuery = { subscriberId: session.subscriberId, _environmentId: session.environment._id };
+        await subscriberRepository.update(subscriberQuery, { $set: { isOnline: true } });
+
+        await session.testAgent
+          .post('/v1/internal/subscriber-online-state')
+          .set('Authorization', `Bearer ${expiredSession}`)
+          .set('X-Novu-Internal-Key', INTERNAL_KEY)
+          .send({ isOnline: false })
+          .expect(200);
+
+        expect((await subscriberRepository.findOne(subscriberQuery))?.isOnline).to.equal(false);
+      });
+
+      it('should return 401 without the internal services key', async () => {
+        await session.testAgent
+          .post('/v1/internal/subscriber-online-state')
+          .set('Authorization', `Bearer ${expiredSession}`)
+          .send({ isOnline: false })
+          .expect(401);
+      });
+
+      it('should return 401 with a wrong internal services key', async () => {
+        await session.testAgent
+          .post('/v1/internal/subscriber-online-state')
+          .set('Authorization', `Bearer ${expiredSession}`)
+          .set('X-Novu-Internal-Key', 'not-the-key')
+          .send({ isOnline: false })
+          .expect(401);
+      });
+
+      it('should return 401 for a token not signed by the API, even with the internal services key', async () => {
+        const forged = jwt.sign(jwt.decode(expiredSession) as object, 'another-secret');
+
+        await session.testAgent
+          .post('/v1/internal/subscriber-online-state')
+          .set('Authorization', `Bearer ${forged}`)
+          .set('X-Novu-Internal-Key', INTERNAL_KEY)
+          .send({ isOnline: false })
+          .expect(401);
+      });
     });
 
     it('should succeed without writing anything when the subscriber was deleted', async () => {

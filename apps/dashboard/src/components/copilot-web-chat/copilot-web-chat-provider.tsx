@@ -1,5 +1,5 @@
 import type { AgentEventEnvelope } from '@novu/js';
-import { useWebChat } from '@novu/react';
+import { type ListConversationsArgs, useNovu, useWebChat } from '@novu/react';
 import { COPILOT_TRY_AGAIN_READY_EVENT, CopilotReviewActionEnum } from '@novu/shared';
 import { type ComponentProps, memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +11,11 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
+import {
+  type CopilotConversationOrigin,
+  getConversationOrigin,
+  writeStoredConversationOrigin,
+} from './copilot-conversation-history';
 import { registerCopilotEntry } from './copilot-entry-store';
 import {
   CopilotRegisterContext,
@@ -48,6 +53,9 @@ type ShellState = {
   pageContext?: CopilotPageContext;
   registerPageContext: ComponentProps<typeof CopilotRegisterContext.Provider>['value'];
   onRefetchRef: React.MutableRefObject<(() => void) | undefined>;
+  isHistoryOpen: boolean;
+  openHistory: () => void;
+  closeHistory: () => void;
 };
 
 function useShellState(surface: CopilotSurface | null): ShellState {
@@ -56,17 +64,22 @@ function useShellState(surface: CopilotSurface | null): ShellState {
   const [isRevealPending, setIsRevealPending] = useState(false);
   const [sidebarCount, setSidebarCount] = useState(0);
   const [pageContext, setPageContext] = useState<CopilotPageContext>();
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const onRefetchRef = useRef<(() => void) | undefined>(undefined);
 
   const open = useCallback<ShellState['open']>(
     (options) => {
       if (options?.prefill) setDraft(options.prefill);
+      // A reveal focuses the composer, which the history replaces; left open, it would steal the focus on the way back.
+      setIsHistoryOpen(false);
       setIsRevealPending(true);
       if (surface === 'popover') setIsOpen(true);
     },
     [surface]
   );
   const close = useCallback(() => setIsOpen(false), []);
+  const openHistory = useCallback(() => setIsHistoryOpen(true), []);
+  const closeHistory = useCallback(() => setIsHistoryOpen(false), []);
   const toggle = useCallback(() => (isOpen ? close() : open()), [isOpen, open, close]);
   const completeReveal = useCallback(() => setIsRevealPending(false), []);
   const registerSidebar = useCallback(() => {
@@ -99,6 +112,9 @@ function useShellState(surface: CopilotSurface | null): ShellState {
     pageContext,
     registerPageContext,
     onRefetchRef,
+    isHistoryOpen,
+    openHistory,
+    closeHistory,
   };
 }
 
@@ -116,6 +132,8 @@ type ConnectedState = Pick<
   | 'sendCardAction'
   | 'pendingReviewMessageId'
   | 'startNewConversation'
+  | 'resumeConversation'
+  | 'listConversations'
   | 'hasUnseenAnswer'
   | 'hasRunError'
   | 'isBusy'
@@ -158,6 +176,9 @@ export function CopilotWebChatProvider({
     pageContext,
     registerPageContext,
     onRefetchRef,
+    isHistoryOpen,
+    openHistory,
+    closeHistory,
   } = shell;
   // Memoized so the bridge (wrapped in `memo`) is not re-rendered by the parent's own state updates;
   // `useWebChat` returns a new object every render, which would otherwise loop through `onConnected`.
@@ -167,6 +188,19 @@ export function CopilotWebChatProvider({
   );
 
   const isBusy = !!connected?.isBusy;
+  const startConnectedConversation = connected?.startNewConversation;
+  const resumeConnectedConversation = connected?.resumeConversation;
+  const startNewConversation = useCallback(() => {
+    closeHistory();
+    startConnectedConversation?.();
+  }, [closeHistory, startConnectedConversation]);
+  const resumeConversation = useCallback(
+    (conversationId: string) => {
+      closeHistory();
+      resumeConnectedConversation?.(conversationId);
+    },
+    [closeHistory, resumeConnectedConversation]
+  );
   const sidebarControl = useMemo(
     () => ({ isGenerating: isBusy, isRevealPending, registerSidebar }),
     [isBusy, isRevealPending, registerSidebar]
@@ -188,7 +222,13 @@ export function CopilotWebChatProvider({
       stop: connected?.stop ?? (async () => {}),
       sendCardAction: connected?.sendCardAction ?? (async () => {}),
       pendingReviewMessageId: connected?.pendingReviewMessageId,
-      startNewConversation: connected?.startNewConversation ?? (() => {}),
+      startNewConversation,
+      resumeConversation,
+      listConversations:
+        connected?.listConversations ?? (async () => ({ conversations: [], next: null, previous: null })),
+      isHistoryOpen,
+      openHistory,
+      closeHistory,
       draft,
       setDraft,
       isRevealPending,
@@ -206,6 +246,11 @@ export function CopilotWebChatProvider({
       close,
       toggle,
       pageContext,
+      startNewConversation,
+      resumeConversation,
+      isHistoryOpen,
+      openHistory,
+      closeHistory,
       draft,
       setDraft,
       isRevealPending,
@@ -348,6 +393,7 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
 
   const onEvent = useCopilotRefetch(onRefetchRef, handleRunEvent, handleWorkflowDeleted);
   const [resumeConversationId, setResumeConversationId] = useState(() => readStoredConversationId(conversationScope));
+  const novu = useNovu();
   const chat = useWebChat({ agentId: NOVU_COPILOT_AGENT_ID, conversationId: resumeConversationId, onEvent });
   const chatRef = useRef(chat);
   chatRef.current = chat;
@@ -359,6 +405,28 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
   useEffect(() => {
     if (chat.conversationId) writeStoredConversationId(conversationScope, chat.conversationId);
   }, [conversationScope, chat.conversationId]);
+
+  // Taken at a new chat's first send: the id only comes back with the response, and the user may have moved page by then.
+  const newChatOriginRef = useRef<CopilotConversationOrigin | undefined>(undefined);
+
+  useEffect(() => {
+    const origin = newChatOriginRef.current;
+    if (!chat.conversationId || resumeConversationIdRef.current || !origin) return;
+
+    newChatOriginRef.current = undefined;
+    writeStoredConversationOrigin(chat.conversationId, origin);
+  }, [chat.conversationId]);
+
+  const listConversations = useCallback(
+    async (args: ListConversationsArgs) => {
+      await novu.loadWebChat();
+      const { data, error } = await novu.webChat.listConversations(args);
+      if (error || !data) throw error ?? new Error('Failed to list conversations');
+
+      return data;
+    },
+    [novu]
+  );
 
   // A stored conversation that fails to load stays selected: the error notice offers Retry (reload history), and
   // New chat drops it. Abandoning it here would let a transient error replace the saved thread.
@@ -385,6 +453,9 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
         page,
       });
       if (isNewChat) track(TelemetryEvent.COPILOT_CHAT_CREATED, { agentId: NOVU_COPILOT_AGENT_ID, surface, page });
+      if (isNewChat && !chatRef.current.conversationId) {
+        newChatOriginRef.current = getConversationOrigin(pageContextRef.current);
+      }
 
       setRunError(false);
       const metadata = buildCopilotMetadata(pageContextRef.current, environmentIdRef.current);
@@ -497,20 +568,44 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     showErrorToast("Couldn't reach the Copilot. Try again.");
   }, []);
 
-  const startNewConversation = useCallback(() => {
+  // Nothing is owed to the next chat: the last send and its origin, a queued Try again resend, the locked review card or
+  // a run error.
+  const resetConversationState = useCallback(() => {
     lastSentRef.current = null;
+    newChatOriginRef.current = undefined;
     tryAgainCardRef.current = undefined;
     readyPromptLookupRef.current++;
     setReadyPrompt(undefined);
     setPendingReviewMessageId(undefined);
     setRunError(false);
     setAwaitingReply(false);
+  }, []);
+
+  const startNewConversation = useCallback(() => {
+    resetConversationState();
     writeStoredConversationId(conversationScope, undefined);
 
     // `startNewConversation` is a no-op on a resumed conversation; dropping the id switches the hook to a new chat.
     if (resumeConversationIdRef.current) setResumeConversationId(undefined);
     else chatRef.current.startNewConversation();
-  }, [conversationScope]);
+  }, [conversationScope, resetConversationState]);
+
+  const resumeConversation = useCallback(
+    (conversationId: string) => {
+      if (conversationId === chatRef.current.conversationId) return;
+
+      resetConversationState();
+      // Stored for this scope, so a reload here comes back to the chat picked last.
+      writeStoredConversationId(conversationScope, conversationId);
+      setResumeConversationId(conversationId);
+      track(TelemetryEvent.COPILOT_CHAT_RESUMED, {
+        agentId: NOVU_COPILOT_AGENT_ID,
+        surface,
+        page: pageContextRef.current?.page,
+      });
+    },
+    [conversationScope, resetConversationState, track, surface]
+  );
 
   const isAvailable = !!connectContext;
   // A reveal nothing can show yet would wait for the next sidebar and steal the focus then (e.g. ⌘J on the Activity tab).
@@ -552,6 +647,8 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
       sendCardAction,
       pendingReviewMessageId,
       startNewConversation,
+      resumeConversation,
+      listConversations,
       hasUnseenAnswer: unseenAnswer,
       hasRunError,
       isBusy,
@@ -565,6 +662,8 @@ const CopilotWebChatBridge = memo(function CopilotWebChatBridge({
     sendCardAction,
     pendingReviewMessageId,
     startNewConversation,
+    resumeConversation,
+    listConversations,
     unseenAnswer,
     hasRunError,
     isBusy,

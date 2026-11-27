@@ -8,6 +8,7 @@ import {
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
   enhanceStepsMap,
+  getCachedEnvironment,
   InMemoryLRUCacheService,
   Instrument,
   InstrumentUsecase,
@@ -47,7 +48,6 @@ import {
   ResourceOriginEnum,
   ResourceTypeEnum,
 } from '@novu/shared';
-import { getCachedEnvironment } from '../../../shared/utils';
 import { ExecuteBridgeJobCommand } from './execute-bridge-job.command';
 
 export interface ExecuteBridgeJobResult extends ExecuteOutput {
