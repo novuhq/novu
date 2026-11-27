@@ -6,7 +6,6 @@ import {
   accessRuleFormSchema,
   parseAccessRule,
   toAccessRule,
-  usesContext,
 } from '@/components/agents/agent-access-rule';
 import type { EnhancedConditionVariable } from '@/components/conditions-editor/types';
 
@@ -187,23 +186,5 @@ describe('validating the access rule form', () => {
     { operator: 'contains', value: 'sla', valid: true },
   ])('channel.platform $operator "$value" is valid: $valid', ({ operator, value, valid }) => {
     expect(valueIssues(value, { field: 'channel.platform', operator })).toHaveLength(valid ? 0 : 1);
-  });
-});
-
-describe('warning that context is missing on some platforms', () => {
-  it.each([
-    { name: 'a context field', rule: { '==': [{ var: 'context.tenant.id' }, 'acme'] }, warns: true },
-    {
-      name: 'a context field inside a nested group',
-      rule: { or: [{ '==': [email, 'a@x.com'] }, { and: [{ in: [{ var: 'context.tenant.data.plan' }, ['pro']] }] }] },
-      warns: true,
-    },
-    {
-      name: 'only subscriber and channel fields',
-      rule: { '==': [{ var: 'channel.platform' }, 'slack'] },
-      warns: false,
-    },
-  ])('warns for $name: $warns', ({ rule, warns }) => {
-    expect(usesContext((parseAccessRule(rule) as AccessRuleDraft).query)).toBe(warns);
   });
 });

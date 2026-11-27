@@ -5,14 +5,7 @@ import {
   INTEGRATION_RULE_OPERATORS,
   isAccessRuleField,
 } from '@novu/shared';
-import {
-  formatQuery,
-  generateID,
-  isRuleGroup,
-  type RuleGroupType,
-  type RuleGroupTypeAny,
-  type RuleType,
-} from 'react-querybuilder';
+import { formatQuery, isRuleGroup, type RuleGroupType, type RuleGroupTypeAny, type RuleType } from 'react-querybuilder';
 import { z } from 'zod';
 import { getConditionsSchema } from '@/components/conditions-editor/conditions-schema';
 import { createEmptyConditionsQuery } from '@/components/conditions-editor/conditions-variables';
@@ -95,7 +88,7 @@ export const accessRuleFormSchema = getConditionsSchema({
     path: ['query'],
   });
 
-export function hasConditions(group: RuleGroupTypeAny): boolean {
+function hasConditions(group: RuleGroupTypeAny): boolean {
   return group.rules.some((rule) => typeof rule !== 'string' && (!isRuleGroup(rule) || hasConditions(rule)));
 }
 
@@ -129,38 +122,6 @@ export const ACCESS_RULE_POLARITIES: Record<AccessRulePolarity, { label: string;
       "Everyone else who is a known subscriber gets a reply. People who aren't subscribers yet are always refused.",
   },
 };
-
-type StartingPoint = {
-  label: string;
-  polarity: AccessRulePolarity;
-  condition: { field: string; operator: string; value: string };
-};
-
-/** One condition each, which the user then completes. Shown while the rule has no conditions. */
-export const ACCESS_RULE_STARTING_POINTS: StartingPoint[] = [
-  {
-    label: 'Paid plans only',
-    polarity: 'allow',
-    condition: { field: 'context.tenant.data.plan', operator: 'in', value: '' },
-  },
-  { label: 'Staff only', polarity: 'allow', condition: { field: 'subscriber.email', operator: 'endsWith', value: '' } },
-  {
-    label: 'Beta users',
-    polarity: 'allow',
-    condition: { field: 'subscriber.data.betaAccess', operator: '=', value: 'true' },
-  },
-  { label: 'Specific people', polarity: 'deny', condition: { field: 'subscriber.email', operator: 'in', value: '' } },
-];
-
-export function startFrom({ polarity, condition }: StartingPoint): AccessRuleDraft {
-  return { polarity, query: { ...createEmptyConditionsQuery(), rules: [{ id: generateID(), ...condition }] } };
-}
-
-export function usesContext(group: RuleGroupTypeAny): boolean {
-  return group.rules.some(
-    (rule) => typeof rule !== 'string' && (isRuleGroup(rule) ? usesContext(rule) : rule.field.startsWith('context.'))
-  );
-}
 
 function getNegatedConditions(rule: AgentAccessRule): AgentAccessRule | null {
   const [operator, ...others] = Object.keys(rule);

@@ -7,17 +7,13 @@ import type { RuleGroupType } from 'react-querybuilder';
 import { type AgentResponse, getAgentDetailQueryKey, updateAgent } from '@/api/agents';
 import {
   ACCESS_RULE_POLARITIES,
-  ACCESS_RULE_STARTING_POINTS,
   ACCESS_RULE_VARIABLES,
   type AccessRuleDraft,
   type AccessRulePolarity,
   accessRuleFormSchema,
   getAccessRuleFieldIssue,
-  hasConditions,
   parseAccessRule,
-  startFrom,
   toAccessRule,
-  usesContext,
 } from '@/components/agents/agent-access-rule';
 import {
   SUBSCRIBER_ACCESS_MODE_SETTING_LABEL,
@@ -43,31 +39,6 @@ const isAllowedVariable = (variable: { name: string }) => getAccessRuleFieldIssu
 
 // The form schema types the query as a plain object, which an interface such as RuleGroupType only matches once spread.
 const toFormValues = ({ polarity, query }: AccessRuleDraft) => ({ polarity, query: { ...query } });
-
-const CONTEXT_PLATFORMS_WARNING =
-  'Context is only set on Slack, Teams, Telegram and web chat. On WhatsApp, SMS, iMessage and email it is missing, so "equals" never matches there and "does not equal" always does. Add a channel.platform condition if that matters.';
-
-function StartingPoints({ onPick }: { onPick: (point: (typeof ACCESS_RULE_STARTING_POINTS)[number]) => void }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-text-soft text-label-xs font-medium uppercase">Start from</span>
-      <div className="flex flex-wrap gap-1.5">
-        {ACCESS_RULE_STARTING_POINTS.map((point) => (
-          <Button
-            key={point.label}
-            type="button"
-            variant="secondary"
-            mode="outline"
-            size="2xs"
-            onClick={() => onPick(point)}
-          >
-            <span className="text-text-soft">{ACCESS_RULE_POLARITIES[point.polarity].label} ·</span> {point.label}
-          </Button>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 type AgentAccessRuleSheetProps = {
   agent: AgentResponse;
@@ -96,7 +67,6 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
     defaultValues: toFormValues(savedDraft ?? { polarity: 'allow', query: createEmptyConditionsQuery() }),
   });
   const polarity = form.watch('polarity');
-  const query = form.watch('query') as RuleGroupType;
   const queryError = form.formState.errors.query?.message;
   const emptyRuleError = typeof queryError === 'string' ? queryError : undefined;
 
@@ -135,11 +105,6 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
             <UneditableRuleNotice rule={savedRule} />
           ) : (
             <>
-              {isEditable && !hasConditions(query) && (
-                <StartingPoints
-                  onPick={(point) => form.reset(toFormValues(startFrom(point)), { keepDefaultValues: true })}
-                />
-              )}
               <Panel className="overflow-initial">
                 <PanelHeader>
                   <RiInputField className="text-feature size-4" />
@@ -184,7 +149,6 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
                 </PanelContent>
               </Panel>
               <p className="text-foreground-400 text-xs">{ACCESS_RULE_POLARITIES[polarity].outcome}</p>
-              {usesContext(query) && <p className="text-foreground-400 text-xs">{CONTEXT_PLATFORMS_WARNING}</p>}
             </>
           )}
         </div>
