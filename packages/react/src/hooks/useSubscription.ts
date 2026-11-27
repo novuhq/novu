@@ -1,7 +1,6 @@
 import { NovuError, TopicSubscription } from '@novu/js';
 import { buildSubscriptionIdentifier } from '@novu/js/internal';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useIdentityKey } from './internal/useIdentityKey';
 import { useNovu } from './NovuProvider';
 
 export type UseSubscriptionProps = {
@@ -24,7 +23,6 @@ export type UseSubscriptionResult = {
  */
 export const useSubscription = (props: UseSubscriptionProps): UseSubscriptionResult => {
   const novu = useNovu();
-  const identityKey = useIdentityKey(novu);
   const propsRef = useRef<UseSubscriptionProps>(props);
   propsRef.current = props;
   const currentIdentifier = useCallback(
@@ -50,12 +48,15 @@ export const useSubscription = (props: UseSubscriptionProps): UseSubscriptionRes
 
       setIsFetching(true);
 
-      const response = await novu.subscriptions.get(
-        {
-          topicKey,
-          identifier: identifier ?? currentIdentifier(),
-        },
-        { refetch: options?.refetch }
+      // The default identifier names the subscriber, which a token source tells only once the session resolves.
+      const response = await novu.subscriptions.callWithSession(() =>
+        novu.subscriptions.get(
+          {
+            topicKey,
+            identifier: identifier ?? currentIdentifier(),
+          },
+          { refetch: options?.refetch }
+        )
       );
 
       if (response.error) {
@@ -72,26 +73,6 @@ export const useSubscription = (props: UseSubscriptionProps): UseSubscriptionRes
   );
 
   useEffect(() => {
-    // A token source tells who the subscriber is only once the session resolves; until then only its failure shows.
-    if (identityKey === undefined) {
-      const reportSessionError = (error: unknown) => {
-        const sessionError = new NovuError('Failed to initialize session, please contact the support', error);
-        setError(sessionError);
-        propsRef.current.onError?.(sessionError);
-        setIsLoading(false);
-      };
-      // The first session may have failed before this hook mounted.
-      if (novu.sessionError !== undefined) {
-        reportSessionError(novu.sessionError);
-      }
-
-      return novu.on('session.initialize.resolved', ({ error }) => {
-        if (error) {
-          reportSessionError(error);
-        }
-      });
-    }
-
     const listener = ({ data: subscription }: { data?: TopicSubscription }) => {
       const { topicKey } = propsRef.current;
       if (!subscription || subscription.topicKey !== topicKey || subscription.identifier !== currentIdentifier()) {
@@ -187,7 +168,7 @@ export const useSubscription = (props: UseSubscriptionProps): UseSubscriptionRes
       cleanupDeletePending();
       cleanupDeleteResolved();
     };
-  }, [novu, fetchSubscription, currentIdentifier, identityKey]);
+  }, [novu, fetchSubscription, currentIdentifier]);
 
   const refetch = useCallback(() => fetchSubscription({ refetch: true }), [fetchSubscription]);
 

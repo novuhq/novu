@@ -44,7 +44,6 @@ export class Session {
   #tokens = new Set<string>();
   /** Who the client was last signed in as; kept across `changeIdentity`, so a switch is noticed when it resolves. */
   #signedInAs: { subscriberId: string | undefined; contextKey: string } | undefined;
-  #error: unknown;
   /** The latest renewal of a token source that failed, until one succeeds. */
   #failedRenewal: { at: number; error: unknown } | undefined;
   #onSubscriberChange: () => void;
@@ -118,11 +117,6 @@ export class Session {
     return this.#session;
   }
 
-  /** Why the latest session request failed, or `undefined` once one succeeded. Read it the same way as `data`. */
-  public get error(): unknown {
-    return this.#error;
-  }
-
   private handleApplicationIdentifier(method: 'get' | 'store' | 'delete', identifier?: string): string | null {
     if (typeof window === 'undefined' || !window.localStorage) {
       return null;
@@ -177,7 +171,6 @@ export class Session {
     this.#identity = identity;
     this.#tokens.clear();
     this.#session = undefined;
-    this.#error = undefined;
 
     // Let a request that is already running finish first, so its token cannot overwrite the new one.
     while (this.#inFlight) {
@@ -328,7 +321,6 @@ export class Session {
           this.#tokens.clear();
         }
         this.#tokens.add(response.token);
-        this.#error = undefined;
         this.#failedRenewal = undefined;
       }
 
@@ -356,7 +348,6 @@ export class Session {
   }
 
   #recordFailure(identity: SessionIdentity, renew: boolean, error: unknown): void {
-    this.#error = error;
     if (renew && identity.kind === 'token') {
       this.#failedRenewal = { at: Date.now(), error };
     }
