@@ -107,7 +107,7 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
     expect(url).to.include(`client_id=${CLIENT_ID}`);
 
     const state = new URL(url).searchParams.get('state') as string;
-    const decoded = decodeLegacyChatOauthState(state, API_KEY);
+    const decoded = decodeLegacyChatOauthState(state, [API_KEY]);
 
     expect(decoded.environmentId).to.equal(ENVIRONMENT_ID);
     expect(decoded.subscriberId).to.equal(SUBSCRIBER_ID);
@@ -124,7 +124,7 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
 
     expect(url).to.not.include(hmacHash);
     expect(decodedState).to.not.include(hmacHash);
-    expect(decodeLegacyChatOauthState(state, API_KEY)).to.include({ subscriberVerified: true });
+    expect(decodeLegacyChatOauthState(state, [API_KEY])).to.include({ subscriberVerified: true });
   });
 
   it('does not record a verified subscriber when the start checked no hash', async () => {
@@ -133,7 +133,7 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
     const url = await usecase.execute(buildCommand({ hmacHash: 'unchecked-hash' }));
     const state = new URL(url).searchParams.get('state') as string;
 
-    expect(decodeLegacyChatOauthState(state, API_KEY)).to.include({ subscriberVerified: false });
+    expect(decodeLegacyChatOauthState(state, [API_KEY])).to.include({ subscriberVerified: false });
     expect(Buffer.from(state, 'base64url').toString()).to.not.include('unchecked-hash');
   });
 
@@ -155,6 +155,13 @@ describe('ChatOauth (deprecated per-subscriber chat OAuth)', () => {
       organizationId: ORGANIZATION_ID,
       environmentId: ENVIRONMENT_ID,
     });
+  });
+
+  it('refuses to start when the revocation policy leaves no key to sign the state with', async () => {
+    stubHmacRequiredEnabled(false);
+    apiKeyRevocationService.getSigningKeys.resolves([]);
+
+    await expectRejection(usecase.execute(buildCommand()), BadRequestException);
   });
 
   it('does not require an HMAC hash for allowlisted legacy organizations without integration HMAC', async () => {

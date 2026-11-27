@@ -17,6 +17,7 @@ import {
   CHAT_INTEGRATION_NOT_FOUND_MESSAGE,
   isLegacySubscriberChatOauthHmacRequired,
   LEGACY_CHAT_OAUTH_MIGRATION_HINT,
+  LEGACY_CHAT_OAUTH_NO_SIGNING_KEY_MESSAGE,
   resolveLegacyChatOauthHmacRequired,
   resolveLegacyChatOauthOrganization,
 } from './legacy-chat-oauth.config';
@@ -59,16 +60,20 @@ export class ChatOauth {
 
     assertLegacyChatOauthIntegrationHmacEnabled(hmacRequiredEnabled, integrationHmacEnabled);
 
-    const apiKeys = await this.getEnvironmentApiKeys(command.environmentId);
+    const signingKeys = await this.apiKeyRevocationService.getSigningKeys({
+      organizationId: integration._organizationId,
+      environmentId: command.environmentId,
+      apiKeys: await this.getEnvironmentApiKeys(command.environmentId),
+    });
+    if (!signingKeys.length) {
+      throw new BadRequestException(LEGACY_CHAT_OAUTH_NO_SIGNING_KEY_MESSAGE);
+    }
+
     const isHmacRequired = resolveLegacyChatOauthHmacRequired(hmacRequiredEnabled, integrationHmacEnabled);
 
     assertLegacyChatOauthHmac({
       isHmacRequired,
-      apiKeys: await this.apiKeyRevocationService.getSigningKeys({
-        organizationId: integration._organizationId,
-        environmentId: command.environmentId,
-        apiKeys,
-      }),
+      apiKeys: signingKeys,
       subscriberId: command.subscriberId,
       externalHmacHash: command.hmacHash,
     });
@@ -94,7 +99,7 @@ export class ChatOauth {
         subscriberVerified: isHmacRequired,
         timestamp: Date.now(),
       },
-      apiKeys[0].key
+      signingKeys[0]
     );
 
     return this.getOAuthUrl(

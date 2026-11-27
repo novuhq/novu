@@ -44,14 +44,13 @@ export function peekLegacyChatOauthStateEnvironmentId(state: string): string {
   }
 }
 
-export function decodeLegacyChatOauthState(state: string, environmentApiKey: string): LegacyChatOauthStateData {
+export function decodeLegacyChatOauthState(state: string, signingKeys: string[]): LegacyChatOauthStateData {
   let data: LegacyChatOauthStateData;
 
   try {
     const { payload, signature } = splitOAuthState(state);
-    const expectedSignature = createHash(environmentApiKey, payload);
 
-    if (!areHexDigestsEqual(expectedSignature, signature)) {
+    if (!signingKeys.some((key) => areHexDigestsEqual(createHash(key, payload), signature))) {
       throw new Error('Invalid state signature');
     }
 

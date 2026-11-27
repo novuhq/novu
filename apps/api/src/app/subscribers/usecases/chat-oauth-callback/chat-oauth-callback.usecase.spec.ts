@@ -227,6 +227,17 @@ describe('ChatOauthCallback (deprecated per-subscriber chat OAuth)', () => {
     expect(createChannelEndpoint.execute.called).to.equal(false);
   });
 
+  it('rejects a verified state signed with a key the revocation policy stopped allowing during consent', async () => {
+    apiKeyRevocationService.getSigningKeys.resolves([]);
+
+    await expectRejection(
+      usecase.execute(buildCommand({ state: buildState({ subscriberVerified: true }) })),
+      BadRequestException
+    );
+
+    expect(createChannelEndpoint.execute.called).to.equal(false);
+  });
+
   it('rejects a hash signed with a key the revocation policy stops from signing', async () => {
     apiKeyRevocationService.getSigningKeys.resolves([]);
 

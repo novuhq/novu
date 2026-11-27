@@ -135,8 +135,7 @@ export class ChatOauthCallback {
     }
 
     const stateEnvironmentId = peekLegacyChatOauthStateEnvironmentId(command.state);
-    const apiKey = await this.getEnvironmentApiKey(stateEnvironmentId);
-    const state = decodeLegacyChatOauthState(command.state, apiKey);
+    const state = decodeLegacyChatOauthState(command.state, await this.getSigningKeys(stateEnvironmentId));
 
     if (state.subscriberId !== command.subscriberId || state.providerId !== command.providerId) {
       throw new BadRequestException('OAuth state does not match the requested subscriber');
@@ -189,14 +188,14 @@ export class ChatOauthCallback {
     return environment;
   }
 
-  private async getEnvironmentApiKey(environmentId: string): Promise<string> {
-    const apiKeys = await this.environmentRepository.getApiKeys(environmentId);
+  private async getSigningKeys(environmentId: string): Promise<string[]> {
+    const environment = await this.getEnvironment(environmentId);
 
-    if (!apiKeys.length) {
-      throw new NotFoundException(CHAT_INTEGRATION_NOT_FOUND_MESSAGE);
-    }
-
-    return apiKeys[0].key;
+    return this.apiKeyRevocationService.getSigningKeys({
+      organizationId: environment._organizationId,
+      environmentId,
+      apiKeys: environment.apiKeys,
+    });
   }
 
   private async getWebhook(

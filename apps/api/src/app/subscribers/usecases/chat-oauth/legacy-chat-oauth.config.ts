@@ -10,6 +10,9 @@ export const LEGACY_CHAT_OAUTH_MIGRATION_HINT =
   '(POST /v1/inbox/channel-connections/oauth) with a subscriber token session; from a backend, use ' +
   'POST /v1/integrations/channel-connections/oauth.';
 
+export const LEGACY_CHAT_OAUTH_NO_SIGNING_KEY_MESSAGE =
+  'The API key revocation policy leaves no key to sign this chat OAuth request. Rotate the API key, then try again.';
+
 export const LEGACY_CHAT_OAUTH_HMAC_REQUIRED_MESSAGE =
   'HMAC must be enabled on the Slack integration to use the per-subscriber chat OAuth endpoints. ' +
   LEGACY_CHAT_OAUTH_MIGRATION_HINT;
