@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/compon
 import { APP_ID, IS_SELF_HOSTED, SOCKET_OPTIONS } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useDashboardInboxHashes } from '@/hooks/use-dashboard-inbox-hashes';
+import { useDashboardInboxIdentity } from '@/hooks/use-dashboard-inbox-identity';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useWorkflowEditorPage } from '@/hooks/use-workflow-editor-page';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
@@ -194,24 +194,23 @@ function HostedInboxButton({ align, side }: InboxButtonProps) {
 
 /** The workflow editor's test Inbox, opened in the customer's own environment. */
 function TestInboxButton({ align, side }: InboxButtonProps) {
-  const subscriber = useInboxSubscriber();
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
   const { currentOrganization } = useAuth();
-  const { subscriberHash, isSettled: isHashSettled } = useDashboardInboxHashes();
+  const inboxIdentity = useDashboardInboxIdentity(currentEnvironment);
 
-  if (!subscriber || !currentEnvironment || !currentOrganization || !isHashSettled) {
+  if (!currentEnvironment || !currentOrganization || inboxIdentity.status !== 'ready') {
     return null;
   }
 
   return (
     <Inbox
-      subscriber={subscriber}
+      key={inboxIdentity.remountKey}
+      {...inboxIdentity.identity}
       applicationIdentifier={currentEnvironment.identifier}
       backendUrl={apiHostnameManager.getHostname()}
       socketUrl={apiHostnameManager.getWebSocketHostname()}
       socketOptions={SOCKET_OPTIONS}
-      subscriberHash={subscriberHash}
       localization={TEST_LOCALIZATION}
       routerPush={(path: string) => navigate(path)}
     >

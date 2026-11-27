@@ -29,7 +29,7 @@ type NovuProviderChildren = ComponentProps<typeof NovuProvider>['children'];
 export function ConnectSubscriberProvider({ children }: ConnectSubscriberProviderProps) {
   const { currentUser, isUserLoaded } = useAuth();
   const { currentEnvironment } = useEnvironment();
-  const { subscriberHash, isSettled: isHashSettled } = useDashboardInboxHashes();
+  const { subscriberHash, isSettled: isHashSettled } = useDashboardInboxHashes(currentEnvironment);
 
   const isReady = isUserLoaded && !!currentUser?._id && !!currentEnvironment?.identifier;
   const subscriberId = currentUser?._id || '';

@@ -29,7 +29,7 @@ function WebChatPanelInner({ agent, showAddToAppCallouts = false, addToAppHref }
   const { currentUser, isUserLoaded } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const testerSubscriberId = currentUser?._id ? buildDashboardWebChatSubscriberId(currentUser._id) : '';
-  const { webChatSubscriberHash, isSettled: isHashSettled } = useDashboardInboxHashes();
+  const { webChatSubscriberHash, isSettled: isHashSettled } = useDashboardInboxHashes(currentEnvironment);
   const { agentHash, isSettled: isAgentHashSettled } = useAgentWebChatHash(agent.identifier);
   const isReady =
     isUserLoaded &&
