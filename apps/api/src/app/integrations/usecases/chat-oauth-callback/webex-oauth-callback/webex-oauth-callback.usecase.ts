@@ -370,6 +370,7 @@ export class WebexOauthCallback {
       return await this.updateChannelConnection.execute(
         UpdateChannelConnectionCommand.create({
           identifier: existingConnection.identifier,
+          channelConnectionId: existingConnection._id,
           organizationId: stateData.organizationId,
           environmentId: stateData.environmentId,
           auth,

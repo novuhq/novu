@@ -198,6 +198,24 @@ describe('Shared channel connections need the channels:shared scope - /inbox/cha
           expect(stored?.auth).to.deep.equal(shared.auth);
         });
 
+        it('should let an admin create a shared connection', async () => {
+          const identifier = `shared-new-${Date.now()}`;
+
+          const { callback } = await completeConnect(
+            await admin(),
+            { connectionIdentifier: identifier, connectionMode: 'shared' },
+            { id: 'T-NEW', name: 'New' },
+            provider
+          );
+
+          expect(callback.status, callback.text).to.equal(200);
+          const stored = await findConnection(identifier);
+          expect(stored).to.exist;
+          expect(stored?.subscriberId, 'a shared connection has no subscriber').to.not.be.ok;
+          expect(stored?.contextKeys).to.deep.equal(CONTEXT_KEYS);
+          expect(stored?.workspace).to.deep.include({ id: 'T-NEW' });
+        });
+
         it('should let an admin replace a shared connection', async () => {
           const shared = await seedSharedConnection(provider.providerId);
 
