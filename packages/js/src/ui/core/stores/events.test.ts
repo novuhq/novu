@@ -74,18 +74,21 @@ const fakeFetch = vi.fn(async (url: string, init: RequestInit) => {
   const json = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as unknown as Response;
   if (url.includes('/inbox/session')) {
     const { subscriberToken } = JSON.parse(init.body as string) as { subscriberToken: string };
-    const subscriberId = subscriberToken.replace('login:', '');
+    const { subscriberId, contextKeys } = JSON.parse(subscriberToken.replace('login:', '')) as {
+      subscriberId: string;
+      contextKeys: string[];
+    };
 
-    return json({ data: { token: createJwt({ subscriberId, contextKeys: [] }), contextKeys: [] } });
+    return json({ data: { token: createJwt({ subscriberId, contextKeys }), contextKeys } });
   }
 
   return json({ data: [], hasMore: false, filter: {} });
 });
 
-const signInAs = (subscriberId: string) =>
+const signInAs = (subscriberId: string, contextKeys: string[] = []) =>
   new Novu({
     applicationIdentifier: 'app',
-    getToken: async () => `login:${subscriberId}`,
+    getToken: async () => `login:${JSON.stringify({ subscriberId, contextKeys })}`,
     useCache: false,
     socketOptions: { minReconnectionDelay: 10, maxReconnectionDelay: 20 },
   });
@@ -94,6 +97,10 @@ const unreadCountFor = (subscriberId: string, total: number) => {
   const socket = FakeWebSocket.instances.find(
     (ws) => subscriberOf(new URL(ws.url).searchParams.get('token') ?? '') === subscriberId
   );
+  dispatchUnreadCount(socket, total);
+};
+
+const dispatchUnreadCount = (socket: FakeWebSocket | undefined, total: number) => {
   socket?.dispatchEvent(
     new MessageEvent('message', {
       data: JSON.stringify({ event: 'unread_count_changed', data: { counts: { total, severity: {} } } }),
@@ -147,5 +154,22 @@ describe('websocket events across tabs signed in with a token source', () => {
 
     alice.dispose();
     bob.dispose();
+  });
+
+  it('keeps two subscribers apart whose subscriberId and context read alike when joined', async () => {
+    const first = listen(signInAs('alice:c=x', ['y']));
+    await wait();
+    const second = listen(signInAs('alice', ['x:c=y']));
+    await wait();
+
+    dispatchUnreadCount(FakeWebSocket.instances[0], 3);
+    dispatchUnreadCount(FakeWebSocket.instances[1], 7);
+    await wait();
+
+    expect(first.received.map((count) => count.total)).toEqual([3]);
+    expect(second.received.map((count) => count.total)).toEqual([7]);
+
+    first.dispose();
+    second.dispose();
   });
 });
