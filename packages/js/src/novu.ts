@@ -208,7 +208,10 @@ export class Novu {
     this.#webChat?.clearCache();
   }
 
-  /** Drops the previous subscriber's data and reconnects the socket with the new session token. */
+  /**
+   * Drops the previous subscriber's data and closes the socket before the new session reaches listeners. The socket
+   * reconnects once that session has handed it the new token.
+   */
   async #resetForNewSubscriber(): Promise<void> {
     this.clearCache();
 
@@ -227,8 +230,6 @@ export class Novu {
       subscriber: options.subscriber,
       subscriberHash: options.subscriberHash,
     }));
-
-    await this.#resetForNewSubscriber();
   }
 
   /**
@@ -240,7 +241,5 @@ export class Novu {
       context: options.context,
       contextHash: options.contextHash,
     }));
-
-    await this.#resetForNewSubscriber();
   }
 }

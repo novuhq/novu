@@ -34,6 +34,8 @@ export class Session {
   #claims: TokenSessionClaims | undefined;
   /** Every token issued for the current subscriber and context; cleared when either changes. */
   #tokens = new Set<string>();
+  /** Who the client was last signed in as; kept across `changeIdentity`, so a switch is noticed when it resolves. */
+  #signedInAs: { subscriberId: string | undefined; contextKey: string } | undefined;
   #error: unknown;
   #onSubscriberChange: () => void;
 
@@ -45,7 +47,10 @@ export class Session {
     }: {
       identity: SessionIdentity;
       defaultSchedule?: DefaultSchedule;
-      /** Called after a renewed session signed in another subscriber or context than the one before it. */
+      /**
+       * Called when a session signed in another subscriber or context than the one before it, whether through
+       * `changeIdentity` or a renewal, before `session.initialize.resolved` reaches any listener.
+       */
       onSubscriberChange: () => void;
     },
     inboxServiceInstance: InboxService,
@@ -270,16 +275,13 @@ export class Session {
 
       let subscriberChanged = false;
       if (identity === this.#identity) {
-        const previous = this.#session && { subscriberId: this.subscriberId, contextKey: this.contextKey };
         this.#session = response;
         this.#claims = identity.kind === 'token' ? this.#readClaims(response.token) : undefined;
         /*
          * A token source can sign in someone else on renewal (a logout and login in the same tab). The old
          * tokens then belong to the previous subscriber: a request sent with one must not be resent as the new one.
          */
-        subscriberChanged =
-          previous !== undefined &&
-          (previous.subscriberId !== this.subscriberId || previous.contextKey !== this.contextKey);
+        subscriberChanged = this.#recordSignedIn();
         if (subscriberChanged) {
           this.#tokens.clear();
         }
@@ -293,20 +295,37 @@ export class Session {
         this.handleApplicationIdentifier('delete');
       }
 
-      this.#emitter.emit('session.initialize.resolved', { args, data: response });
+      // Listeners of the new subscriber must not find the previous one's data.
       if (subscriberChanged) {
         this.#onSubscriberChange();
       }
+      this.#emitter.emit('session.initialize.resolved', { args, data: response });
 
       return identity === this.#identity && !subscriberChanged;
     } catch (error) {
       if (identity === this.#identity) {
         this.#error = error;
+        // A subscriber identity is known without a session, so the previous one's data goes even when this failed.
+        if (identity.kind === 'subscriber' && this.#recordSignedIn()) {
+          this.#onSubscriberChange();
+        }
       }
       this.#emitter.emit('session.initialize.resolved', { args, error });
 
       return false;
     }
+  }
+
+  /** Records who the client is now signed in as; true when that differs from who it was signed in as before. */
+  #recordSignedIn(): boolean {
+    const previous = this.#signedInAs;
+    const current = { subscriberId: this.subscriberId, contextKey: this.contextKey };
+    this.#signedInAs = current;
+
+    return (
+      previous !== undefined &&
+      (previous.subscriberId !== current.subscriberId || previous.contextKey !== current.contextKey)
+    );
   }
 
   #readClaims(token: string): TokenSessionClaims {
