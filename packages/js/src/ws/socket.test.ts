@@ -45,7 +45,7 @@ const HOUR_MS = 60 * 60 * 1000;
 const toBase64Url = (value: object) =>
   btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const createJwt = (name: string, expiresAtMs: number) =>
-  `${toBase64Url({ alg: 'HS256' })}.${toBase64Url({ sub: name, exp: Math.floor(expiresAtMs / 1000) })}.sig`;
+  `${toBase64Url({ alg: 'HS256' })}.${toBase64Url({ sub: name, subscriberId: 'user_1', exp: Math.floor(expiresAtMs / 1000) })}.sig`;
 
 let now = Date.now();
 const oldToken = createJwt('old', now + HOUR_MS);
@@ -187,6 +187,10 @@ describe('Socket (socket.io)', () => {
     });
 
     expect(received).toHaveBeenCalledTimes(1);
-    expect(received.mock.calls[0][0].result).toMatchObject({ id: 'message_1', body: 'Hello' });
+    expect(received.mock.calls[0][0].result).toMatchObject({
+      id: 'message_1',
+      body: 'Hello',
+      to: { subscriberId: 'user_1' },
+    });
   });
 });
