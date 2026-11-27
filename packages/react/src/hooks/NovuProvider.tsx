@@ -21,6 +21,13 @@ export type NovuProviderProps = NovuOptions & {
 
 const NovuContext = createContext<{ novu: Novu | undefined; realtime: boolean }>({ novu: undefined, realtime: true });
 
+/**
+ * Opens one Novu client for its children. The hooks below it show the data of whoever is signed in, and refetch when
+ * another subscriber or context signs in.
+ *
+ * On sign-out, unmount `NovuProvider` or change its `key`. With a token source the client learns of a new user only at
+ * the next renewal, and until then it keeps the previous user's session.
+ */
 export const NovuProvider = (props: NovuProviderProps) => {
   const { subscriberId, realtime = true, ...propsWithoutSubscriberId } = props;
   const subscriberObj = useMemo(

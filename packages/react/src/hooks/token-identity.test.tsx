@@ -1,9 +1,11 @@
 import { act, render } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { NovuProvider } from './NovuProvider';
+import { NovuProvider, useNovu } from './NovuProvider';
 import { useCounts } from './useCounts';
 import { useCreateSubscription } from './useCreateSubscription';
+import { useNotifications } from './useNotifications';
+import { usePreferences } from './usePreferences';
 import { useSubscription } from './useSubscription';
 
 class FakeWebSocket extends EventTarget {
@@ -72,6 +74,7 @@ const createJwt = (claims: Record<string, unknown>) =>
 const subscriberOf = (token: string) => JSON.parse(atob(token.split('.')[1])).subscriberId as string;
 
 const requests: Array<{ url: string; subscriberId?: string }> = [];
+const signedOut = new Set<string>();
 
 const fakeFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = String(input);
@@ -87,12 +90,22 @@ const fakeFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => 
     return json({ data: { token: createJwt({ subscriberId, contextKeys }), contextKeys } });
   }
   const bearer = ((init?.headers as Record<string, string> | undefined)?.Authorization ?? '').replace('Bearer ', '');
-  requests.push({ url, subscriberId: bearer ? subscriberOf(bearer) : undefined });
+  const caller = bearer ? subscriberOf(bearer) : undefined;
+  requests.push({ url, subscriberId: caller });
+  if (caller && signedOut.has(caller)) {
+    return { ok: false, status: 401, json: async () => ({ statusCode: 401, message: 'Unauthorized' }) };
+  }
   if (url.includes('/notifications/count')) {
-    return json({ data: [{ count: 0, filter: {} }] });
+    return json({ data: [{ count: caller === 'bob' ? 2 : 0, filter: { read: false } }] });
   }
   if (url.includes('/subscriptions/')) {
-    return json({ data: null });
+    return json({ data: caller === 'bob' ? { id: 'sub_bob', identifier: 'tk_news:si_bob' } : null });
+  }
+  if (url.includes('/inbox/preferences')) {
+    return json({ data: [{ level: 'global', enabled: true, channels: { email: caller === 'bob' } }] });
+  }
+  if (url.includes('/inbox/notifications')) {
+    return json({ data: [{ id: `${caller}_notification` }], hasMore: false, filter: {} });
   }
   if (url.endsWith('/topics/news/subscriptions') && init?.method === 'POST') {
     // With context preferences off, the server stores the identifier without the context.
@@ -113,6 +126,7 @@ const SignedInAs = ({ user, children }: { user: string; children: React.ReactNod
 beforeEach(() => {
   FakeWebSocket.instances = [];
   requests.length = 0;
+  signedOut.clear();
   vi.stubGlobal('WebSocket', FakeWebSocket);
   vi.stubGlobal('fetch', fakeFetch);
   Object.defineProperty(navigator, 'locks', { value: createLockManager(), configurable: true });
@@ -235,5 +249,55 @@ describe('hooks under a token source', () => {
     expect(state?.isLoading).toBe(false);
     expect(state?.error).toBeDefined();
     expect(onError).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the data of the user a renewal signed in, not of the one before', async () => {
+    let user = 'alice';
+    let state: {
+      novu?: ReturnType<typeof useNovu>;
+      notifications?: string[];
+      unread?: number;
+      emailEnabled?: boolean;
+      subscription?: unknown;
+    } = {};
+    const Probe = () => {
+      const novu = useNovu();
+      const { notifications } = useNotifications();
+      const { counts } = useCounts({ filters: [{ read: false }] });
+      const { preferences } = usePreferences();
+      const { subscription } = useSubscription({ topicKey: 'news' });
+      state = {
+        novu,
+        notifications: notifications?.map((notification) => notification.id),
+        unread: counts?.[0]?.count,
+        emailEnabled: preferences?.[0]?.channels.email,
+        subscription,
+      };
+
+      return null;
+    };
+    render(
+      <NovuProvider applicationIdentifier="app" getToken={async () => `login:${user}`}>
+        <Probe />
+      </NovuProvider>
+    );
+    await flush();
+    expect(state).toMatchObject({ notifications: ['alice_notification'], unread: 0, emailEnabled: false });
+    expect(state.subscription).toBeNull();
+
+    user = 'bob';
+    signedOut.add('alice');
+    await act(async () => {
+      await state.novu?.notifications.count({ filters: [{ read: false }] });
+    });
+    await flush();
+
+    expect(state.novu?.subscriberId).toBe('bob');
+    expect(state).toMatchObject({
+      notifications: ['bob_notification'],
+      unread: 2,
+      emailEnabled: true,
+      subscription: { id: 'sub_bob' },
+    });
   });
 });

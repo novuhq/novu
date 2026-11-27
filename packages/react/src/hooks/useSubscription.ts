@@ -1,6 +1,7 @@
 import { NovuError, TopicSubscription } from '@novu/js';
 import { buildSubscriptionIdentifier } from '@novu/js/internal';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useIdentitySwitch } from './internal/useIdentitySwitch';
 import { useNovu } from './NovuProvider';
 
 export type UseSubscriptionProps = {
@@ -171,6 +172,11 @@ export const useSubscription = (props: UseSubscriptionProps): UseSubscriptionRes
   }, [novu, fetchSubscription, currentIdentifier]);
 
   const refetch = useCallback(() => fetchSubscription({ refetch: true }), [fetchSubscription]);
+
+  useIdentitySwitch(novu, () => {
+    setSubscription(undefined);
+    void refetch();
+  });
 
   return {
     subscription,

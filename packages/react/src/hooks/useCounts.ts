@@ -8,6 +8,7 @@ import {
 } from '@novu/js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
+import { useIdentitySwitch } from './internal/useIdentitySwitch';
 import { useWebSocketEvent } from './internal/useWebsocketEvent';
 import { useNovu, useRealtime } from './NovuProvider';
 
@@ -112,14 +113,16 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
       setIsFetching(false);
       setIsLoading(false);
 
-      if (countsRes.error) {
-        setError(countsRes.error);
-        onErrorRef.current?.(countsRes.error);
+      const { data, error } = countsRes;
+      if (error || !data) {
+        if (error) {
+          setError(error);
+          onErrorRef.current?.(error);
+        }
 
         return;
       }
 
-      const data = countsRes.data!;
       onSuccessRef.current?.(data.counts);
 
       setCounts((oldCounts) => {
@@ -181,6 +184,11 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
   const refetch = useCallback(async () => {
     await sync();
   }, [sync]);
+
+  useIdentitySwitch(novu, () => {
+    setCounts(undefined);
+    void sync();
+  });
 
   return { counts, error, refetch, isLoading, isFetching };
 };
