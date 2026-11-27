@@ -20,7 +20,7 @@ export type {
 
 /**
  * HMAC-SHA256 of `agentId` with the environment secret.
- * Needed only when Novu signs in with `subscriberHash` and Security HMAC is on for the Web Chat integration.
+ * Required for non-token sessions when Security HMAC is on for the Web Chat integration.
  * Not needed when Novu signs in with `tokenEndpoint` or `getToken`.
  */
 export type AgentHashFields = {
