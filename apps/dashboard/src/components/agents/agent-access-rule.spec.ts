@@ -1,6 +1,11 @@
 import type { RuleGroupType } from 'react-querybuilder';
 import { describe, expect, it } from 'vitest';
-import { ACCESS_RULE_SUBSCRIBER_VARIABLES, parseAccessRule, toAccessRule } from '@/components/agents/agent-access-rule';
+import {
+  ACCESS_RULE_SUBSCRIBER_VARIABLES,
+  accessRuleFormSchema,
+  parseAccessRule,
+  toAccessRule,
+} from '@/components/agents/agent-access-rule';
 import type { EnhancedConditionVariable } from '@/components/conditions-editor/types';
 
 const variables: EnhancedConditionVariable[] = [
@@ -112,5 +117,25 @@ describe('opening a rule written through the API', () => {
     const edited = { ...opened, rules: [{ ...opened.rules[0], ...change }] };
 
     expect(toAccessRule(edited, subscriberVariablesOnly)).toEqual({ and: [saved] });
+  });
+});
+
+describe('validating the access rule form', () => {
+  function valueIssues(value: string) {
+    const result = accessRuleFormSchema.safeParse({
+      query: query({ field: 'subscriber.email', operator: '=', value }),
+    });
+
+    return result.success ? [] : result.error.issues.filter((issue) => issue.path.at(-1) === 'value');
+  }
+
+  it('rejects a dynamic value, which the agent would compare as literal text', () => {
+    expect(valueIssues('{{payload.email}}')).toEqual([
+      expect.objectContaining({ message: 'Dynamic values are not supported here' }),
+    ]);
+  });
+
+  it('accepts a literal value', () => {
+    expect(valueIssues('ada@acme.com')).toEqual([]);
   });
 });

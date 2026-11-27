@@ -85,6 +85,7 @@ function InternalConditionsEditor({
   enhancedVariables,
   disabled,
   valueInput,
+  allowDynamicValues,
 }: {
   fields: EnhancedField[];
   variables: LiquidVariable[];
@@ -95,6 +96,7 @@ function InternalConditionsEditor({
   enhancedVariables?: EnhancedConditionVariable[];
   disabled?: boolean;
   valueInput?: ConditionsValueInput;
+  allowDynamicValues: boolean;
 }) {
   const fieldDataMap = useMemo(() => {
     if (!enhancedVariables) return new Map();
@@ -161,35 +163,17 @@ function InternalConditionsEditor({
 
   const getHelpText = useCallback(
     (fieldName: string, operator: string) => {
-      if (!enhancedVariables) {
+      const fieldData = fieldDataMap.get(fieldName) ?? {
         // Fallback to default help text for variables not found in schema
-        return getHelpTextForField(operator, {
-          fieldData: {
-            name: fieldName,
-            label: fieldName,
-            value: fieldName,
-            dataType: 'string',
-          },
-        });
-      }
+        name: fieldName,
+        label: fieldName,
+        value: fieldName,
+        dataType: 'string',
+      };
 
-      const fieldData = fieldDataMap.get(fieldName);
-
-      if (!fieldData) {
-        // Fallback to default help text for variables not found in schema
-        return getHelpTextForField(operator, {
-          fieldData: {
-            name: fieldName,
-            label: fieldName,
-            value: fieldName,
-            dataType: 'string',
-          },
-        });
-      }
-
-      return getHelpTextForField(operator, { fieldData });
+      return getHelpTextForField(operator, { fieldData, allowDynamicValues });
     },
-    [fieldDataMap, enhancedVariables]
+    [fieldDataMap, allowDynamicValues]
   );
 
   const getArrayItemPaths = useCallback(
@@ -260,6 +244,7 @@ export function ConditionsEditor({
   enhancedVariables,
   disabled,
   valueInput,
+  allowDynamicValues = true,
 }: {
   query: RuleGroupType;
   onQueryChange: (query: RuleGroupType) => void;
@@ -270,6 +255,8 @@ export function ConditionsEditor({
   enhancedVariables?: EnhancedConditionVariable[];
   disabled?: boolean;
   valueInput?: ConditionsValueInput;
+  /** Off where values are compared as literal text, so help text shows no `{{payload.x}}` examples. */
+  allowDynamicValues?: boolean;
 }) {
   const configuredMaxConditionsPerGroup = useNumericFeatureFlag(
     FeatureFlagsKeysEnum.MAX_STEP_CONDITIONS_PER_GROUP_NUMBER,
@@ -308,6 +295,7 @@ export function ConditionsEditor({
         enhancedVariables={enhancedVariables}
         disabled={disabled}
         valueInput={valueInput}
+        allowDynamicValues={allowDynamicValues}
       />
     </ConditionsEditorProvider>
   );

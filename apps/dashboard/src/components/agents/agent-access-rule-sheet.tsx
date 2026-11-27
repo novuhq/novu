@@ -7,15 +7,13 @@ import type { RuleGroupType } from 'react-querybuilder';
 import { type AgentResponse, getAgentDetailQueryKey, updateAgent } from '@/api/agents';
 import {
   ACCESS_RULE_SUBSCRIBER_VARIABLES,
+  accessRuleFormSchema,
   getAccessRuleFieldIssue,
-  getAccessRuleOperatorIssue,
-  hasConditions,
   parseAccessRule,
   toAccessRule,
 } from '@/components/agents/agent-access-rule';
 import { SUBSCRIBER_ACCESS_MODES } from '@/components/agents/subscriber-access-copy';
 import { ConditionsEditor } from '@/components/conditions-editor/conditions-editor';
-import { getConditionsSchema } from '@/components/conditions-editor/conditions-schema';
 import {
   createEmptyConditionsQuery,
   mergeConditionVariables,
@@ -28,14 +26,6 @@ import { Panel, PanelContent, PanelHeader } from '@/components/primitives/panel'
 import { NonModalSheet, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useContextTypeVariables } from '@/hooks/use-context-type-variables';
-
-const conditionsSchema = getConditionsSchema({
-  getFieldIssue: getAccessRuleFieldIssue,
-  getOperatorIssue: getAccessRuleOperatorIssue,
-}).refine(({ query }) => hasConditions(query as RuleGroupType), {
-  message: 'Add at least one condition.',
-  path: ['query'],
-});
 
 const isAllowedVariable = (variable: { name: string }) => getAccessRuleFieldIssue(variable.name) === null;
 
@@ -62,7 +52,7 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
 
   const form = useForm({
     mode: 'onSubmit',
-    resolver: standardSchemaResolver(conditionsSchema),
+    resolver: standardSchemaResolver(accessRuleFormSchema),
     defaultValues: { query: { ...(savedQuery ?? createEmptyConditionsQuery()) } },
   });
   const queryError = form.formState.errors.query?.message;
@@ -119,6 +109,7 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
                       isAllowedVariable={isAllowedVariable}
                       saveForm={() => undefined}
                       disabled={!isEditable}
+                      allowDynamicValues={false}
                     />
                   )}
                 />

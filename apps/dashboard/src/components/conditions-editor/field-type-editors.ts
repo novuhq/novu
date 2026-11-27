@@ -269,9 +269,26 @@ function getArrayHelpText(operator: string): HelpTextInfo {
   };
 }
 
-export function getHelpTextForField(operator: string, { fieldData }: { fieldData: EnhancedField }): HelpTextInfo {
-  const { dataType } = fieldData;
+const DYNAMIC_VALUES_SENTENCE = ' You can also use dynamic values from the payload.';
 
+export function getHelpTextForField(
+  operator: string,
+  { fieldData, allowDynamicValues = true }: { fieldData: EnhancedField; allowDynamicValues?: boolean }
+): HelpTextInfo {
+  const helpText = getHelpTextWithDynamicValues(operator, fieldData.dataType);
+
+  if (allowDynamicValues) {
+    return helpText;
+  }
+
+  return {
+    ...helpText,
+    description: helpText.description.replace(DYNAMIC_VALUES_SENTENCE, ''),
+    examples: helpText.examples.filter((example) => !example.includes('{{')),
+  };
+}
+
+function getHelpTextWithDynamicValues(operator: string, dataType: EnhancedField['dataType']): HelpTextInfo {
   if (isArrayItemOperator(operator)) {
     return ARRAY_ITEM_HELP_TEXT[operator];
   }

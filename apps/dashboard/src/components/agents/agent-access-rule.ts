@@ -1,5 +1,6 @@
 import { ACCESS_RULE_SUBSCRIBER_FIELDS, INTEGRATION_RULE_OPERATORS, isAccessRuleField } from '@novu/shared';
 import { formatQuery, isRuleGroup, type RuleGroupType, type RuleGroupTypeAny, type RuleType } from 'react-querybuilder';
+import { getConditionsSchema } from '@/components/conditions-editor/conditions-schema';
 import { createEmptyConditionsQuery } from '@/components/conditions-editor/conditions-variables';
 import { parseLosslessRule } from '@/components/conditions-editor/lossless-rule';
 import type { ConditionFieldDataType, EnhancedConditionVariable } from '@/components/conditions-editor/types';
@@ -14,6 +15,8 @@ export const ACCESS_RULE_SUBSCRIBER_VARIABLES: EnhancedConditionVariable[] = ACC
 const FIELD_ISSUE =
   'Access rules can only use subscriber.<field>, subscriber.data.<key>, context.<type>.id or context.<type>.data.<key>';
 const OPERATOR_ISSUE = 'Access rules do not support this operator';
+const DYNAMIC_VALUE_ISSUE = 'Dynamic values are not supported here';
+const DYNAMIC_VALUE = /\{\{.*\}\}/;
 
 export function getAccessRuleFieldIssue(field: string): string | null {
   return isAccessRuleField(field) ? null : FIELD_ISSUE;
@@ -21,7 +24,11 @@ export function getAccessRuleFieldIssue(field: string): string | null {
 
 const ALLOWED_OPERATORS = new Set<string>(INTEGRATION_RULE_OPERATORS);
 
-export function getAccessRuleOperatorIssue(rule: RuleType): string | null {
+export function getAccessRuleConditionIssue(rule: RuleType): string | null {
+  if (typeof rule.value === 'string' && DYNAMIC_VALUE.test(rule.value)) {
+    return DYNAMIC_VALUE_ISSUE;
+  }
+
   const logic = customRuleProcessor(rule, { parseNumbers: false });
 
   return emitsOnlyAllowedOperators(logic) ? null : OPERATOR_ISSUE;
@@ -35,6 +42,14 @@ function emitsOnlyAllowedOperators(node: unknown): boolean {
     ([operator, args]) => ALLOWED_OPERATORS.has(operator) && emitsOnlyAllowedOperators(args)
   );
 }
+
+export const accessRuleFormSchema = getConditionsSchema({
+  getFieldIssue: getAccessRuleFieldIssue,
+  getOperatorIssue: getAccessRuleConditionIssue,
+}).refine(({ query }) => hasConditions(query as RuleGroupType), {
+  message: 'Add at least one condition.',
+  path: ['query'],
+});
 
 export function hasConditions(group: RuleGroupTypeAny): boolean {
   return group.rules.some((rule) => typeof rule !== 'string' && (!isRuleGroup(rule) || hasConditions(rule)));

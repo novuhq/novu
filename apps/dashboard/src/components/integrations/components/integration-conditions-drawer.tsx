@@ -161,6 +161,7 @@ export function IntegrationConditionsDrawer({
                         valueInput={IntegrationConditionValueInput}
                         saveForm={() => undefined}
                         disabled={isReadOnly}
+                        allowDynamicValues={false}
                       />
                     )}
                   />
