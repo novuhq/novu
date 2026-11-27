@@ -32,15 +32,19 @@ export class ContextRepository extends BaseRepository<ContextDBModel, ContextEnt
   }
 
   /**
-   * For a signed payload, the signer is the source of truth. An entry with `data` replaces the stored
-   * record's whole `data` (created when missing), like `PATCH /v2/contexts` does: fields the signer left out
-   * are dropped, so no field an unsigned session saved first can survive next to signed ones. An entry with
-   * only an id signs no data, so the stored record is found or created as in `findOrCreateContextsFromPayload`.
+   * For a payload signed at `signedAt`, the signer is the source of truth. An entry with `data` replaces the
+   * stored record's whole `data`, like `PATCH /v2/contexts` does: fields the signer left out are dropped, so no
+   * field an unsigned session saved can survive next to signed ones. The data is written when the record is
+   * missing, unchanged since it was created (an unsigned session can only create records), or last changed
+   * before `signedAt`. A record changed after `signedAt` keeps its data, so an older token cannot undo a newer
+   * update such as a plan downgrade. An entry with only an id signs no data, so the stored record is found or
+   * created as in `findOrCreateContextsFromPayload`.
    */
   async upsertContextsFromPayload(
     environmentId: string,
     organizationId: string,
-    contextPayload: ContextPayload
+    contextPayload: ContextPayload,
+    signedAt: Date
   ): Promise<ContextEntity[]> {
     const contexts = await Promise.all(
       Object.entries(contextPayload).flatMap(([type, value]) => {
@@ -51,31 +55,34 @@ export class ContextRepository extends BaseRepository<ContextDBModel, ContextEnt
           return [this.findOrCreateContext(environmentId, organizationId, type, id)];
         }
 
-        return [this.upsertContextData(environmentId, organizationId, type, value.id, value.data)];
+        return [this.writeSignedContextData(environmentId, organizationId, type, value.id, value.data, signedAt)];
       })
     );
 
     return contexts.sort((a, b) => a.key.localeCompare(b.key));
   }
 
-  /** The query matches the unique index exactly, so MongoDB retries a concurrent duplicate-key upsert itself. */
-  private async upsertContextData(
+  private async writeSignedContextData(
     environmentId: string,
     organizationId: string,
     type: ContextType,
     id: ContextId,
-    data: ContextData
+    data: ContextData,
+    signedAt: Date
   ): Promise<ContextEntity> {
-    const context = await this.findOneAndUpdate(
-      { _environmentId: environmentId, _organizationId: organizationId, type, id },
-      { $set: { data }, $setOnInsert: { key: createContextKey(type, id) } },
-      { upsert: true, new: true }
+    const updated = await this.findOneAndUpdate(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        type,
+        id,
+        $or: [{ updatedAt: { $lt: signedAt } }, { $expr: { $eq: ['$updatedAt', '$createdAt'] } }],
+      },
+      { $set: { data } },
+      { new: true }
     );
-    if (!context) {
-      throw new Error(`Upserting context ${type}:${id} returned no record`);
-    }
 
-    return context;
+    return updated ?? this.findOrCreateContext(environmentId, organizationId, type, id, data);
   }
 
   async findOrCreateContext(

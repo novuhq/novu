@@ -484,6 +484,40 @@ describe('Agent access rule #novu-v2', () => {
         await waitForBridgeCalls(0);
       });
 
+      it('keeps a downgrade made after the token was issued when the token is exchanged again', async () => {
+        await linkWebChat();
+        await setRule(PAID_PLAN_RULE);
+        const tenantId = `token-replay-${Date.now()}`;
+        const minted = await ctx.session.testAgent
+          .post(`/v2/subscribers/${ctx.session.subscriberId}/tokens`)
+          .set('Authorization', `ApiKey ${ctx.session.apiKey}`)
+          .send({ context: { tenant: { id: tenantId, data: { plan: 'pro' } } } });
+        expect(minted.status, JSON.stringify(minted.body)).to.equal(201);
+        const exchange = async () => {
+          const res = await ctx.session.testAgent.post('/v1/inbox/session').send({
+            applicationIdentifier: ctx.session.environment.identifier,
+            subscriberToken: minted.body.data.token,
+          });
+          expect(res.status, JSON.stringify(res.body)).to.equal(201);
+
+          return res.body.data.token as string;
+        };
+        await exchange();
+
+        const downgrade = await ctx.session.testAgent
+          .patch(`/v2/contexts/tenant/${tenantId}`)
+          .send({ data: { plan: 'free' } });
+        expect(downgrade.status, JSON.stringify(downgrade.body)).to.equal(200);
+
+        const replayed = await exchange();
+
+        const stored = await ctx.session.testAgent.get(`/v2/contexts/tenant/${tenantId}`);
+        expect(stored.body.data.data).to.deep.equal({ plan: 'free' });
+        const identifier = await send(replayed, 'Hi, I am on Pro again');
+        await waitForRefusal(identifier);
+        await waitForBridgeCalls(0);
+      });
+
       it("refuses a session from another environment on the agent's webhook", async () => {
         const integrationIdentifier = await linkWebChat();
         const webhook = `/v1/agents/${ctx.agentId}/webhook/${integrationIdentifier}`;

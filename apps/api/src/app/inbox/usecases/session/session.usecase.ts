@@ -97,7 +97,7 @@ const MAX_NOTIFICATIONS_COUNT = 100;
 
 type SessionAuth =
   | { method: SubscriberSessionAuthMethodEnum.HMAC | SubscriberSessionAuthMethodEnum.NONE }
-  | { method: SubscriberSessionAuthMethodEnum.TOKEN; expiresAt: number };
+  | { method: SubscriberSessionAuthMethodEnum.TOKEN; issuedAt: number; expiresAt: number };
 
 interface SessionIdentity {
   environment: EnvironmentEntity;
@@ -371,7 +371,7 @@ export class Session {
       inAppIntegration: await this.selectInAppIntegration(environment),
       subscriber: { ...grant.profile, subscriberId: grant.subscriberId },
       context: grant.context,
-      auth: { method: SubscriberSessionAuthMethodEnum.TOKEN, expiresAt: grant.expiresAt },
+      auth: { method: SubscriberSessionAuthMethodEnum.TOKEN, issuedAt: grant.issuedAt, expiresAt: grant.expiresAt },
     };
   }
 
@@ -536,10 +536,14 @@ export class Session {
       return [];
     }
 
-    // The customer signed a token's context, so its data replaces what an earlier unsigned session saved.
     const contexts =
       auth.method === SubscriberSessionAuthMethodEnum.TOKEN
-        ? await this.contextRepository.upsertContextsFromPayload(environmentId, organizationId, context)
+        ? await this.contextRepository.upsertContextsFromPayload(
+            environmentId,
+            organizationId,
+            context,
+            new Date(auth.issuedAt * 1000)
+          )
         : await this.contextRepository.findOrCreateContextsFromPayload(environmentId, organizationId, context);
 
     return contexts.map((context) => context.key);
