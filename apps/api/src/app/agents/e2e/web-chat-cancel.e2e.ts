@@ -79,10 +79,12 @@ describe('Web Chat - Stop a running turn #novu-v2', () => {
     sinon.restore();
   });
 
-  async function startConversation(): Promise<{ identifier: string; conversation: ConversationEntity }> {
+  async function startConversation(
+    token = subscriberToken
+  ): Promise<{ identifier: string; conversation: ConversationEntity }> {
     const res = await ctx.session.testAgent
       .post('/v1/web-chat/conversations')
-      .set('Authorization', `Bearer ${subscriberToken}`)
+      .set('Authorization', `Bearer ${token}`)
       .send({ agentId: ctx.agentIdentifier, text: 'Add an email step' });
     expect(res.status).to.equal(201);
 
@@ -200,6 +202,41 @@ describe('Web Chat - Stop a running turn #novu-v2', () => {
     expect(repeatRes.body.data).to.deep.equal({ status: 'aborted' });
     expect(await runFinishes(conversationId)).to.have.length(1);
     expect(executeSpy.getCalls().filter((call) => call.args[0].event === AgentEventEnum.ON_ABORT)).to.have.length(1);
+  });
+
+  it('sends onAbort the tenant a subscriber token signed, without in-app HMAC', async () => {
+    process.env.IS_SUBSCRIBER_TOKENS_ENABLED = 'true';
+    try {
+      const tenantId = `stop-acme-${Date.now()}`;
+      const minted = await ctx.session.testAgent
+        .post(`/v2/subscribers/${ctx.session.subscriberId}/tokens`)
+        .set('Authorization', `ApiKey ${ctx.session.apiKey}`)
+        .send({ context: { tenant: { id: tenantId, data: { plan: 'pro' } } } });
+      expect(minted.status, JSON.stringify(minted.body)).to.equal(201);
+      const session = await ctx.session.testAgent.post('/v1/inbox/session').send({
+        applicationIdentifier: ctx.session.environment.identifier,
+        subscriberToken: minted.body.data.token,
+      });
+      expect(session.status, JSON.stringify(session.body)).to.equal(201);
+      const token = session.body.data.token as string;
+
+      const { identifier, conversation } = await startConversation(token);
+      await pollFor(async () => {
+        const turn = await turnAbortStore().getActiveTurn(String(conversation._id));
+
+        return turn?.bridgeHandlesOnAbort ? turn : null;
+      });
+
+      const cancelRes = await cancel(identifier, token);
+      expect(cancelRes.body.data).to.deep.equal({ status: 'aborted' });
+
+      const onAbort = await pollFor(async () =>
+        executeSpy.getCalls().find((call) => call.args[0].event === AgentEventEnum.ON_ABORT)
+      );
+      expect(onAbort.args[0].context).to.deep.include({ tenant: { id: tenantId, data: { plan: 'pro' } } });
+    } finally {
+      delete process.env.IS_SUBSCRIBER_TOKENS_ENABLED;
+    }
   });
 
   it('stops the turn of a bridge on a framework that predates onAbort without sending it onAbort', async () => {

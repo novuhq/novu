@@ -496,6 +496,50 @@ describe('NovuWebChatAdapterImpl', () => {
     expect(Object.prototype.hasOwnProperty.call(raw.metadata ?? {}, '__proto__')).toBe(false);
   });
 
+  describe('contextVerified', () => {
+    const ACTION_BODY = {
+      agentId: 'a',
+      actionId: 'tool-approval:approve:tc1',
+      conversationIdentifier: 'conv_abcdefghijkl',
+      contextVerified: true,
+    };
+
+    it('stamps the session value on the message raw', async () => {
+      const verified = await createAdapter(
+        createConfig({ verifySession: async () => ({ ...SESSION, contextVerified: true }) })
+      );
+      const unverified = await createAdapter();
+
+      await verified.adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'hi' }));
+      await unverified.adapter.handleWebhook(jsonRequest({ agentId: 'a', text: 'hi', contextVerified: true }));
+
+      expect(verified.processMessage.mock.calls[0][2].raw.contextVerified).toBe(true);
+      expect(unverified.processMessage.mock.calls[0][2].raw.contextVerified).toBe(false);
+    });
+
+    it('ignores a client-sent contextVerified on the action raw', async () => {
+      const { adapter, processAction } = await createAdapter(createConfig({ authorizeResume: async () => true }));
+
+      const response = await adapter.handleWebhook(jsonRequest(ACTION_BODY));
+
+      expect(response.status).toBe(200);
+      expect(processAction.mock.calls[0]?.[0].raw.contextVerified).toBe(false);
+    });
+
+    it('stamps a verified session on the action raw', async () => {
+      const { adapter, processAction } = await createAdapter(
+        createConfig({
+          authorizeResume: async () => true,
+          verifySession: async () => ({ ...SESSION, contextVerified: true }),
+        })
+      );
+
+      await adapter.handleWebhook(jsonRequest({ ...ACTION_BODY, contextVerified: false }));
+
+      expect(processAction.mock.calls[0]?.[0].raw.contextVerified).toBe(true);
+    });
+  });
+
   it('dispatches processAction then returns 200 for actionId ingress', async () => {
     const authorizeResume = vi.fn(async () => true);
     const { adapter, processMessage, processAction } = await createAdapter(createConfig({ authorizeResume }));

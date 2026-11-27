@@ -41,6 +41,7 @@ export class CancelWebChatConversationTurn {
         organizationId: command.organizationId,
         conversationId: String(conversation._id),
         contextKeys: command.contextKeys ?? [],
+        contextVerified: command.contextVerified,
       })
     );
   }

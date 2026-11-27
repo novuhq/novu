@@ -5,6 +5,7 @@ import {
   ContextRepository,
   ConversationActivitySenderTypeEnum,
   ConversationActivityTypeEnum,
+  type EnvironmentEntity,
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
@@ -218,6 +219,8 @@ describe('Agent access rule #novu-v2', () => {
         providerId: ChatProviderIdEnum.NovuWebChat,
       });
       expect(res.status).to.equal(201);
+
+      return res.body.data.integration.identifier as string;
     }
 
     async function enforceInboxHmac() {
@@ -349,6 +352,263 @@ describe('Agent access rule #novu-v2', () => {
       await send(token, 'Blocked after flag off', identifier);
       await waitForRefusal(identifier, UNRESOLVED_SUBSCRIBER_TRANSIENT_REPLY);
       await waitForBridgeCalls(1);
+    });
+
+    describe('with a token session', () => {
+      async function setWebChatHmac(hmac: boolean) {
+        await integrationRepository.update(
+          {
+            _environmentId: ctx.session.environment._id,
+            _organizationId: ctx.session.organization._id,
+            providerId: ChatProviderIdEnum.NovuWebChat,
+          },
+          { $set: { 'credentials.hmac': hmac } }
+        );
+      }
+
+      async function openTokenSession(
+        subscriberId: string,
+        body: Record<string, unknown> = {},
+        environment: EnvironmentEntity = ctx.session.environment
+      ) {
+        const minted = await ctx.session.testAgent
+          .post(`/v2/subscribers/${subscriberId}/tokens`)
+          .set('Authorization', `ApiKey ${environment.apiKeys[0].key}`)
+          .send(body);
+        expect(minted.status, JSON.stringify(minted.body)).to.equal(201);
+
+        const res = await ctx.session.testAgent.post('/v1/inbox/session').send({
+          applicationIdentifier: environment.identifier,
+          subscriberToken: minted.body.data.token,
+        });
+        expect(res.status, JSON.stringify(res.body)).to.equal(201);
+
+        return res.body.data.token as string;
+      }
+
+      function post(token: string, body: Record<string, unknown>) {
+        return ctx.session.testAgent
+          .post('/v1/web-chat/conversations')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ agentId: ctx.agentIdentifier, ...body });
+      }
+
+      async function refusalCount(identifier: string) {
+        const _conversationId = await conversationId(identifier);
+
+        return activityRepository.count({
+          _environmentId: ctx.session.environment._id,
+          _conversationId,
+          content: SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY,
+        });
+      }
+
+      it('trusts the tenant the token signed without in-app HMAC, and refuses it after the tenant downgrades', async () => {
+        await linkWebChat();
+        await setRule(PAID_PLAN_RULE);
+        const tenantId = `token-acme-${Date.now()}`;
+        const token = await openTokenSession(ctx.session.subscriberId, {
+          context: { tenant: { id: tenantId, data: { plan: 'pro' } } },
+        });
+
+        const identifier = await send(token, 'Hi, I am on Pro');
+        await waitForBridgeCalls(1);
+        expect(bridgeCalls[0].context).to.deep.include({ tenant: { id: tenantId, data: { plan: 'pro' } } });
+
+        const downgrade = await ctx.session.testAgent
+          .patch(`/v2/contexts/tenant/${tenantId}`)
+          .send({ data: { plan: 'free' } });
+        expect(downgrade.status, JSON.stringify(downgrade.body)).to.equal(200);
+
+        await send(token, 'Still there?', identifier);
+        await waitForRefusal(identifier);
+        await waitForBridgeCalls(1);
+      });
+
+      it('refuses a guest the customer signed in and admits a signed-in subscriber, without agentHash', async () => {
+        await linkWebChat();
+        await setWebChatHmac(true);
+        await setRule({ '!': { var: 'subscriber.data.guest' } });
+        const guest = await openTokenSession(`guest-${Date.now()}`, { subscriber: { data: { guest: true } } });
+        const member = await openTokenSession(ctx.session.subscriberId);
+
+        const guestConversation = await send(guest, 'Hi, just browsing');
+        await waitForRefusal(guestConversation);
+        await waitForBridgeCalls(0);
+
+        await send(member, 'Hi, I have an account');
+        await waitForBridgeCalls(1);
+        expect(bridgeCalls[0].subscriber?.subscriberId).to.equal(ctx.session.subscriberId);
+      });
+
+      it('needs no agentHash with Web Chat HMAC on, unlike a hash session, while subscriber tokens are enabled', async () => {
+        await linkWebChat();
+        await setWebChatHmac(true);
+        const token = await openTokenSession(ctx.session.subscriberId);
+
+        const identifier = await send(token, 'Hello');
+        await send(token, 'Hello again', identifier);
+        await waitForBridgeCalls(2);
+
+        const hashSession = await post(await openSession(), { text: 'Hello' });
+        expect(hashSession.status, JSON.stringify(hashSession.body)).to.equal(400);
+
+        process.env.IS_SUBSCRIBER_TOKENS_ENABLED = 'false';
+
+        const flagOff = await post(token, { text: 'Hello with the flag off', conversationIdentifier: identifier });
+        expect(flagOff.status, JSON.stringify(flagOff.body)).to.equal(400);
+        await waitForBridgeCalls(2);
+      });
+
+      it('stores the data the token signed over data an unsigned session saved first', async () => {
+        await linkWebChat();
+        await setRule(PAID_PLAN_RULE);
+        const tenantId = `token-overwrite-${Date.now()}`;
+        const unsigned = await ctx.session.testAgent.post('/v1/inbox/session').send({
+          applicationIdentifier: ctx.session.environment.identifier,
+          subscriberId: ctx.session.subscriberId,
+          context: { tenant: { id: tenantId, data: { plan: 'pro' } } },
+        });
+        expect(unsigned.status, JSON.stringify(unsigned.body)).to.equal(201);
+
+        const token = await openTokenSession(ctx.session.subscriberId, {
+          context: { tenant: { id: tenantId, data: { plan: 'free' } } },
+        });
+
+        const stored = await ctx.session.testAgent.get(`/v2/contexts/tenant/${tenantId}`);
+        expect(stored.status, JSON.stringify(stored.body)).to.equal(200);
+        expect(stored.body.data.data).to.deep.equal({ plan: 'free' });
+
+        const identifier = await send(token, 'Hi, I am on Pro');
+        await waitForRefusal(identifier);
+        await waitForBridgeCalls(0);
+      });
+
+      it('keeps a downgrade made after the token was issued when the token is exchanged again', async () => {
+        await linkWebChat();
+        await setRule(PAID_PLAN_RULE);
+        const tenantId = `token-replay-${Date.now()}`;
+        const minted = await ctx.session.testAgent
+          .post(`/v2/subscribers/${ctx.session.subscriberId}/tokens`)
+          .set('Authorization', `ApiKey ${ctx.session.apiKey}`)
+          .send({ context: { tenant: { id: tenantId, data: { plan: 'pro' } } } });
+        expect(minted.status, JSON.stringify(minted.body)).to.equal(201);
+        const exchange = async () => {
+          const res = await ctx.session.testAgent.post('/v1/inbox/session').send({
+            applicationIdentifier: ctx.session.environment.identifier,
+            subscriberToken: minted.body.data.token,
+          });
+          expect(res.status, JSON.stringify(res.body)).to.equal(201);
+
+          return res.body.data.token as string;
+        };
+        await exchange();
+
+        const downgrade = await ctx.session.testAgent
+          .patch(`/v2/contexts/tenant/${tenantId}`)
+          .send({ data: { plan: 'free' } });
+        expect(downgrade.status, JSON.stringify(downgrade.body)).to.equal(200);
+        const { iat } = JSON.parse(Buffer.from(minted.body.data.token.split('.')[1], 'base64url').toString());
+        await new ContextRepository().update(
+          {
+            _environmentId: ctx.session.environment._id,
+            _organizationId: ctx.session.organization._id,
+            type: 'tenant',
+            id: tenantId,
+          },
+          { $set: { updatedAt: new Date((iat + 1) * 1000) } },
+          { timestamps: false }
+        );
+
+        const replayed = await exchange();
+
+        const stored = await ctx.session.testAgent.get(`/v2/contexts/tenant/${tenantId}`);
+        expect(stored.body.data.data).to.deep.equal({ plan: 'free' });
+        const identifier = await send(replayed, 'Hi, I am on Pro again');
+        await waitForRefusal(identifier);
+        await waitForBridgeCalls(0);
+      });
+
+      it('stores the data of a token issued in the same second as the last update', async () => {
+        const tenantId = `token-same-second-${Date.now()}`;
+        const minted = await ctx.session.testAgent
+          .post(`/v2/subscribers/${ctx.session.subscriberId}/tokens`)
+          .set('Authorization', `ApiKey ${ctx.session.apiKey}`)
+          .send({ context: { tenant: { id: tenantId, data: { plan: 'pro' } } } });
+        expect(minted.status, JSON.stringify(minted.body)).to.equal(201);
+        const { iat } = JSON.parse(Buffer.from(minted.body.data.token.split('.')[1], 'base64url').toString());
+        const contextRepository = new ContextRepository();
+        const scope = { _environmentId: ctx.session.environment._id, _organizationId: ctx.session.organization._id };
+        await contextRepository.create({
+          ...scope,
+          type: 'tenant',
+          id: tenantId,
+          key: `tenant:${tenantId}`,
+          data: { plan: 'free' },
+        });
+        await contextRepository.update(
+          { ...scope, type: 'tenant', id: tenantId },
+          { $set: { updatedAt: new Date(iat * 1000 + 500) } },
+          { timestamps: false }
+        );
+
+        const res = await ctx.session.testAgent.post('/v1/inbox/session').send({
+          applicationIdentifier: ctx.session.environment.identifier,
+          subscriberToken: minted.body.data.token,
+        });
+        expect(res.status, JSON.stringify(res.body)).to.equal(201);
+
+        const stored = await ctx.session.testAgent.get(`/v2/contexts/tenant/${tenantId}`);
+        expect(stored.body.data.data).to.deep.equal({ plan: 'pro' });
+      });
+
+      it("refuses a session from another environment on the agent's webhook", async () => {
+        const integrationIdentifier = await linkWebChat();
+        const webhook = `/v1/agents/${ctx.agentId}/webhook/${integrationIdentifier}`;
+        const otherEnvironment = await ctx.session.createEnvironment('Other');
+        await ctx.session.createIntegrations([otherEnvironment]);
+        const foreign = await openTokenSession(ctx.session.subscriberId, {}, otherEnvironment);
+
+        const refused = await ctx.session.testAgent
+          .post(webhook)
+          .set('Authorization', `Bearer ${foreign}`)
+          .send({ text: 'Hello from another environment' });
+        expect(refused.status, JSON.stringify(refused.body)).to.equal(401);
+
+        const own = await ctx.session.testAgent
+          .post(webhook)
+          .set('Authorization', `Bearer ${await openTokenSession(ctx.session.subscriberId)}`)
+          .send({ text: 'Hello from this environment' });
+        expect(own.status, JSON.stringify(own.body)).to.equal(201);
+        await waitForBridgeCalls(1);
+        expect(bridgeCalls[0].subscriber?.subscriberId).to.equal(ctx.session.subscriberId);
+      });
+
+      it('ignores contextVerified sent by the client of an unsigned session', async () => {
+        await linkWebChat();
+        await setRule(PAID_PLAN_RULE);
+        const res = await ctx.session.testAgent.post('/v1/inbox/session').send({
+          applicationIdentifier: ctx.session.environment.identifier,
+          subscriberId: ctx.session.subscriberId,
+          context: { tenant: { id: `forged-${Date.now()}`, data: { plan: 'enterprise' } } },
+        });
+        expect(res.status).to.equal(201);
+        const token = res.body.data.token as string;
+
+        const message = await post(token, { text: 'Let me in', contextVerified: true });
+        expect(message.status, JSON.stringify(message.body)).to.equal(201);
+        const identifier = message.body.data.identifier as string;
+        await waitForRefusal(identifier);
+
+        const click = await post(token, {
+          actionId: 'tool-approval:approve:forged',
+          conversationIdentifier: identifier,
+          contextVerified: true,
+        });
+        expect(click.status, JSON.stringify(click.body)).to.equal(200);
+        await pollFor(async () => (await refusalCount(identifier)) === 2);
+        await waitForBridgeCalls(0);
+      });
     });
 
     it('refuses every message when the stored rule cannot be evaluated', async () => {

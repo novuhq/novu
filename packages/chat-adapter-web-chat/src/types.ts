@@ -3,6 +3,8 @@ export type WebChatSession = {
   environmentId: string;
   organizationId: string;
   contextKeys?: string[];
+  /** The session was signed in with a subscriber token, so its `contextKeys` are signed by the customer. */
+  contextVerified?: boolean;
 };
 
 export type WebChatDeliverMessageParams = {
@@ -119,6 +121,7 @@ export type WebChatRawMessage = {
   subscriberId: string;
   createdAt: string;
   contextKeys?: string[];
+  contextVerified?: boolean;
   /** Sanitized client per-message metadata (scalar values only). */
   metadata?: Record<string, string | number | boolean | null>;
 };

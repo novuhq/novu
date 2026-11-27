@@ -218,6 +218,7 @@ export class CancelConversationTurn {
         : null;
       const { context, bridgeUrl } = await this.connectionContextResolver.resolve(config, {
         contextKeys: command.contextKeys ?? [],
+        contextVerified: command.contextVerified,
       });
 
       await this.bridgeExecutor.execute({

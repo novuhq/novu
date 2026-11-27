@@ -97,7 +97,7 @@ const MAX_NOTIFICATIONS_COUNT = 100;
 
 type SessionAuth =
   | { method: SubscriberSessionAuthMethodEnum.HMAC | SubscriberSessionAuthMethodEnum.NONE }
-  | { method: SubscriberSessionAuthMethodEnum.TOKEN; expiresAt: number };
+  | { method: SubscriberSessionAuthMethodEnum.TOKEN; issuedAt: number; expiresAt: number };
 
 interface SessionIdentity {
   environment: EnvironmentEntity;
@@ -150,7 +150,7 @@ export class Session {
       ? await this.resolveTokenIdentity(subscriberToken, command.requestData.applicationIdentifier)
       : await this.resolveHashIdentity(command);
 
-    const contextKeys = await this.resolveContexts(environment._id, environment._organizationId, context);
+    const contextKeys = await this.resolveContexts(environment._id, environment._organizationId, context, auth);
 
     const subscriberEntity = await this.createSubscriber.execute(
       CreateOrUpdateSubscriberCommand.create({
@@ -371,7 +371,7 @@ export class Session {
       inAppIntegration: await this.selectInAppIntegration(environment),
       subscriber: { ...grant.profile, subscriberId: grant.subscriberId },
       context: grant.context,
-      auth: { method: SubscriberSessionAuthMethodEnum.TOKEN, expiresAt: grant.expiresAt },
+      auth: { method: SubscriberSessionAuthMethodEnum.TOKEN, issuedAt: grant.issuedAt, expiresAt: grant.expiresAt },
     };
   }
 
@@ -529,17 +529,17 @@ export class Session {
   private async resolveContexts(
     environmentId: string,
     organizationId: string,
-    context?: ContextPayload
+    context: ContextPayload | undefined,
+    auth: SessionAuth
   ): Promise<string[]> {
     if (!context) {
       return [];
     }
 
-    const contexts = await this.contextRepository.findOrCreateContextsFromPayload(
-      environmentId,
-      organizationId,
-      context
-    );
+    const contexts =
+      auth.method === SubscriberSessionAuthMethodEnum.TOKEN
+        ? await this.contextRepository.upsertContextsFromPayload(environmentId, organizationId, context, auth.issuedAt)
+        : await this.contextRepository.findOrCreateContextsFromPayload(environmentId, organizationId, context);
 
     return contexts.map((context) => context.key);
   }

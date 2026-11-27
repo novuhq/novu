@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../../../shared/commands/project.command';
 
@@ -11,4 +11,8 @@ export class CancelWebChatConversationTurnCommand extends EnvironmentWithSubscri
   @IsOptional()
   @IsString()
   agentIdentifier?: string;
+
+  /** The session came from a customer-signed subscriber token, so its context is trusted as the agent's tenant. */
+  @IsBoolean()
+  contextVerified: boolean;
 }

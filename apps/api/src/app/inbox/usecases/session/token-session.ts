@@ -11,6 +11,7 @@ export type SubscriberLoginGrant =
       isExpired: false;
       environmentId: string;
       subscriberId: string;
+      issuedAt: number;
       expiresAt: number;
       profile?: SubscriberLoginProfile;
       context?: ContextPayload;
@@ -35,6 +36,7 @@ export function parseSubscriberLoginGrant(verification: TokenVerification): Subs
     claims.aud !== 'novu' ||
     !isNonEmptyString(claims.iss) ||
     !isNonEmptyString(claims.sub) ||
+    typeof claims.iat !== 'number' ||
     typeof claims.exp !== 'number' ||
     'topic' in claims
   ) {
@@ -49,6 +51,7 @@ export function parseSubscriberLoginGrant(verification: TokenVerification): Subs
     isExpired: false,
     environmentId: claims.iss,
     subscriberId: claims.sub,
+    issuedAt: claims.iat,
     expiresAt: claims.exp,
     profile: claims.subscriber,
     context: claims.context,

@@ -1,7 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { FeatureFlagsService } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { ApiKeyRevocationService } from '../../auth/api-key-revocation/api-key-revocation.service';
+import { isSubscriberTokensEnabled } from '../shared/assert-subscriber-tokens-enabled';
 import { isWebChatAgentHashValidForAnyKey } from './web-chat-agent-hash';
 
 const WEB_CHAT_UNAVAILABLE_MESSAGE = 'This agent is not available on web chat';
@@ -13,6 +15,12 @@ export type PublishedWebChatAgent = {
   integrationIdentifier: string;
 };
 
+export type WebChatAgentAccess = {
+  agentHash?: string;
+  /** The session came from a subscriber token, so Novu already knows who the subscriber is. */
+  isTokenSession: boolean;
+};
+
 @Injectable()
 export class WebChatPublicationService {
   constructor(
@@ -20,19 +28,23 @@ export class WebChatPublicationService {
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly environmentRepository: EnvironmentRepository,
-    private readonly apiKeyRevocationService: ApiKeyRevocationService
+    private readonly apiKeyRevocationService: ApiKeyRevocationService,
+    private readonly featureFlagsService: FeatureFlagsService
   ) {}
 
   /**
    * Resolve the Web Chat publication for a specific agent.
    * Must not pick an arbitrary env-wide `novu-web-chat` integration — orgs
    * can have one per agent; only the link for *this* agent counts.
+   *
+   * With Web Chat HMAC on, a hash session must prove it may name this agent with `agentHash`.
+   * A subscriber token session skips that check while subscriber tokens are enabled.
    */
   async resolvePublishedAgent(
     agentIdentifier: string,
     environmentId: string,
     organizationId: string,
-    agentHash?: string
+    { agentHash, isTokenSession }: WebChatAgentAccess
   ): Promise<PublishedWebChatAgent> {
     const agent = await this.agentRepository.findOne(
       {
@@ -75,7 +87,7 @@ export class WebChatPublicationService {
       throw new BadRequestException(WEB_CHAT_UNAVAILABLE_MESSAGE);
     }
 
-    if (integration.credentials?.hmac) {
+    if (integration.credentials?.hmac && !(await this.skipsAgentHash(isTokenSession, environmentId, organizationId))) {
       const environment = await this.environmentRepository.findOne(
         { _id: environmentId, _organizationId: organizationId },
         'apiKeys'
@@ -102,5 +114,12 @@ export class WebChatPublicationService {
       integrationId: integration._id,
       integrationIdentifier: integration.identifier,
     };
+  }
+
+  private async skipsAgentHash(isTokenSession: boolean, environmentId: string, organizationId: string) {
+    return (
+      isTokenSession &&
+      isSubscriberTokensEnabled({ featureFlagsService: this.featureFlagsService, environmentId, organizationId })
+    );
   }
 }

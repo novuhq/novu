@@ -184,16 +184,52 @@ describe('InboundConnectionContextResolver', () => {
       const channelConnectionRepository = { findOne: sinon.stub().resolves(null) };
       const channelEndpointRepository = { findByPlatformIdentity: sinon.stub().resolves(null) };
       const contextRepository = makeContextRepository(contexts);
+      const integrationRepository = makeIntegrationRepository(inAppHmac);
       const resolver = new InboundConnectionContextResolver(
         channelConnectionRepository as any,
         channelEndpointRepository as any,
         contextRepository as any,
-        makeIntegrationRepository(inAppHmac) as any,
+        integrationRepository as any,
         makeLogger() as any
       );
 
-      return { resolver, channelConnectionRepository, channelEndpointRepository, contextRepository };
+      return {
+        resolver,
+        channelConnectionRepository,
+        channelEndpointRepository,
+        contextRepository,
+        integrationRepository,
+      };
     }
+
+    it('trusts a verified session context without in-app HMAC or an integration lookup', async () => {
+      const { resolver, integrationRepository } = build(
+        [makeContext('tenant', 'acme', 'https://acme.example.com/api/novu', { plan: 'pro' })],
+        [false]
+      );
+
+      const result = await resolver.resolve(makeConfig(AgentPlatformEnum.WEB_CHAT), {
+        contextKeys: ['tenant:acme'],
+        contextVerified: true,
+      });
+
+      expect(result).to.deep.equal({
+        context: { tenant: { id: 'acme', data: { plan: 'pro' } } },
+        bridgeUrl: 'https://acme.example.com/api/novu',
+      });
+      expect(integrationRepository.find.called).to.equal(false);
+    });
+
+    it('ignores an unverified session context without in-app HMAC', async () => {
+      const { resolver } = build([makeContext('tenant', 'acme')], [false]);
+      const config = makeConfig(AgentPlatformEnum.WEB_CHAT);
+
+      for (const contextVerified of [false, 'true', undefined]) {
+        expect((await resolver.resolve(config, { contextKeys: ['tenant:acme'], contextVerified })).context).to.equal(
+          null
+        );
+      }
+    });
 
     it('ignores session contextKeys when the in-app integration does not enforce HMAC', async () => {
       const { resolver, contextRepository } = build(
