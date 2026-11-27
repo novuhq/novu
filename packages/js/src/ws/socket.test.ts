@@ -76,6 +76,7 @@ const createClient = () => {
 };
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 beforeEach(() => {
   now = Date.now();
@@ -110,10 +111,25 @@ describe('Socket (socket.io)', () => {
     const socket = fakeSocketIo.current!;
 
     socket.handlers.get('disconnect')?.('io server disconnect');
-    await flush();
+    await wait(30);
 
     expect(refreshSession).not.toHaveBeenCalled();
     expect(socket.connect).not.toHaveBeenCalled();
+  });
+
+  it('reconnects when the server closed the socket at expiry a moment before the browser counted the token expired', async () => {
+    const { client, refreshSession } = createClient();
+    await client.connect();
+    const socket = fakeSocketIo.current!;
+
+    socket.handlers.get('disconnect')?.('io server disconnect');
+    await flush();
+    now += 2 * HOUR_MS;
+    await wait(30);
+
+    expect(refreshSession).toHaveBeenCalledTimes(1);
+    expect(socket.connect).toHaveBeenCalledTimes(1);
+    expect(socket.io.opts.query?.token).toBe(newToken);
   });
 
   it('sends the newest token with each reconnect attempt', async () => {

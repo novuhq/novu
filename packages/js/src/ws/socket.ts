@@ -99,7 +99,22 @@ export class Socket extends BaseModule implements BaseSocketInterface {
   async #reconnectWithFreshToken(socket: SocketIO): Promise<void> {
     this.#tokenRetryTimeout = undefined;
     const session = this.#session;
-    if (!session || socket !== this.#socketIo || !session.isExpired(this.#handshakeToken)) {
+    if (!session || socket !== this.#socketIo) {
+      return;
+    }
+
+    // socket.io stopped retrying after the server disconnect, so keep checking here. The browser's estimate of the
+    // expiry can trail the server's by a moment, so a token that still looks valid is checked again later.
+    const retryLater = () => {
+      this.#tokenRetryTimeout = setTimeout(
+        () => void this.#reconnectWithFreshToken(socket),
+        socket.io.reconnectionDelayMax()
+      );
+    };
+
+    if (!session.isExpired(this.#handshakeToken)) {
+      retryLater();
+
       return;
     }
 
@@ -111,11 +126,7 @@ export class Socket extends BaseModule implements BaseSocketInterface {
     }
 
     if (!hasFreshToken) {
-      // socket.io stopped retrying after the server disconnect, so keep trying here until a token comes back.
-      this.#tokenRetryTimeout = setTimeout(
-        () => void this.#reconnectWithFreshToken(socket),
-        socket.io.reconnectionDelayMax()
-      );
+      retryLater();
 
       return;
     }
@@ -154,6 +165,8 @@ export class Socket extends BaseModule implements BaseSocketInterface {
     });
 
     this.#socketIo.on('connect', () => {
+      clearTimeout(this.#tokenRetryTimeout);
+      this.#tokenRetryTimeout = undefined;
       this.#emitter.emit('socket.connect.resolved', { args });
     });
 
