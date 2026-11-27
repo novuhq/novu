@@ -27,7 +27,7 @@ export class ListChannelConnections {
     };
 
     if (command.connectionMode === 'subscriber') {
-      filter.subscriberId = command.subscriberId ?? { $ne: null };
+      filter.subscriberId = command.subscriberId || { $ne: null };
     } else if (command.connectionMode === 'shared') {
       filter.subscriberId = null;
     } else if (command.subscriberId) {
