@@ -1,8 +1,8 @@
 import { createResource, createSignal, onCleanup, onMount, Show } from 'solid-js';
 import type { ChannelEndpointResponse } from '../../../channel-connections/types';
 import type { Context } from '../../../types';
-import { useChannelEndpoint } from '../../api/hooks/useChannelEndpoint';
 import { useNovu } from '../../context';
+import { useSignedInIdentity } from '../../helpers/useSignedInIdentity';
 import { useStyle } from '../../helpers/useStyle';
 import { CheckCircleFill } from '../../icons/CheckCircleFill';
 import { Loader } from '../../icons/Loader';
@@ -31,17 +31,12 @@ const POLL_TIMEOUT_MS = 120_000;
 export const SlackLinkUser = (props: SlackLinkUserProps) => {
   const style = useStyle();
   const novuAccessor = useNovu();
+  const identity = useSignedInIdentity();
   const integrationIdentifier = () => props.integrationIdentifier;
-  const resolvedSubscriberId = () => props.subscriberId ?? novuAccessor().subscriberId;
+  const resolvedSubscriberId = () => props.subscriberId ?? identity().subscriberId;
   const connectionIdentifier = () =>
     props.connectionIdentifier ??
-    buildDefaultConnectionIdentifier(DEFAULT_SLACK_CONNECTION_IDENTIFIER, resolvedSubscriberId());
-
-  const { generateLinkUserOAuthUrl } = useChannelEndpoint({
-    integrationIdentifier: integrationIdentifier(),
-    connectionIdentifier: connectionIdentifier(),
-    subscriberId: props.subscriberId,
-  });
+    buildDefaultConnectionIdentifier(DEFAULT_SLACK_CONNECTION_IDENTIFIER, 'subscriber', resolvedSubscriberId());
 
   const [endpoint, setEndpoint] = createSignal<ChannelEndpointResponse | null>(null);
   const [loading, setLoading] = createSignal(true);
@@ -57,10 +52,11 @@ export const SlackLinkUser = (props: SlackLinkUserProps) => {
   const isLoading = () => loading() || actionLoading();
 
   createResource(
-    () => ({
-      integrationIdentifier: integrationIdentifier(),
-      connectionIdentifier: connectionIdentifier(),
-    }),
+    () => {
+      const connId = connectionIdentifier();
+
+      return connId ? { integrationIdentifier: integrationIdentifier(), connectionIdentifier: connId } : undefined;
+    },
     async ({ integrationIdentifier: intId, connectionIdentifier: connId }) => {
       setLoading(true);
 
@@ -140,8 +136,9 @@ export const SlackLinkUser = (props: SlackLinkUserProps) => {
         props.onUnlinkSuccess?.();
       }
     } else {
-      const resolvedSubscriberId = props.subscriberId ?? novuAccessor().subscriberId;
-      if (!resolvedSubscriberId) {
+      const subscriberId = resolvedSubscriberId();
+      const connId = connectionIdentifier();
+      if (!subscriberId || !connId) {
         props.onLinkError?.(new Error('subscriberId is required to link a Slack user'));
 
         return;
@@ -149,10 +146,10 @@ export const SlackLinkUser = (props: SlackLinkUserProps) => {
 
       setActionLoading(true);
 
-      const result = await generateLinkUserOAuthUrl({
+      const result = await novuAccessor().channelEndpoints.generateLinkUserOAuthUrl({
         integrationIdentifier: integrationIdentifier(),
-        connectionIdentifier: connectionIdentifier(),
-        subscriberId: resolvedSubscriberId,
+        connectionIdentifier: connId,
+        subscriberId,
         context: props.context,
         userScope: ['identity.basic'],
       });

@@ -2,6 +2,7 @@ import { createSignal, onCleanup, Show } from 'solid-js';
 import type { Context } from '../../../types';
 import { useTelegramConnection } from '../../api/hooks/useTelegramConnection';
 import { useNovu } from '../../context';
+import { useSignedInIdentity } from '../../helpers/useSignedInIdentity';
 import { useStyle } from '../../helpers/useStyle';
 import { CheckCircleFill } from '../../icons/CheckCircleFill';
 import { Loader } from '../../icons/Loader';
@@ -15,7 +16,7 @@ export type TelegramConnectButtonProps = {
   subscriberId?: string;
   /**
    * Context bound to the Telegram endpoint at link time. Falls back to the
-   * `context` configured on `NovuProvider`.
+   * `context` configured on `NovuProvider`. Ignored with a token source: the token decides the context.
    */
   context?: Context;
   /**
@@ -24,6 +25,7 @@ export type TelegramConnectButtonProps = {
    * with HMAC validation enabled and the current session did not already verify
    * the context. Must be minted by an authenticated backend — never computed in
    * the browser.
+   * Not needed with a token source (`tokenEndpoint`/`getToken`): the token's context is already verified.
    */
   contextHash?: string;
   onConnectSuccess?: (endpointIdentifier: string) => void;
@@ -42,13 +44,17 @@ export const TelegramConnectButton = (props: TelegramConnectButtonProps) => {
   const style = useStyle();
   const novuAccessor = useNovu();
   const integrationIdentifier = () => props.integrationIdentifier;
-  const resolvedSubscriberId = () => props.subscriberId ?? novuAccessor().subscriberId;
-  const resolvedContext = () => props.context ?? novuAccessor().context;
+  const identity = useSignedInIdentity();
+  const resolvedSubscriberId = () => props.subscriberId ?? identity().subscriberId;
+  const resolvedContext = () => props.context ?? identity().context;
   const resolvedContextHash = () => props.contextHash ?? novuAccessor().contextHash;
 
-  const { endpoint, loading, disconnect, mutate, link } = useTelegramConnection({
-    integrationIdentifier: integrationIdentifier(),
-    subscriberId: props.subscriberId,
+  const { endpoint, loading, disconnect, mutate, link } = useTelegramConnection(() => {
+    const subscriberId = resolvedSubscriberId();
+
+    return integrationIdentifier() && subscriberId !== undefined
+      ? { integrationIdentifier: integrationIdentifier(), subscriberId: subscriberId || undefined }
+      : undefined;
   });
 
   const [actionLoading, setActionLoading] = createSignal(false);
@@ -252,7 +258,10 @@ export const TelegramConnectButton = (props: TelegramConnectButtonProps) => {
   );
 
   return (
-    <Show when={!loading()} fallback={<Loader class="nt-text-foreground-alpha-600 nt-size-4 nt-animate-spin" />}>
+    <Show
+      when={!loading() && resolvedSubscriberId() !== undefined}
+      fallback={<Loader class="nt-text-foreground-alpha-600 nt-size-4 nt-animate-spin" />}
+    >
       <div
         class={style({
           key: 'channelConnectButtonContainer',

@@ -3,6 +3,7 @@ import type { ConnectionMode } from '../../../channel-connections/types';
 import type { Context } from '../../../types';
 import { useChannelConnection } from '../../api/hooks/useChannelConnection';
 import { useNovu } from '../../context';
+import { isMissingSharedContext, useSignedInIdentity } from '../../helpers/useSignedInIdentity';
 import { useStyle } from '../../helpers/useStyle';
 import { CheckCircleFill } from '../../icons/CheckCircleFill';
 import { Loader } from '../../icons/Loader';
@@ -17,6 +18,7 @@ export type SlackConnectButtonProps = {
   integrationIdentifier: string;
   connectionIdentifier?: string;
   subscriberId?: string;
+  /** Ignored with a token source: the token decides the context. */
   context?: Context;
   /**
    * HMAC-SHA256 of the canonicalized `context`, signed with the tenant environment
@@ -24,6 +26,7 @@ export type SlackConnectButtonProps = {
    * a `restricted` agent and the current session did not already verify the context
    * (e.g. cross-org distribution like the Novu-hosted copilot). Must be minted by an
    * authenticated backend — never computed in the browser.
+   * Not needed with a token source (`tokenEndpoint`/`getToken`): the token's context is already verified.
    */
   contextHash?: string;
   scope?: string[];
@@ -51,36 +54,42 @@ const POLL_TIMEOUT_MS = 120_000;
 export const SlackConnectButton = (props: SlackConnectButtonProps) => {
   const style = useStyle();
   const novuAccessor = useNovu();
+  const identity = useSignedInIdentity();
   const integrationIdentifier = () => props.integrationIdentifier;
   const connectionMode = () => props.connectionMode ?? 'subscriber';
-  const resolvedContext = () => props.context ?? novuAccessor().context;
+  const resolvedContext = () => props.context ?? identity().context;
   const resolvedContextHash = () => props.contextHash ?? novuAccessor().contextHash;
   const resolvedSubscriberId = () =>
-    connectionMode() === 'subscriber' ? (props.subscriberId ?? novuAccessor().subscriberId) : undefined;
+    connectionMode() === 'subscriber' ? (props.subscriberId ?? identity().subscriberId) : undefined;
   const connectionIdentifier = () =>
     props.connectionIdentifier ??
-    buildDefaultConnectionIdentifier(DEFAULT_SLACK_CONNECTION_IDENTIFIER, resolvedSubscriberId());
+    buildDefaultConnectionIdentifier(
+      DEFAULT_SLACK_CONNECTION_IDENTIFIER,
+      connectionMode(),
+      props.subscriberId ?? identity().subscriberId
+    );
 
-  const { connection, loading, disconnect, mutate, generateConnectOAuthUrl } = useChannelConnection({
-    integrationIdentifier: integrationIdentifier(),
-    connectionIdentifier: connectionIdentifier(),
-    subscriberId: props.subscriberId,
-  });
+  const { connection, loading, disconnect, mutate, generateConnectOAuthUrl } =
+    useChannelConnection(connectionIdentifier);
 
   const [actionLoading, setActionLoading] = createSignal(false);
-  const isMisconfigured = createMemo(() => connectionMode() === 'shared' && !resolvedContext());
+  const isMisconfigured = createMemo(
+    () => connectionMode() === 'shared' && isMissingSharedContext(identity(), props.context)
+  );
 
   createEffect(() => {
     if (isMisconfigured()) {
       console.warn(
         '[Novu] SlackConnectButton: "context" is required when connectionMode is "shared". ' +
-          'Provide it via the context prop on SlackConnectButton or on NovuProvider.'
+          'Provide it via the context prop on SlackConnectButton or on NovuProvider, or sign in with a token ' +
+          'that carries a context.'
       );
     }
   });
 
   const isConnected = () => !!connection();
   const isLoading = () => loading() || actionLoading();
+  const isIdentityPending = () => connectionIdentifier() === undefined;
 
   const intervalIdRef: { current: ReturnType<typeof setInterval> | null } = { current: null };
 
@@ -91,9 +100,7 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
     }
   });
 
-  const startPolling = () => {
-    const connId = connectionIdentifier();
-
+  const startPolling = (connId: string) => {
     if (intervalIdRef.current !== null) {
       clearInterval(intervalIdRef.current);
       intervalIdRef.current = null;
@@ -147,18 +154,17 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
         props.onDisconnectSuccess?.();
       }
     } else {
+      const connId = connectionIdentifier();
+      if (!connId) return;
+
       setActionLoading(true);
 
       const mode = connectionMode();
-      const ctx = resolvedContext();
-      const resolvedSubscriberId =
-        mode === 'subscriber' ? (props.subscriberId ?? novuAccessor().subscriberId) : undefined;
-
       const result = await generateConnectOAuthUrl({
         integrationIdentifier: integrationIdentifier(),
-        connectionIdentifier: connectionIdentifier(),
-        subscriberId: resolvedSubscriberId,
-        context: ctx,
+        connectionIdentifier: connId,
+        subscriberId: resolvedSubscriberId(),
+        context: resolvedContext(),
         contextHash: resolvedContextHash(),
         scope: props.scope,
         connectionMode: mode,
@@ -174,7 +180,7 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
 
       if (result.data?.url) {
         window.open(result.data.url, '_blank', 'noopener,noreferrer');
-        startPolling();
+        startPolling(connId);
       } else {
         setActionLoading(false);
         props.onConnectError?.(new Error('OAuth URL was not returned. Please try again.'));
@@ -275,7 +281,10 @@ export const SlackConnectButton = (props: SlackConnectButtonProps) => {
   );
 
   return (
-    <Show when={!loading()} fallback={<Loader class="nt-text-foreground-alpha-600 nt-size-4 nt-animate-spin" />}>
+    <Show
+      when={!loading() && !isIdentityPending()}
+      fallback={<Loader class="nt-text-foreground-alpha-600 nt-size-4 nt-animate-spin" />}
+    >
       <div
         class={style({
           key: 'channelConnectButtonContainer',

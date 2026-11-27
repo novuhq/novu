@@ -1,18 +1,19 @@
+import type { ConnectionMode } from '../../channel-connections/types';
+
 export const DEFAULT_MSTEAMS_CONNECTION_IDENTIFIER = 'chconn-msteams-default';
 export const DEFAULT_SLACK_CONNECTION_IDENTIFIER = 'chconn-slack-default';
 
-/**
- * Builds a per-subscriber default connection identifier so that multiple
- * subscribers in the same environment each get their own unique default,
- * avoiding 409 Conflict errors when no explicit connectionIdentifier is given.
- *
- * Falls back to the bare prefix when subscriberId is unavailable (e.g. shared
- * mode before a subscriberId is known).
- */
-export function buildDefaultConnectionIdentifier(prefix: string, subscriberId: string | undefined): string {
-  if (!subscriberId) {
+export function buildDefaultConnectionIdentifier(
+  prefix: string,
+  connectionMode: ConnectionMode,
+  subscriberId: string | undefined
+): string | undefined {
+  if (connectionMode === 'shared') {
     return prefix;
   }
+  if (subscriberId === undefined) {
+    return undefined;
+  }
 
-  return `${prefix}-${subscriberId}`;
+  return subscriberId ? `${prefix}-${subscriberId}` : prefix;
 }
