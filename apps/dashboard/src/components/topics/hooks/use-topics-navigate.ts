@@ -13,15 +13,6 @@ export const useTopicsNavigate = () => {
     navigate(buildRoute(ROUTES.TOPICS_CREATE, { environmentSlug }));
   }, [navigate, environmentSlug]);
 
-  const navigateToEditTopicPage = useCallback(
-    (topicKey: string) => {
-      const currentSearchParams = searchParams.toString();
-
-      navigate(buildRoute(ROUTES.TOPICS_EDIT, { topicKey, environmentSlug }) + '?' + currentSearchParams);
-    },
-    [navigate, searchParams, environmentSlug]
-  );
-
   const navigateToTopicsPage = useCallback(() => {
     const currentSearchParams = searchParams.toString();
 
@@ -30,7 +21,6 @@ export const useTopicsNavigate = () => {
 
   return {
     navigateToCreateTopicPage,
-    navigateToEditTopicPage,
     navigateToTopicsPage,
   };
 };

@@ -65,6 +65,66 @@ describe('List Channel Connections - /channel-connections (GET) #novu-v2', () =>
     expect(contextResult.data.some((conn) => conn.identifier === connectionWithContext.identifier)).to.be.true;
   });
 
+  it('should list every subscriber-owned connection across pages when connectionMode is subscriber', async () => {
+    const integration = await createSlackIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const alice = await subscribersService.createSubscriber();
+    const bob = await subscribersService.createSubscriber();
+
+    const aliceConnection = await createConnection(novuClient, integration.identifier, alice.subscriberId);
+    await createConnection(novuClient, integration.identifier, undefined, { tenant: 'acme' });
+    const bobConnection = await createConnection(novuClient, integration.identifier, bob.subscriberId);
+
+    const query = { integrationIdentifier: integration.identifier, connectionMode: 'subscriber', limit: 1 };
+    const { body: firstPage } = await session.testAgent.get('/v1/channel-connections').query(query).expect(200);
+    const { body: secondPage } = await session.testAgent
+      .get('/v1/channel-connections')
+      .query({ ...query, after: firstPage.next })
+      .expect(200);
+
+    const listed = [...firstPage.data, ...secondPage.data].map((conn: { identifier: string }) => conn.identifier);
+    expect(listed).to.have.members([aliceConnection.identifier, bobConnection.identifier]);
+    expect(firstPage.totalCount).to.equal(2);
+    expect(secondPage.next).to.equal(null);
+  });
+
+  it('should treat an empty subscriberId as absent when connectionMode is subscriber', async () => {
+    const integration = await createSlackIntegration(session);
+    const subscriber = await createSubscribersService(session).createSubscriber();
+
+    const subscriberConnection = await createConnection(novuClient, integration.identifier, subscriber.subscriberId);
+    await createConnection(novuClient, integration.identifier, undefined, { tenant: 'acme' });
+
+    const { body } = await session.testAgent
+      .get('/v1/channel-connections')
+      .query({ integrationIdentifier: integration.identifier, connectionMode: 'subscriber', subscriberId: '' })
+      .expect(200);
+
+    expect(body.data.map((conn: { identifier: string }) => conn.identifier)).to.deep.equal([
+      subscriberConnection.identifier,
+    ]);
+  });
+
+  it('should list only shared connections when connectionMode is shared', async () => {
+    const integration = await createSlackIntegration(session);
+    const subscriber = await createSubscribersService(session).createSubscriber();
+
+    await createConnection(novuClient, integration.identifier, subscriber.subscriberId);
+    const sharedConnection = await createConnection(novuClient, integration.identifier, undefined, {
+      tenant: 'acme',
+    });
+
+    const { body } = await session.testAgent
+      .get('/v1/channel-connections')
+      .query({ integrationIdentifier: integration.identifier, connectionMode: 'shared' })
+      .expect(200);
+
+    expect(body.data.map((conn: { identifier: string }) => conn.identifier)).to.deep.equal([
+      sharedConnection.identifier,
+    ]);
+    expect(body.totalCount).to.equal(1);
+  });
+
   it('should support pagination', async () => {
     const integration = await createSlackIntegration(session);
     const subscribersService = createSubscribersService(session);
