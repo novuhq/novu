@@ -1,17 +1,9 @@
 import { ACCESS_RULE_SUBSCRIBER_FIELDS, INTEGRATION_RULE_OPERATORS, isAccessRuleField } from '@novu/shared';
-import isEqual from 'lodash.isequal';
-import {
-  formatQuery,
-  isRuleGroup,
-  type RQBJsonLogic,
-  type RuleGroupType,
-  type RuleGroupTypeAny,
-  type RuleType,
-} from 'react-querybuilder';
-import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
+import { formatQuery, isRuleGroup, type RuleGroupType, type RuleGroupTypeAny, type RuleType } from 'react-querybuilder';
 import { createEmptyConditionsQuery } from '@/components/conditions-editor/conditions-variables';
+import { parseLosslessRule } from '@/components/conditions-editor/lossless-rule';
 import type { ConditionFieldDataType, EnhancedConditionVariable } from '@/components/conditions-editor/types';
-import { customRuleProcessor, parseJsonLogicOptions } from '@/utils/conditions';
+import { customRuleProcessor } from '@/utils/conditions';
 
 export type AgentAccessRule = Record<string, unknown>;
 
@@ -53,12 +45,7 @@ export function parseAccessRule(rule: AgentAccessRule | undefined): RuleGroupTyp
     return createEmptyConditionsQuery();
   }
 
-  const query = withStoredValues(
-    parseJsonLogic(rule as RQBJsonLogic, { generateIDs: true, ...parseJsonLogicOptions })
-  ) as RuleGroupType;
-  const saved = toAccessRule(query, []);
-
-  return isEqual(saved, rule) || isEqual(saved, { and: [rule] }) ? query : null;
+  return parseLosslessRule(rule, { prepare: withStoredValues, format: (query) => toAccessRule(query, []) });
 }
 
 function withStoredValues(group: RuleGroupTypeAny): RuleGroupTypeAny {

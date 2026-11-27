@@ -21,6 +21,7 @@ import {
   mergeConditionVariables,
   toConditionField,
 } from '@/components/conditions-editor/conditions-variables';
+import { UneditableRuleNotice } from '@/components/conditions-editor/uneditable-rule-notice';
 import { Button } from '@/components/primitives/button';
 import { Form, FormField } from '@/components/primitives/form/form';
 import { Panel, PanelContent, PanelHeader } from '@/components/primitives/panel';
@@ -35,9 +36,6 @@ const conditionsSchema = getConditionsSchema({
   message: 'Add at least one condition.',
   path: ['query'],
 });
-
-const UNEDITABLE_RULE_NOTICE =
-  "This rule was written through the API and uses conditions the editor can't show. Edit it through the API.";
 
 const isAllowedVariable = (variable: { name: string }) => getAccessRuleFieldIssue(variable.name) === null;
 
@@ -100,12 +98,7 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
       <Form {...form}>
         <div className="flex flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden px-3 py-5">
           {savedQuery === null ? (
-            <>
-              <p className="text-warning-base text-xs">{UNEDITABLE_RULE_NOTICE}</p>
-              <pre className="bg-bg-weak overflow-x-auto rounded-md p-3 font-mono text-xs">
-                {JSON.stringify(savedRule, null, 2)}
-              </pre>
-            </>
+            <UneditableRuleNotice rule={savedRule} />
           ) : (
             <Panel className="overflow-initial">
               <PanelHeader>

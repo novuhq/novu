@@ -2,14 +2,14 @@ import { IMessageFilter } from '@novu/shared';
 import { useCallback, useMemo, useState } from 'react';
 import { Control, UseFormSetValue, useForm, useWatch } from 'react-hook-form';
 import { RiArrowRightSLine, RiGuideFill, RiInputField } from 'react-icons/ri';
-import { formatQuery, RQBJsonLogic, RuleGroupType } from 'react-querybuilder';
-import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
+import { RQBJsonLogic, RuleGroupType } from 'react-querybuilder';
 import { ConditionsEditor } from '@/components/conditions-editor/conditions-editor';
 import {
   createEmptyConditionsQuery,
   mergeConditionVariables,
   toConditionField,
 } from '@/components/conditions-editor/conditions-variables';
+import { UneditableRuleNotice } from '@/components/conditions-editor/uneditable-rule-notice';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Button } from '@/components/primitives/button';
 import { Form, FormField } from '@/components/primitives/form/form';
@@ -18,13 +18,15 @@ import { NonModalSheet, SheetDescription, SheetTitle } from '@/components/primit
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { useContextTypeVariables } from '@/hooks/use-context-type-variables';
 import { useDataRef } from '@/hooks/use-data-ref';
-import { countConditions, customRuleProcessor, parseJsonLogicOptions } from '@/utils/conditions';
+import { countConditions } from '@/utils/conditions';
 import { cn } from '@/utils/ui';
 import { IntegrationFormData } from '../types';
 import {
   countLegacyIntegrationConditions,
   INTEGRATION_CONDITION_VARIABLES,
   isAllowedIntegrationConditionVariable,
+  parseIntegrationRules,
+  toIntegrationRules,
 } from '../utils/integration-conditions';
 import { IntegrationConditionValueInput } from './integration-condition-value-input';
 
@@ -40,23 +42,6 @@ type IntegrationConditionsDrawerProps = {
 type ConditionsFormValues = {
   query: RuleGroupType;
 };
-
-function queryToRules(query: RuleGroupType): Record<string, unknown> | null {
-  if (!query.rules.length) {
-    return null;
-  }
-
-  const logic = formatQuery(query, {
-    format: 'jsonlogic',
-    ruleProcessor: customRuleProcessor,
-  });
-
-  if (!logic || typeof logic !== 'object') {
-    return null;
-  }
-
-  return logic as Record<string, unknown>;
-}
 
 export function IntegrationConditionsDrawer({
   control,
@@ -78,20 +63,15 @@ export function IntegrationConditionsDrawer({
   );
   const rulesRef = useDataRef(rules);
   const legacyConditionsCount = countLegacyIntegrationConditions(legacyConditions);
-  const buildQuery = useCallback(() => {
-    if (rulesRef.current) {
-      return parseJsonLogic(rulesRef.current as RQBJsonLogic, {
-        generateIDs: true,
-        ...parseJsonLogicOptions,
-      });
-    }
+  const buildQuery = useCallback(
+    () => (rulesRef.current ? parseIntegrationRules(rulesRef.current) : createEmptyConditionsQuery()),
+    [rulesRef]
+  );
 
-    return createEmptyConditionsQuery();
-  }, [rulesRef]);
-
+  const [isUneditable, setIsUneditable] = useState(false);
   const form = useForm<ConditionsFormValues>({
     defaultValues: {
-      query: buildQuery(),
+      query: createEmptyConditionsQuery(),
     },
   });
   const [pendingQuery, setPendingQuery] = useState<RuleGroupType | null>(null);
@@ -101,7 +81,7 @@ export function IntegrationConditionsDrawer({
 
   const applyQuery = (nextQuery: RuleGroupType, unsetPrimary = false) => {
     form.setValue('query', nextQuery);
-    setValue('rules', queryToRules(nextQuery), { shouldDirty: true });
+    setValue('rules', toIntegrationRules(nextQuery), { shouldDirty: true });
 
     if (unsetPrimary) {
       setValue('primary', false, { shouldDirty: true });
@@ -122,7 +102,9 @@ export function IntegrationConditionsDrawer({
 
   const handleOpenChange = (open: boolean) => {
     if (open) {
-      form.reset({ query: buildQuery() });
+      const opened = buildQuery();
+      setIsUneditable(opened === null);
+      form.reset({ query: opened ?? createEmptyConditionsQuery() });
     }
 
     setIsOpen(open);
@@ -156,31 +138,35 @@ export function IntegrationConditionsDrawer({
 
         <Form {...form}>
           <div className="flex flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden px-3 py-5">
-            <Panel className="overflow-initial">
-              <PanelHeader>
-                <RiInputField className="text-feature size-4" />
-                <span className="text-neutral-950">Conditions for {integrationName || 'this integration'}</span>
-              </PanelHeader>
-              <PanelContent className="flex flex-col gap-2 border-solid">
-                <FormField
-                  control={form.control}
-                  name="query"
-                  render={({ field }) => (
-                    <ConditionsEditor
-                      query={field.value}
-                      onQueryChange={handleQueryChange}
-                      fields={integrationConditionFields}
-                      variables={integrationConditionVariables}
-                      enhancedVariables={integrationConditionVariables}
-                      isAllowedVariable={isAllowedIntegrationConditionVariable}
-                      valueInput={IntegrationConditionValueInput}
-                      saveForm={() => undefined}
-                      disabled={isReadOnly}
-                    />
-                  )}
-                />
-              </PanelContent>
-            </Panel>
+            {isUneditable ? (
+              <UneditableRuleNotice rule={rules ?? undefined} />
+            ) : (
+              <Panel className="overflow-initial">
+                <PanelHeader>
+                  <RiInputField className="text-feature size-4" />
+                  <span className="text-neutral-950">Conditions for {integrationName || 'this integration'}</span>
+                </PanelHeader>
+                <PanelContent className="flex flex-col gap-2 border-solid">
+                  <FormField
+                    control={form.control}
+                    name="query"
+                    render={({ field }) => (
+                      <ConditionsEditor
+                        query={field.value}
+                        onQueryChange={handleQueryChange}
+                        fields={integrationConditionFields}
+                        variables={integrationConditionVariables}
+                        enhancedVariables={integrationConditionVariables}
+                        isAllowedVariable={isAllowedIntegrationConditionVariable}
+                        valueInput={IntegrationConditionValueInput}
+                        saveForm={() => undefined}
+                        disabled={isReadOnly}
+                      />
+                    )}
+                  />
+                </PanelContent>
+              </Panel>
+            )}
             <p className="text-foreground-400 text-xs">
               When a notification is sent, the first active integration whose conditions match is used. If none match,
               the primary integration is used.
