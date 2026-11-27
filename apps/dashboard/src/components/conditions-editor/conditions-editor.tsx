@@ -34,6 +34,7 @@ export interface EnhancedField extends Field {
   dataType: ConditionFieldDataType;
   inputType?: string;
   format?: string;
+  allowedValues?: readonly string[];
 }
 
 const ruleActionsClassName = `*:data-[actions="true"]:opacity-0! [&:hover>[data-actions="true"]]:opacity-100! [&>[data-actions="true"]:has(~[data-radix-popper-content-wrapper])]:opacity-100!`;

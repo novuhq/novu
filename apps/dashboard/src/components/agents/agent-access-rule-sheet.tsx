@@ -6,7 +6,7 @@ import { RiInputField, RiShieldUserLine } from 'react-icons/ri';
 import type { RuleGroupType } from 'react-querybuilder';
 import { type AgentResponse, getAgentDetailQueryKey, updateAgent } from '@/api/agents';
 import {
-  ACCESS_RULE_SUBSCRIBER_VARIABLES,
+  ACCESS_RULE_VARIABLES,
   accessRuleFormSchema,
   getAccessRuleFieldIssue,
   parseAccessRule,
@@ -41,7 +41,7 @@ export function AgentAccessRuleSheet({ agent, open, onOpenChange, readOnly }: Ag
   const { currentEnvironment } = useEnvironment();
   const contextTypeVariables = useContextTypeVariables();
   const variables = useMemo(
-    () => mergeConditionVariables([...ACCESS_RULE_SUBSCRIBER_VARIABLES, ...contextTypeVariables]),
+    () => mergeConditionVariables([...ACCESS_RULE_VARIABLES, ...contextTypeVariables]),
     [contextTypeVariables]
   );
   const fields = useMemo(() => variables.map(toConditionField), [variables]);

@@ -1,4 +1,10 @@
-import { ACCESS_RULE_SUBSCRIBER_FIELDS, INTEGRATION_RULE_OPERATORS, isAccessRuleField } from '@novu/shared';
+import {
+  ACCESS_RULE_CHANNEL_PLATFORM_FIELD,
+  ACCESS_RULE_SUBSCRIBER_FIELDS,
+  AGENT_PLATFORMS,
+  INTEGRATION_RULE_OPERATORS,
+  isAccessRuleField,
+} from '@novu/shared';
 import { formatQuery, isRuleGroup, type RuleGroupType, type RuleGroupTypeAny, type RuleType } from 'react-querybuilder';
 import { getConditionsSchema } from '@/components/conditions-editor/conditions-schema';
 import { createEmptyConditionsQuery } from '@/components/conditions-editor/conditions-variables';
@@ -8,15 +14,28 @@ import { customRuleProcessor } from '@/utils/conditions';
 
 export type AgentAccessRule = Record<string, unknown>;
 
-export const ACCESS_RULE_SUBSCRIBER_VARIABLES: EnhancedConditionVariable[] = ACCESS_RULE_SUBSCRIBER_FIELDS.map(
-  (field) => ({ name: `subscriber.${field}`, dataType: field === 'data' ? 'object' : 'string' })
-);
+export const ACCESS_RULE_VARIABLES: EnhancedConditionVariable[] = [
+  ...ACCESS_RULE_SUBSCRIBER_FIELDS.map(
+    (field): EnhancedConditionVariable => ({
+      name: `subscriber.${field}`,
+      dataType: field === 'data' ? 'object' : 'string',
+    })
+  ),
+  {
+    name: ACCESS_RULE_CHANNEL_PLATFORM_FIELD,
+    displayLabel: 'channel.platform (Slack, WhatsApp…)',
+    dataType: 'string',
+    allowedValues: AGENT_PLATFORMS,
+  },
+];
 
 const FIELD_ISSUE =
-  'Access rules can only use subscriber.<field>, subscriber.data.<key>, context.<type>.id or context.<type>.data.<key>';
+  'Access rules can only use subscriber.<field>, subscriber.data.<key>, context.<type>.id, context.<type>.data.<key> or channel.platform';
 const OPERATOR_ISSUE = 'Access rules do not support this operator';
 const DYNAMIC_VALUE_ISSUE = 'Dynamic values are not supported here';
 const DYNAMIC_VALUE = /\{\{.*\}\}/;
+const PLATFORM_VALUE_ISSUE = `Use one of: ${AGENT_PLATFORMS.join(', ')}`;
+const OPERATORS_COMPARING_WHOLE_VALUES = new Set(['=', '!=', 'in', 'notIn']);
 
 export function getAccessRuleFieldIssue(field: string): string | null {
   return isAccessRuleField(field) ? null : FIELD_ISSUE;
@@ -29,9 +48,24 @@ export function getAccessRuleConditionIssue(rule: RuleType): string | null {
     return DYNAMIC_VALUE_ISSUE;
   }
 
+  if (isUnknownPlatform(rule)) {
+    return PLATFORM_VALUE_ISSUE;
+  }
+
   const logic = customRuleProcessor(rule, { parseNumbers: false });
 
   return emitsOnlyAllowedOperators(logic) ? null : OPERATOR_ISSUE;
+}
+
+function isUnknownPlatform({ field, operator, value }: RuleType): boolean {
+  if (field !== ACCESS_RULE_CHANNEL_PLATFORM_FIELD || !OPERATORS_COMPARING_WHOLE_VALUES.has(operator)) {
+    return false;
+  }
+
+  return String(value)
+    .split(',')
+    .map((platform) => platform.trim())
+    .some((platform) => platform !== '' && !(AGENT_PLATFORMS as readonly string[]).includes(platform));
 }
 
 function emitsOnlyAllowedOperators(node: unknown): boolean {

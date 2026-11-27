@@ -10,6 +10,8 @@ import type {
 export type ConditionFieldDataType = FieldDataType | 'mixed' | 'unknown';
 export type EnhancedConditionVariable = Omit<EnhancedLiquidVariable, 'dataType'> & {
   dataType: ConditionFieldDataType;
+  /** The only values the field takes, shown as the placeholder and in the help text. */
+  allowedValues?: readonly string[];
 };
 
 /**

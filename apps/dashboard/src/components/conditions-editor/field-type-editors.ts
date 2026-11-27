@@ -16,12 +16,20 @@ export function shouldUseRelativeDateEditor(operator: string): boolean {
   return isRelativeDateOperator(operator);
 }
 
+function getAllowedValuesPlaceholder(operator: string, allowedValues: readonly string[]): string {
+  return operator === 'in' || operator === 'notIn' ? allowedValues.slice(0, 2).join(', ') : allowedValues[0];
+}
+
 export function getPlaceholderForField(
   fieldName: string,
   operator: string,
   { fieldData }: { fieldData: EnhancedField }
 ): string {
-  const { dataType } = fieldData;
+  const { dataType, allowedValues } = fieldData;
+
+  if (allowedValues?.length) {
+    return getAllowedValuesPlaceholder(operator, allowedValues);
+  }
 
   if (isArrayItemOperator(operator)) {
     return 'item property';
@@ -276,15 +284,21 @@ export function getHelpTextForField(
   { fieldData, allowDynamicValues = true }: { fieldData: EnhancedField; allowDynamicValues?: boolean }
 ): HelpTextInfo {
   const helpText = getHelpTextWithDynamicValues(operator, fieldData.dataType);
+  const literalHelpText = allowDynamicValues
+    ? helpText
+    : {
+        ...helpText,
+        description: helpText.description.replace(DYNAMIC_VALUES_SENTENCE, ''),
+        examples: helpText.examples.filter((example) => !example.includes('{{')),
+      };
 
-  if (allowDynamicValues) {
-    return helpText;
+  if (!fieldData.allowedValues?.length) {
+    return literalHelpText;
   }
 
   return {
-    ...helpText,
-    description: helpText.description.replace(DYNAMIC_VALUES_SENTENCE, ''),
-    examples: helpText.examples.filter((example) => !example.includes('{{')),
+    ...literalHelpText,
+    description: `${literalHelpText.description} Use one of: ${fieldData.allowedValues.join(', ')}.`,
   };
 }
 

@@ -35,6 +35,7 @@ export function toConditionField(variable: EnhancedConditionVariable): EnhancedF
     dataType: variable.dataType,
     inputType: variable.inputType,
     format: variable.format,
+    allowedValues: variable.allowedValues,
   };
 }
 

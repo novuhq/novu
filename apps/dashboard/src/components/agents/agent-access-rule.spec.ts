@@ -1,7 +1,7 @@
 import type { RuleGroupType } from 'react-querybuilder';
 import { describe, expect, it } from 'vitest';
 import {
-  ACCESS_RULE_SUBSCRIBER_VARIABLES,
+  ACCESS_RULE_VARIABLES,
   accessRuleFormSchema,
   parseAccessRule,
   toAccessRule,
@@ -9,7 +9,7 @@ import {
 import type { EnhancedConditionVariable } from '@/components/conditions-editor/types';
 
 const variables: EnhancedConditionVariable[] = [
-  ...ACCESS_RULE_SUBSCRIBER_VARIABLES,
+  ...ACCESS_RULE_VARIABLES,
   { name: 'context.tenant.id', dataType: 'string' },
   { name: 'context.tenant.data.seats', dataType: 'number' },
   { name: 'context.tenant.data.beta', dataType: 'boolean' },
@@ -66,7 +66,7 @@ describe('toAccessRule', () => {
 
 const email = { var: 'subscriber.email' };
 const seats = { var: 'context.tenant.data.seats' };
-const subscriberVariablesOnly = ACCESS_RULE_SUBSCRIBER_VARIABLES;
+const accessRuleVariablesOnly = ACCESS_RULE_VARIABLES;
 
 describe('opening a rule written through the API', () => {
   it.each([
@@ -106,7 +106,7 @@ describe('opening a rule written through the API', () => {
     const opened = parseAccessRule(stored);
 
     expect(opened).not.toBeNull();
-    expect(toAccessRule(opened as RuleGroupType, subscriberVariablesOnly)).toEqual(saved);
+    expect(toAccessRule(opened as RuleGroupType, accessRuleVariablesOnly)).toEqual(saved);
   });
 
   it.each([
@@ -116,15 +116,13 @@ describe('opening a rule written through the API', () => {
     const opened = parseAccessRule({ '==': [seats, 5] }) as RuleGroupType;
     const edited = { ...opened, rules: [{ ...opened.rules[0], ...change }] };
 
-    expect(toAccessRule(edited, subscriberVariablesOnly)).toEqual({ and: [saved] });
+    expect(toAccessRule(edited, accessRuleVariablesOnly)).toEqual({ and: [saved] });
   });
 });
 
 describe('validating the access rule form', () => {
-  function valueIssues(value: string) {
-    const result = accessRuleFormSchema.safeParse({
-      query: query({ field: 'subscriber.email', operator: '=', value }),
-    });
+  function valueIssues(value: string, condition = { field: 'subscriber.email', operator: '=' }) {
+    const result = accessRuleFormSchema.safeParse({ query: query({ ...condition, value }) });
 
     return result.success ? [] : result.error.issues.filter((issue) => issue.path.at(-1) === 'value');
   }
@@ -137,5 +135,15 @@ describe('validating the access rule form', () => {
 
   it('accepts a literal value', () => {
     expect(valueIssues('ada@acme.com')).toEqual([]);
+  });
+
+  it.each([
+    { operator: '=', value: 'slak', valid: false },
+    { operator: 'notIn', value: 'slack, sms', valid: false },
+    { operator: '=', value: 'web_chat', valid: true },
+    { operator: 'in', value: 'slack, teams', valid: true },
+    { operator: 'contains', value: 'sla', valid: true },
+  ])('channel.platform $operator "$value" is valid: $valid', ({ operator, value, valid }) => {
+    expect(valueIssues(value, { field: 'channel.platform', operator })).toHaveLength(valid ? 0 : 1);
   });
 });
