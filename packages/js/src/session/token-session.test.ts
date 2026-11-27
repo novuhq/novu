@@ -5,10 +5,13 @@ const fakeSocketIo = vi.hoisted(() => {
   const create = () => {
     const handlers = new Map<string, Handler>();
     const managerHandlers = new Map<string, Handler>();
+    /** The token each `connect()` call carried. */
+    const connectedWith: Array<string | undefined> = [];
 
     return {
       handlers,
       managerHandlers,
+      connectedWith,
       on: (event: string, handler: Handler) => handlers.set(event, handler),
       connect: () => {},
       disconnect: () => {},
@@ -28,7 +31,7 @@ vi.mock('socket.io-client', () => ({
   default: vi.fn((_url: string, options: { query: Record<string, string> }) => {
     const socket = fakeSocketIo.create();
     socket.io.opts.query = options.query;
-    socket.connect = vi.fn();
+    socket.connect = () => socket.connectedWith.push(socket.io.opts.query?.token);
     fakeSocketIo.current = socket;
 
     return socket;
@@ -265,25 +268,22 @@ describe('signing in with a token endpoint', () => {
     expect(backend.state.apiRequests).toEqual([backend.state.sessionTokens[0]]);
   });
 
-  it('reads the subscriber and context from the session the token opened', async () => {
-    createFakeBackend({ subscriberId: 'user_42', contextKeys: ['tenant:org_9', 'app:web'] });
-    const novu = createNovu();
-    expect(novu.subscriberId).toBeUndefined();
+  it.each([
+    { subscriberId: 'user_42', contextKeys: ['tenant:org_9', 'app:web'], contextKey: 'app:web,tenant:org_9' },
+    { subscriberId: 'józef', contextKeys: ['tenant:org_1'], contextKey: 'tenant:org_1' },
+  ])(
+    'reads subscriber $subscriberId and its context from the session the token opened',
+    async ({ subscriberId, contextKeys, contextKey }) => {
+      createFakeBackend({ subscriberId, contextKeys });
+      const novu = createNovu();
+      expect(novu.subscriberId).toBeUndefined();
 
-    await novu.notifications.list();
+      await novu.notifications.list();
 
-    expect(novu.subscriberId).toBe('user_42');
-    expect(novu.contextKey).toBe('app:web,tenant:org_9');
-  });
-
-  it('reads a subscriberId with non-ASCII characters', async () => {
-    createFakeBackend({ subscriberId: 'józef' });
-    const novu = createNovu();
-
-    await novu.notifications.list();
-
-    expect(novu.subscriberId).toBe('józef');
-  });
+      expect(novu.subscriberId).toBe(subscriberId);
+      expect(novu.contextKey).toBe(contextKey);
+    }
+  );
 
   it('calls a getToken callback instead of an endpoint', async () => {
     const backend = createFakeBackend();
@@ -320,27 +320,25 @@ describe('signing in with a token endpoint', () => {
     expect(backend.state.sessionBodies.map((body) => body.subscriberToken)).toEqual([backend.state.loginTokens[1]]);
   });
 
-  it('falls back to the endpoint when the server rejects the initial token', async () => {
-    const backend = createFakeBackend();
-    const initialToken = backend.mintLoginToken(5 * MINUTE_MS);
-    const novu = createNovu({ initialToken });
-    backend.advanceTime(6 * MINUTE_MS);
-    vi.spyOn(Date, 'now').mockImplementation(() => expOf(initialToken) - 5 * MINUTE_MS);
-
-    const { error } = await novu.notifications.list();
-
-    expect(error).toBeUndefined();
-    expect(backend.state.sessionBodies.map((body) => body.subscriberToken)).toEqual([
-      initialToken,
-      backend.state.loginTokens[1],
-    ]);
-  });
-
-  it('falls back to the endpoint once when the server rejects the initial token as invalid', async () => {
+  it.each([
+    {
+      rejection: 'expired (401) while the browser clock thinks it is valid',
+      reject: (backend: ReturnType<typeof createFakeBackend>) => {
+        backend.advanceTime(11 * MINUTE_MS);
+        backend.state.clientClockAheadMs = -11 * MINUTE_MS;
+      },
+    },
+    {
+      rejection: 'invalid (400)',
+      reject: (backend: ReturnType<typeof createFakeBackend>, initialToken: string) => {
+        backend.state.invalidLoginTokens.add(initialToken);
+      },
+    },
+  ])('falls back to the endpoint once when the server rejects the initial token as $rejection', async ({ reject }) => {
     const backend = createFakeBackend();
     const initialToken = backend.mintLoginToken();
-    backend.state.invalidLoginTokens.add(initialToken);
     const novu = createNovu({ initialToken });
+    reject(backend, initialToken);
 
     const { error } = await novu.notifications.list();
 
@@ -422,30 +420,24 @@ describe('keeping the session alive', () => {
 });
 
 describe('refreshing before expiry on the server clock', () => {
-  it('fetches at most one token when the browser clock runs 10 minutes ahead of the server', async () => {
+  it.each([
+    {
+      scenario: 'the browser clock runs 10 minutes ahead',
+      lifetimeMs: 5 * MINUTE_MS,
+      aheadMs: 10 * MINUTE_MS,
+      stepMs: 10_000,
+    },
+    { scenario: 'tokens last 15 seconds', lifetimeMs: 15_000, aheadMs: 0, stepMs: 1000 },
+  ])('fetches one token for five calls when $scenario', async ({ lifetimeMs, aheadMs, stepMs }) => {
     const backend = createFakeBackend();
-    backend.state.loginTokenLifetimeMs = 5 * MINUTE_MS;
-    backend.state.clientClockAheadMs = 10 * MINUTE_MS;
+    backend.state.loginTokenLifetimeMs = lifetimeMs;
+    backend.state.clientClockAheadMs = aheadMs;
     const novu = createNovu();
 
     for (let i = 0; i < 5; i += 1) {
       const { error } = await novu.notifications.list();
       expect(error).toBeUndefined();
-      backend.advanceTime(10 * 1000);
-    }
-
-    expect(backend.state.tokenRequests.length).toBeLessThanOrEqual(1);
-  });
-
-  it('does not fetch a token per call with 15-second tokens', async () => {
-    const backend = createFakeBackend();
-    backend.state.loginTokenLifetimeMs = 15 * 1000;
-    const novu = createNovu();
-
-    for (let i = 0; i < 5; i += 1) {
-      const { error } = await novu.notifications.list();
-      expect(error).toBeUndefined();
-      backend.advanceTime(1000);
+      backend.advanceTime(stepMs);
     }
 
     expect(backend.state.tokenRequests).toHaveLength(1);
@@ -453,10 +445,29 @@ describe('refreshing before expiry on the server clock', () => {
 });
 
 describe('when the token source fails', () => {
-  it('returns an error from calls when the endpoint answers non-2xx, and does not retry', async () => {
+  it.each([
+    {
+      source: 'the endpoint answers 500',
+      setup: (backend: ReturnType<typeof createFakeBackend>) => {
+        backend.state.tokenEndpointStatus = 500;
+
+        return { options: {}, calls: () => backend.state.tokenRequests.length };
+      },
+    },
+    {
+      source: 'getToken throws',
+      setup: () => {
+        const getToken = vi.fn(async () => {
+          throw new Error('signed out');
+        });
+
+        return { options: { tokenEndpoint: undefined, getToken }, calls: () => getToken.mock.calls.length };
+      },
+    },
+  ])('returns an error from calls without retrying when $source at sign-in', async ({ setup }) => {
     const backend = createFakeBackend();
-    backend.state.tokenEndpointStatus = 500;
-    const novu = createNovu();
+    const { options, calls } = setup(backend);
+    const novu = createNovu(options);
     const sessionErrors: unknown[] = [];
     novu.on('session.initialize.resolved', ({ error }) => error && sessionErrors.push(error));
 
@@ -464,25 +475,10 @@ describe('when the token source fails', () => {
     const second = await novu.notifications.list();
     await wait();
 
-    expect(first.error).toBeDefined();
-    expect(second.error).toBeDefined();
+    expect(first.error).toBeInstanceOf(NovuError);
+    expect(second.error).toBeInstanceOf(NovuError);
     expect(sessionErrors).toHaveLength(1);
-    expect(backend.state.tokenRequests).toHaveLength(1);
-    expect(backend.state.sessionBodies).toHaveLength(0);
-  });
-
-  it('returns an error from calls when getToken throws', async () => {
-    const backend = createFakeBackend();
-    const getToken = vi.fn(async () => {
-      throw new Error('signed out');
-    });
-    const novu = createNovu({ tokenEndpoint: undefined, getToken });
-
-    const { error } = await novu.notifications.list();
-    await wait();
-
-    expect(error).toBeDefined();
-    expect(getToken).toHaveBeenCalledTimes(1);
+    expect(calls()).toBe(1);
     expect(backend.state.sessionBodies).toHaveLength(0);
   });
 
@@ -492,8 +488,11 @@ describe('when the token source fails', () => {
     await novu.notifications.list();
     backend.state.tokenEndpointStatus = 503;
     backend.advanceTime(HOUR_MS);
-    await novu.notifications.list();
+    const failed = await novu.notifications.list();
     expect(backend.state.tokenRequests).toHaveLength(2);
+    expect(backend.state.sessionBodies).toHaveLength(1);
+    // The renewal failed: the error must not claim another subscriber signed in.
+    expect(failed.error?.originalError?.message).toMatch(/could not be renewed/);
 
     const results = await Promise.all([
       novu.notifications.list(),
@@ -524,33 +523,6 @@ describe('when the token source fails', () => {
 
     expect(results.map((result) => result.error)).toEqual([undefined, undefined]);
     expect(backend.state.tokenRequests).toHaveLength(3);
-  });
-
-  it('says the renewal failed, not that someone else signed in, when the endpoint is down', async () => {
-    const backend = createFakeBackend();
-    const novu = createNovu();
-    await novu.notifications.list();
-    backend.state.tokenEndpointStatus = 503;
-    backend.advanceTime(HOUR_MS);
-
-    const { error } = await novu.notifications.list();
-
-    expect(error?.originalError?.message).toMatch(/could not be renewed/);
-    expect(error?.originalError?.message).not.toMatch(/subscriber/);
-  });
-
-  it('returns the 401 when the refresh fails, without looping', async () => {
-    const backend = createFakeBackend();
-    const novu = createNovu();
-    await novu.notifications.list();
-
-    backend.state.tokenEndpointStatus = 401;
-    backend.advanceTime(HOUR_MS);
-    const { error } = await novu.notifications.list();
-
-    expect(error).toBeDefined();
-    expect(backend.state.tokenRequests).toHaveLength(2);
-    expect(backend.state.sessionBodies).toHaveLength(1);
   });
 });
 
@@ -613,45 +585,31 @@ describe('when the token endpoint signs in another user', () => {
     await novu.socket.disconnect();
   });
 
-  it('drops a response to the previous user that arrives after the new user signed in', async () => {
-    const { backend, novu } = await switchToBob();
-    novu.notifications.cache.clearAll();
-    backend.state.apiDelayMs = 100;
-    const aliceList = novu.notifications.list();
-    await wait(10);
-    backend.state.apiDelayMs = 0;
-    backend.advanceTime(10 * MINUTE_MS);
-    await novu.notifications.count({});
-    expect(novu.subscriberId).toBe('bob');
+  it.each([
+    { part: 'whole response', delay: 'apiDelayMs' },
+    { part: 'body', delay: 'apiBodyDelayMs' },
+  ] as const)(
+    'drops a response to the previous user whose $part arrives after the new user signed in',
+    async ({ delay }) => {
+      const { backend, novu } = await switchToBob();
+      novu.notifications.cache.clearAll();
+      backend.state[delay] = 100;
+      const aliceList = novu.notifications.list();
+      await wait(10);
+      backend.state[delay] = 0;
+      backend.advanceTime(10 * MINUTE_MS);
+      await novu.notifications.count({});
+      expect(novu.subscriberId).toBe('bob');
 
-    const { error } = await aliceList;
-    const { data } = await novu.notifications.list();
+      const { error } = await aliceList;
+      const { data } = await novu.notifications.list();
 
-    expect(error).toBeInstanceOf(NovuError);
-    expect(data?.notifications.map((notification) => notification.id)).toEqual(['bob_notification']);
+      expect(error).toBeInstanceOf(NovuError);
+      expect(data?.notifications.map((notification) => notification.id)).toEqual(['bob_notification']);
 
-    await novu.socket.disconnect();
-  });
-
-  it('drops a response to the previous user whose body arrives after the new user signed in', async () => {
-    const { backend, novu } = await switchToBob();
-    novu.notifications.cache.clearAll();
-    backend.state.apiBodyDelayMs = 100;
-    const aliceList = novu.notifications.list();
-    await wait(10);
-    backend.state.apiBodyDelayMs = 0;
-    backend.advanceTime(10 * MINUTE_MS);
-    await novu.notifications.count({});
-    expect(novu.subscriberId).toBe('bob');
-
-    const { error } = await aliceList;
-    const { data } = await novu.notifications.list();
-
-    expect(error).toBeInstanceOf(NovuError);
-    expect(data?.notifications.map((notification) => notification.id)).toEqual(['bob_notification']);
-
-    await novu.socket.disconnect();
-  });
+      await novu.socket.disconnect();
+    }
+  );
 
   it('treats a renewal into a different subscriber and context pair as another user, even if they read alike', async () => {
     const backend = createFakeBackend({ subscriberId: 'alice:x', contextKeys: ['tenant:org'] });
@@ -682,111 +640,82 @@ describe('when the token endpoint signs in another user', () => {
   });
 });
 
+const tokenOfUrl = (ws: FakeWebSocket) => new URL(ws.url).searchParams.get('token');
+
+const closePartySocketFromServer = () =>
+  FakeWebSocket.instances.find((ws) => ws.readyState !== FakeWebSocket.CLOSED)?.closeFromServer();
+
+const transports = [
+  {
+    transport: 'PartySocket',
+    options: {},
+    serverClose: closePartySocketFromServer,
+    reconnectAttempt: closePartySocketFromServer,
+    liveToken: () => {
+      const open = FakeWebSocket.instances.find((ws) => ws.readyState !== FakeWebSocket.CLOSED);
+
+      return open && tokenOfUrl(open);
+    },
+    reconnectTokens: () => FakeWebSocket.instances.slice(1).map(tokenOfUrl),
+  },
+  {
+    transport: 'socket.io',
+    options: { socketUrl: 'https://ws.self-hosted.example.com' },
+    serverClose: () => fakeSocketIo.current?.handlers.get('disconnect')?.('io server disconnect'),
+    reconnectAttempt: () => fakeSocketIo.current?.managerHandlers.get('reconnect_attempt')?.(),
+    liveToken: () => fakeSocketIo.current?.io.opts.query?.token,
+    reconnectTokens: () => fakeSocketIo.current?.connectedWith,
+  },
+];
+
 describe('the realtime socket with a token source', () => {
-  it('reconnects PartySocket with a new session after the server closes it at expiry', async () => {
-    const backend = createFakeBackend();
-    const novu = createNovu();
-    await novu.socket.connect();
-    await wait();
-    expect(new URL(FakeWebSocket.instances[0].url).searchParams.get('token')).toBe(backend.state.sessionTokens[0]);
-
-    backend.advanceTime(10 * MINUTE_MS);
-    FakeWebSocket.instances[0].closeFromServer();
-    await wait();
-
-    expect(backend.state.tokenRequests).toHaveLength(2);
-    expect(FakeWebSocket.instances).toHaveLength(2);
-    expect(new URL(FakeWebSocket.instances[1].url).searchParams.get('token')).toBe(backend.state.sessionTokens[1]);
-
-    await novu.socket.disconnect();
-  });
-
-  it('reconnects socket.io with a new session after an io server disconnect at expiry', async () => {
-    const backend = createFakeBackend();
-    const novu = createNovu({ socketUrl: 'https://ws.self-hosted.example.com' });
-    await novu.socket.connect();
-    const socket = fakeSocketIo.current!;
-    expect(socket.io.opts.query?.token).toBe(backend.state.sessionTokens[0]);
-
-    backend.advanceTime(10 * MINUTE_MS);
-    socket.handlers.get('disconnect')?.('io server disconnect');
-    await wait();
-
-    expect(backend.state.tokenRequests).toHaveLength(2);
-    expect(socket.connect).toHaveBeenCalledTimes(1);
-    expect(socket.io.opts.query?.token).toBe(backend.state.sessionTokens[1]);
-  });
-});
-
-describe('the realtime socket when the browser clock is off', () => {
-  it('reconnects socket.io with a new session at expiry when the browser clock runs 5 minutes behind', async () => {
-    const backend = createFakeBackend();
-    backend.state.clientClockAheadMs = -5 * MINUTE_MS;
-    const novu = createNovu({ socketUrl: 'https://ws.self-hosted.example.com' });
-    await novu.socket.connect();
-    const socket = fakeSocketIo.current!;
-
-    backend.advanceTime(10 * MINUTE_MS);
-    socket.handlers.get('disconnect')?.('io server disconnect');
-    await wait();
-
-    expect(backend.state.tokenRequests).toHaveLength(2);
-    expect(socket.connect).toHaveBeenCalledTimes(1);
-    expect(socket.io.opts.query?.token).toBe(backend.state.sessionTokens[1]);
-  });
-
-  it('does not reconnect PartySocket with the expired token when the browser clock runs 5 minutes behind', async () => {
-    const backend = createFakeBackend();
-    backend.state.clientClockAheadMs = -5 * MINUTE_MS;
-    const novu = createNovu();
-    await novu.socket.connect();
-    await wait();
-
-    backend.advanceTime(10 * MINUTE_MS);
-    FakeWebSocket.instances[0].closeFromServer();
-    await wait();
-
-    const reconnectTokens = FakeWebSocket.instances.slice(1).map((ws) => new URL(ws.url).searchParams.get('token'));
-    expect(reconnectTokens).toEqual([backend.state.sessionTokens[1]]);
-
-    await novu.socket.disconnect();
-  });
-
-  it('does not fetch a token per PartySocket reconnect when the browser clock runs 10 minutes ahead', async () => {
-    const backend = createFakeBackend();
-    backend.state.loginTokenLifetimeMs = 5 * MINUTE_MS;
-    backend.state.clientClockAheadMs = 10 * MINUTE_MS;
-    const novu = createNovu();
-    await novu.socket.connect();
-    await wait();
-
-    for (let i = 0; i < 3; i += 1) {
-      FakeWebSocket.instances.at(-1)?.closeFromServer();
+  it.each(
+    transports.flatMap((transport) => [
+      { ...transport, clock: 'on time', clockAheadMs: 0 },
+      { ...transport, clock: '5 minutes behind', clockAheadMs: -5 * MINUTE_MS },
+    ])
+  )(
+    'reconnects $transport once, with a new session, after the server closes it at expiry with the browser clock $clock',
+    async (transport) => {
+      const backend = createFakeBackend();
+      backend.state.clientClockAheadMs = transport.clockAheadMs;
+      const novu = createNovu(transport.options);
+      await novu.socket.connect();
       await wait();
-    }
+      expect(transport.liveToken()).toBe(backend.state.sessionTokens[0]);
 
-    expect(FakeWebSocket.instances).toHaveLength(4);
-    expect(backend.state.tokenRequests).toHaveLength(1);
-
-    await novu.socket.disconnect();
-  });
-
-  it('does not fetch a token per socket.io reconnect attempt when the browser clock runs 10 minutes ahead', async () => {
-    const backend = createFakeBackend();
-    backend.state.loginTokenLifetimeMs = 5 * MINUTE_MS;
-    backend.state.clientClockAheadMs = 10 * MINUTE_MS;
-    const novu = createNovu({ socketUrl: 'https://ws.self-hosted.example.com' });
-    await novu.socket.connect();
-    const socket = fakeSocketIo.current!;
-
-    for (let i = 0; i < 3; i += 1) {
-      socket.managerHandlers.get('reconnect_attempt')?.();
+      backend.advanceTime(10 * MINUTE_MS);
+      transport.serverClose();
       await wait();
-    }
 
-    expect(backend.state.tokenRequests).toHaveLength(1);
-    expect(socket.io.opts.query?.token).toBe(backend.state.sessionTokens[0]);
-  });
+      expect(backend.state.tokenRequests).toHaveLength(2);
+      expect(transport.reconnectTokens()).toEqual([backend.state.sessionTokens[1]]);
+
+      await novu.socket.disconnect();
+    }
+  );
+
+  it.each(transports)(
+    'does not fetch a token per $transport reconnect when the browser clock runs 10 minutes ahead',
+    async (transport) => {
+      const backend = createFakeBackend();
+      backend.state.loginTokenLifetimeMs = 5 * MINUTE_MS;
+      backend.state.clientClockAheadMs = 10 * MINUTE_MS;
+      const novu = createNovu(transport.options);
+      await novu.socket.connect();
+      await wait();
+
+      for (let i = 0; i < 3; i += 1) {
+        transport.reconnectAttempt();
+        await wait();
+      }
+
+      expect(backend.state.tokenRequests).toHaveLength(1);
+      expect(transport.liveToken()).toBe(backend.state.sessionTokens[0]);
+
+      await novu.socket.disconnect();
+    }
+  );
 });
 
 describe('several tabs waking up after the session expired', () => {

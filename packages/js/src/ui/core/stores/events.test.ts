@@ -10,8 +10,6 @@ const toBase64Url = (value: object) =>
 const createJwt = (claims: Record<string, unknown>) =>
   `${toBase64Url({ alg: 'HS256', typ: 'JWT' })}.${toBase64Url({ ...claims, exp: Math.floor(Date.now() / 1000) + 600 })}.sig`;
 
-const subscriberOf = (token: string) => JSON.parse(atob(token.split('.')[1])).subscriberId as string;
-
 class FakeWebSocket extends EventTarget {
   static CONNECTING = 0;
   static OPEN = 1;
@@ -93,13 +91,6 @@ const signInAs = (subscriberId: string, contextKeys: string[] = []) =>
     socketOptions: { minReconnectionDelay: 10, maxReconnectionDelay: 20 },
   });
 
-const unreadCountFor = (subscriberId: string, total: number) => {
-  const socket = FakeWebSocket.instances.find(
-    (ws) => subscriberOf(new URL(ws.url).searchParams.get('token') ?? '') === subscriberId
-  );
-  dispatchUnreadCount(socket, total);
-};
-
 const dispatchUnreadCount = (socket: FakeWebSocket | undefined, total: number) => {
   socket?.dispatchEvent(
     new MessageEvent('message', {
@@ -140,36 +131,26 @@ afterEach(() => {
 });
 
 describe('websocket events across tabs signed in with a token source', () => {
-  it('keeps the counts of two subscribers apart in one browser', async () => {
-    const alice = listen(signInAs('alice'));
-    const bob = listen(signInAs('bob'));
-    await wait();
+  it.each([
+    { pair: 'two subscribers', first: ['alice', []], second: ['bob', []] },
+    { pair: 'two identities that read alike when joined', first: ['alice:c=x', ['y']], second: ['alice', ['x:c=y']] },
+  ] as Array<{ pair: string; first: [string, string[]]; second: [string, string[]] }>)(
+    'keeps the counts of $pair apart in one browser',
+    async ({ first, second }) => {
+      const firstTab = listen(signInAs(...first));
+      await wait();
+      const secondTab = listen(signInAs(...second));
+      await wait();
 
-    unreadCountFor('alice', 3);
-    unreadCountFor('bob', 7);
-    await wait();
+      dispatchUnreadCount(FakeWebSocket.instances[0], 3);
+      dispatchUnreadCount(FakeWebSocket.instances[1], 7);
+      await wait();
 
-    expect(alice.received.map((count) => count.total)).toEqual([3]);
-    expect(bob.received.map((count) => count.total)).toEqual([7]);
+      expect(firstTab.received.map((count) => count.total)).toEqual([3]);
+      expect(secondTab.received.map((count) => count.total)).toEqual([7]);
 
-    alice.dispose();
-    bob.dispose();
-  });
-
-  it('keeps two subscribers apart whose subscriberId and context read alike when joined', async () => {
-    const first = listen(signInAs('alice:c=x', ['y']));
-    await wait();
-    const second = listen(signInAs('alice', ['x:c=y']));
-    await wait();
-
-    dispatchUnreadCount(FakeWebSocket.instances[0], 3);
-    dispatchUnreadCount(FakeWebSocket.instances[1], 7);
-    await wait();
-
-    expect(first.received.map((count) => count.total)).toEqual([3]);
-    expect(second.received.map((count) => count.total)).toEqual([7]);
-
-    first.dispose();
-    second.dispose();
-  });
+      firstTab.dispose();
+      secondTab.dispose();
+    }
+  );
 });
