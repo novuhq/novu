@@ -2,6 +2,7 @@ import type { RuleGroupType } from 'react-querybuilder';
 import { describe, expect, it } from 'vitest';
 import {
   ACCESS_RULE_VARIABLES,
+  type AccessRuleDraft,
   accessRuleFormSchema,
   parseAccessRule,
   toAccessRule,
@@ -55,12 +56,18 @@ describe('toAccessRule', () => {
       rule: { and: [{ '==': [{ var: 'context.tenant.id' }, '42'] }] },
     },
   ])('$name', ({ query, rule }) => {
-    expect(toAccessRule(query, variables)).toEqual(rule);
+    expect(toAccessRule({ polarity: 'allow', query }, variables)).toEqual(rule);
   });
 
   it('returns null for a rule without conditions, which the API rejects', () => {
-    expect(toAccessRule(query(), variables)).toBeNull();
-    expect(toAccessRule({ combinator: 'and', rules: [{ combinator: 'or', rules: [] }] }, variables)).toBeNull();
+    expect(toAccessRule({ polarity: 'allow', query: query() }, variables)).toBeNull();
+    expect(toAccessRule({ polarity: 'deny', query: query() }, variables)).toBeNull();
+    expect(
+      toAccessRule(
+        { polarity: 'allow', query: { combinator: 'and', rules: [{ combinator: 'or', rules: [] }] } },
+        variables
+      )
+    ).toBeNull();
   });
 });
 
@@ -106,23 +113,57 @@ describe('opening a rule written through the API', () => {
     const opened = parseAccessRule(stored);
 
     expect(opened).not.toBeNull();
-    expect(toAccessRule(opened as RuleGroupType, accessRuleVariablesOnly)).toEqual(saved);
+    expect(toAccessRule(opened as AccessRuleDraft, accessRuleVariablesOnly)).toEqual(saved);
   });
 
   it.each([
     { name: 'field', change: { field: 'subscriber.email' }, saved: { '==': [email, '5'] } },
     { name: 'operator', change: { operator: 'in' }, saved: { in: [seats, ['5']] } },
   ])('types the value afresh when the $name of an opened condition changes', ({ change, saved }) => {
-    const opened = parseAccessRule({ '==': [seats, 5] }) as RuleGroupType;
-    const edited = { ...opened, rules: [{ ...opened.rules[0], ...change }] };
+    const opened = parseAccessRule({ '==': [seats, 5] }) as AccessRuleDraft;
+    const edited = { ...opened, query: { ...opened.query, rules: [{ ...opened.query.rules[0], ...change }] } };
 
     expect(toAccessRule(edited, accessRuleVariablesOnly)).toEqual({ and: [saved] });
   });
 });
 
+describe("opening a Don't reply to rule", () => {
+  const blockList = { in: [email, ['a@x.com', 'b@x.com']] };
+
+  it.each([
+    {
+      name: 'a single condition',
+      stored: { '!': blockList },
+      fields: ['subscriber.email'],
+      saved: { '!': { and: [blockList] } },
+    },
+    {
+      name: 'a group of conditions',
+      stored: { '!': { and: [blockList, { '==': [seats, 5] }] } },
+      fields: ['subscriber.email', 'context.tenant.data.seats'],
+    },
+  ])('opens $name under the ! as the conditions and saves it back', ({ stored, fields, saved = stored }) => {
+    const opened = parseAccessRule(stored) as AccessRuleDraft;
+
+    expect(opened.polarity).toBe('deny');
+    expect(opened.query.rules.map((rule) => 'field' in rule && rule.field)).toEqual(fields);
+    expect(toAccessRule(opened, accessRuleVariablesOnly)).toEqual(saved);
+  });
+
+  it('reports a negated rule the editor would change as not editable', () => {
+    expect(parseAccessRule({ '!': { notIn: [email, ['a@x.com']] } })).toBeNull();
+  });
+
+  it('opens a rule that only starts with a negated condition as Reply to', () => {
+    const stored = { and: [{ '!': blockList }] };
+
+    expect(parseAccessRule(stored)?.polarity).toBe('allow');
+  });
+});
+
 describe('validating the access rule form', () => {
   function valueIssues(value: string, condition = { field: 'subscriber.email', operator: '=' }) {
-    const result = accessRuleFormSchema.safeParse({ query: query({ ...condition, value }) });
+    const result = accessRuleFormSchema.safeParse({ polarity: 'allow', query: query({ ...condition, value }) });
 
     return result.success ? [] : result.error.issues.filter((issue) => issue.path.at(-1) === 'value');
   }

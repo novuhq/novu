@@ -5,7 +5,15 @@ import {
   INTEGRATION_RULE_OPERATORS,
   isAccessRuleField,
 } from '@novu/shared';
-import { formatQuery, isRuleGroup, type RuleGroupType, type RuleGroupTypeAny, type RuleType } from 'react-querybuilder';
+import {
+  formatQuery,
+  generateID,
+  isRuleGroup,
+  type RuleGroupType,
+  type RuleGroupTypeAny,
+  type RuleType,
+} from 'react-querybuilder';
+import { z } from 'zod';
 import { getConditionsSchema } from '@/components/conditions-editor/conditions-schema';
 import { createEmptyConditionsQuery } from '@/components/conditions-editor/conditions-variables';
 import { parseLosslessRule } from '@/components/conditions-editor/lossless-rule';
@@ -80,21 +88,83 @@ function emitsOnlyAllowedOperators(node: unknown): boolean {
 export const accessRuleFormSchema = getConditionsSchema({
   getFieldIssue: getAccessRuleFieldIssue,
   getOperatorIssue: getAccessRuleConditionIssue,
-}).refine(({ query }) => hasConditions(query as RuleGroupType), {
-  message: 'Add at least one condition.',
-  path: ['query'],
-});
+})
+  .extend({ polarity: z.enum(['allow', 'deny']) })
+  .refine(({ query }) => hasConditions(query as RuleGroupType), {
+    message: 'Add at least one condition.',
+    path: ['query'],
+  });
 
 export function hasConditions(group: RuleGroupTypeAny): boolean {
   return group.rules.some((rule) => typeof rule !== 'string' && (!isRuleGroup(rule) || hasConditions(rule)));
 }
 
-export function parseAccessRule(rule: AgentAccessRule | undefined): RuleGroupType | null {
+/** Reply to subscribers who match the conditions (`allow`), or to everyone but them (`deny`, stored as `{ "!": conditions }`). */
+export type AccessRulePolarity = 'allow' | 'deny';
+
+export type AccessRuleDraft = { polarity: AccessRulePolarity; query: RuleGroupType };
+
+export function parseAccessRule(rule: AgentAccessRule | undefined): AccessRuleDraft | null {
   if (!rule) {
-    return createEmptyConditionsQuery();
+    return { polarity: 'allow', query: createEmptyConditionsQuery() };
   }
 
-  return parseLosslessRule(rule, { prepare: withStoredValues, format: (query) => toAccessRule(query, []) });
+  const negated = getNegatedConditions(rule);
+  const query = parseLosslessRule(negated ?? rule, {
+    prepare: withStoredValues,
+    format: (conditions) => formatConditions(conditions, []),
+  });
+
+  return query && { polarity: negated ? 'deny' : 'allow', query };
+}
+
+export const ACCESS_RULE_POLARITIES: Record<AccessRulePolarity, { label: string; outcome: string }> = {
+  allow: {
+    label: 'Reply to',
+    outcome: "Everyone else gets a short refusal. People who aren't subscribers yet are always refused.",
+  },
+  deny: {
+    label: "Don't reply to",
+    outcome:
+      "Everyone else who is a known subscriber gets a reply. People who aren't subscribers yet are always refused.",
+  },
+};
+
+type StartingPoint = {
+  label: string;
+  polarity: AccessRulePolarity;
+  condition: { field: string; operator: string; value: string };
+};
+
+/** One condition each, which the user then completes. Shown while the rule has no conditions. */
+export const ACCESS_RULE_STARTING_POINTS: StartingPoint[] = [
+  {
+    label: 'Paid plans only',
+    polarity: 'allow',
+    condition: { field: 'context.tenant.data.plan', operator: 'in', value: '' },
+  },
+  { label: 'Staff only', polarity: 'allow', condition: { field: 'subscriber.email', operator: 'endsWith', value: '' } },
+  {
+    label: 'Beta users',
+    polarity: 'allow',
+    condition: { field: 'subscriber.data.betaAccess', operator: '=', value: 'true' },
+  },
+  { label: 'Specific people', polarity: 'deny', condition: { field: 'subscriber.email', operator: 'in', value: '' } },
+];
+
+export function startFrom({ polarity, condition }: StartingPoint): AccessRuleDraft {
+  return { polarity, query: { ...createEmptyConditionsQuery(), rules: [{ id: generateID(), ...condition }] } };
+}
+
+function getNegatedConditions(rule: AgentAccessRule): AgentAccessRule | null {
+  const [operator, ...others] = Object.keys(rule);
+  const conditions = rule['!'];
+
+  if (operator !== '!' || others.length > 0) return null;
+
+  return conditions !== null && typeof conditions === 'object' && !Array.isArray(conditions)
+    ? (conditions as AgentAccessRule)
+    : null;
 }
 
 function withStoredValues(group: RuleGroupTypeAny): RuleGroupTypeAny {
@@ -114,7 +184,16 @@ function withStoredValues(group: RuleGroupTypeAny): RuleGroupTypeAny {
   } as RuleGroupTypeAny;
 }
 
-export function toAccessRule(query: RuleGroupType, variables: EnhancedConditionVariable[]): AgentAccessRule | null {
+export function toAccessRule(
+  { polarity, query }: AccessRuleDraft,
+  variables: EnhancedConditionVariable[]
+): AgentAccessRule | null {
+  const conditions = formatConditions(query, variables);
+
+  return conditions && polarity === 'deny' ? { '!': conditions } : conditions;
+}
+
+function formatConditions(query: RuleGroupType, variables: EnhancedConditionVariable[]): AgentAccessRule | null {
   const dataTypes = new Map(variables.map((variable) => [variable.name, variable.dataType]));
 
   const logic = formatQuery(query, {
