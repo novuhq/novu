@@ -351,6 +351,135 @@ describe('Agent access rule #novu-v2', () => {
       await waitForBridgeCalls(1);
     });
 
+    describe('with a token session', () => {
+      async function setWebChatHmac(hmac: boolean) {
+        await integrationRepository.update(
+          {
+            _environmentId: ctx.session.environment._id,
+            _organizationId: ctx.session.organization._id,
+            providerId: ChatProviderIdEnum.NovuWebChat,
+          },
+          { $set: { 'credentials.hmac': hmac } }
+        );
+      }
+
+      async function openTokenSession(subscriberId: string, body: Record<string, unknown> = {}) {
+        const minted = await ctx.session.testAgent
+          .post(`/v2/subscribers/${subscriberId}/tokens`)
+          .set('Authorization', `ApiKey ${ctx.session.apiKey}`)
+          .send(body);
+        expect(minted.status, JSON.stringify(minted.body)).to.equal(201);
+
+        const res = await ctx.session.testAgent.post('/v1/inbox/session').send({
+          applicationIdentifier: ctx.session.environment.identifier,
+          subscriberToken: minted.body.data.token,
+        });
+        expect(res.status, JSON.stringify(res.body)).to.equal(201);
+
+        return res.body.data.token as string;
+      }
+
+      function post(token: string, body: Record<string, unknown>) {
+        return ctx.session.testAgent
+          .post('/v1/web-chat/conversations')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ agentId: ctx.agentIdentifier, ...body });
+      }
+
+      async function refusalCount(identifier: string) {
+        const _conversationId = await conversationId(identifier);
+
+        return activityRepository.count({
+          _environmentId: ctx.session.environment._id,
+          _conversationId,
+          content: SUBSCRIBER_ACCESS_RULE_REFUSED_REPLY,
+        });
+      }
+
+      it('trusts the tenant the token signed without in-app HMAC, and refuses it after the tenant downgrades', async () => {
+        await linkWebChat();
+        await setRule(PAID_PLAN_RULE);
+        const tenantId = `token-acme-${Date.now()}`;
+        const token = await openTokenSession(ctx.session.subscriberId, {
+          context: { tenant: { id: tenantId, data: { plan: 'pro' } } },
+        });
+
+        const identifier = await send(token, 'Hi, I am on Pro');
+        await waitForBridgeCalls(1);
+        expect(bridgeCalls[0].context).to.deep.include({ tenant: { id: tenantId, data: { plan: 'pro' } } });
+
+        const downgrade = await ctx.session.testAgent
+          .patch(`/v2/contexts/tenant/${tenantId}`)
+          .send({ data: { plan: 'free' } });
+        expect(downgrade.status, JSON.stringify(downgrade.body)).to.equal(200);
+
+        await send(token, 'Still there?', identifier);
+        await waitForRefusal(identifier);
+        await waitForBridgeCalls(1);
+      });
+
+      it('refuses a guest the customer signed in and admits a signed-in subscriber, without agentHash', async () => {
+        await linkWebChat();
+        await setWebChatHmac(true);
+        await setRule({ '!': { var: 'subscriber.data.guest' } });
+        const guest = await openTokenSession(`guest-${Date.now()}`, { subscriber: { data: { guest: true } } });
+        const member = await openTokenSession(ctx.session.subscriberId);
+
+        const guestConversation = await send(guest, 'Hi, just browsing');
+        await waitForRefusal(guestConversation);
+        await waitForBridgeCalls(0);
+
+        await send(member, 'Hi, I have an account');
+        await waitForBridgeCalls(1);
+        expect(bridgeCalls[0].subscriber?.subscriberId).to.equal(ctx.session.subscriberId);
+      });
+
+      it('needs no agentHash with Web Chat HMAC on, unlike a hash session, while subscriber tokens are enabled', async () => {
+        await linkWebChat();
+        await setWebChatHmac(true);
+        const token = await openTokenSession(ctx.session.subscriberId);
+
+        const identifier = await send(token, 'Hello');
+        await send(token, 'Hello again', identifier);
+        await waitForBridgeCalls(2);
+
+        const hashSession = await post(await openSession(), { text: 'Hello' });
+        expect(hashSession.status, JSON.stringify(hashSession.body)).to.equal(400);
+
+        process.env.IS_SUBSCRIBER_TOKENS_ENABLED = 'false';
+
+        const flagOff = await post(token, { text: 'Hello with the flag off', conversationIdentifier: identifier });
+        expect(flagOff.status, JSON.stringify(flagOff.body)).to.equal(400);
+        await waitForBridgeCalls(2);
+      });
+
+      it('ignores contextVerified sent by the client of an unsigned session', async () => {
+        await linkWebChat();
+        await setRule(PAID_PLAN_RULE);
+        const res = await ctx.session.testAgent.post('/v1/inbox/session').send({
+          applicationIdentifier: ctx.session.environment.identifier,
+          subscriberId: ctx.session.subscriberId,
+          context: { tenant: { id: `forged-${Date.now()}`, data: { plan: 'enterprise' } } },
+        });
+        expect(res.status).to.equal(201);
+        const token = res.body.data.token as string;
+
+        const message = await post(token, { text: 'Let me in', contextVerified: true });
+        expect(message.status, JSON.stringify(message.body)).to.equal(201);
+        const identifier = message.body.data.identifier as string;
+        await waitForRefusal(identifier);
+
+        const click = await post(token, {
+          actionId: 'tool-approval:approve:forged',
+          conversationIdentifier: identifier,
+          contextVerified: true,
+        });
+        expect(click.status, JSON.stringify(click.body)).to.equal(200);
+        await pollFor(async () => (await refusalCount(identifier)) === 2);
+        await waitForBridgeCalls(0);
+      });
+    });
+
     it('refuses every message when the stored rule cannot be evaluated', async () => {
       await linkWebChat();
       await agentRepository.update(
