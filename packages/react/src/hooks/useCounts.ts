@@ -148,7 +148,7 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
     event: 'notifications.notification_received',
     enabled: realtime,
     eventHandler: (data) => {
-      sync(data.result);
+      void sync(data.result);
     },
   });
 
@@ -156,7 +156,7 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
     event: 'notifications.unread_count_changed',
     enabled: realtime,
     eventHandler: () => {
-      sync();
+      void sync();
     },
   });
 
@@ -167,7 +167,7 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
           return;
         }
 
-        sync();
+        void sync();
       })
     );
 
@@ -178,7 +178,7 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
     setError(undefined);
     setIsLoading(true);
     setIsFetching(false);
-    sync(undefined, filters);
+    void sync(undefined, filters);
   }, [JSON.stringify(filters), sync]);
 
   const refetch = useCallback(async () => {
