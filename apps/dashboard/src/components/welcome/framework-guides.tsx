@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { useState } from 'react';
 import { RiSparklingLine } from 'react-icons/ri';
 import { useTelemetry } from '../../hooks/use-telemetry';
+import { buildCursorPromptLink } from '../../utils/cursor-prompt-link';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { CodeBlock, Language } from '../primitives/code-block';
 import { InlineToast } from '../primitives/inline-toast';
@@ -321,14 +322,8 @@ NEVER:
 If any fails, revise.`;
 }
 
-function safeCursorEncode(text: string): string {
-  return encodeURIComponent(text).replace(/[!'()*~]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
-}
-
 function buildCursorDeepLink(frameworkName: string, applicationIdentifier: string, subscriberId: string): string {
-  const prompt = buildCondensedPrompt(frameworkName, applicationIdentifier, subscriberId);
-
-  return `https://cursor.com/link/prompt?text=${safeCursorEncode(prompt)}`;
+  return buildCursorPromptLink(buildCondensedPrompt(frameworkName, applicationIdentifier, subscriberId));
 }
 
 function StepButton({

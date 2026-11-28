@@ -6,12 +6,15 @@ import {
   IChatProvider,
   IChatRenderResult,
   ISendMessageSuccessResponse,
+  IVerifyCredentialsResponse,
   isChannelDataOfType,
+  VerifyCredentialsStatusEnum,
 } from '@novu/stateless';
 import { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
+import { VERIFY_CREDENTIALS_TIMEOUT_MS, verifyCredentialsWith } from '../../../utils/verify-credentials';
 import { cardToWhatsAppText } from './card-render.utils';
 import { WhatsAppMessageTypeEnum } from './consts/whatsapp-business.enum';
 import { ISendMessageRes } from './types/whatsapp-business.types';
@@ -49,6 +52,26 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
       content: cardToWhatsAppText(card),
       validation: [],
     };
+  }
+
+  /**
+   * Reads the configured phone number from the Graph API. Graph reports a bad or expired token as
+   * `OAuthException` code 190 (sometimes with a 400), so that code counts as invalid too.
+   */
+  async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
+    const url = `${this.baseUrl}${encodeURIComponent(this.config.phoneNumberIdentification ?? '')}`;
+
+    return verifyCredentialsWith(
+      () =>
+        createProviderHttpClient({ timeoutMs: VERIFY_CREDENTIALS_TIMEOUT_MS }).get(url, {
+          params: { fields: 'id' },
+          headers: { Authorization: `Bearer ${this.config.accessToken}` },
+        }),
+      (_httpStatus, error) =>
+        (error as { response?: { data?: { error?: { code?: number } } } })?.response?.data?.error?.code === 190
+          ? VerifyCredentialsStatusEnum.INVALID
+          : undefined
+    );
   }
 
   async sendMessage(

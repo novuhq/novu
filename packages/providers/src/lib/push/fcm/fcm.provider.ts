@@ -1,5 +1,11 @@
 import { FCM_ROUTING_KEYS, PushProviderIdEnum, resolveExclusiveRoutingKeys } from '@novu/shared';
-import { IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
+import {
+  IPushOptions,
+  IPushProvider,
+  ISendMessageSuccessResponse,
+  IVerifyCredentialsResponse,
+  VerifyCredentialsStatusEnum,
+} from '@novu/stateless';
 import crypto from 'crypto';
 import { cert, deleteApp, getApp, initializeApp } from 'firebase-admin/app';
 import {
@@ -12,6 +18,7 @@ import {
 } from 'firebase-admin/messaging';
 import { CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
+import { verifyCredentialsResponse } from '../../../utils/verify-credentials';
 import { PushBaseProvider } from '../push.base-provider';
 
 type FcmRouting = {
@@ -65,6 +72,24 @@ export class FcmPushProvider extends PushBaseProvider implements IPushProvider {
       this.appName
     );
     this.messaging = getMessaging(firebase);
+  }
+
+  /**
+   * Mints a Google OAuth2 access token from the service account. Google only issues one for a key that exists
+   * and isn't revoked, so this proves the credentials without sending a push.
+   */
+  async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
+    const app = getApp(this.appName);
+
+    try {
+      await app.options.credential?.getAccessToken();
+
+      return verifyCredentialsResponse(VerifyCredentialsStatusEnum.VALID);
+    } catch (error) {
+      return verifyCredentialsResponse(classifyFcmTokenError(error));
+    } finally {
+      await deleteApp(app);
+    }
   }
 
   async sendMessage(
@@ -295,4 +320,30 @@ export class FcmPushProvider extends PushBaseProvider implements IPushProvider {
 
     return cleanedPayload;
   }
+}
+
+const FCM_INVALID_CREDENTIAL_PATTERNS = [
+  /invalid_grant/i,
+  /invalid_client/i,
+  /unauthorized_client/i,
+  /account not found/i,
+];
+const FCM_TRANSIENT_PATTERNS = [
+  /ENOTFOUND|EAI_AGAIN|ETIMEDOUT|ECONNRESET|ECONNREFUSED|socket hang up|timeout/i,
+  /status code 5\d\d|HTTP 5\d\d|\b50[0-4]\b/i,
+];
+
+/** Google's token endpoint reports problems in the error message, not a status we can read reliably. */
+function classifyFcmTokenError(error: unknown): VerifyCredentialsStatusEnum {
+  const message = error instanceof Error ? error.message : String(error);
+
+  if (FCM_INVALID_CREDENTIAL_PATTERNS.some((pattern) => pattern.test(message))) {
+    return VerifyCredentialsStatusEnum.INVALID;
+  }
+
+  if (FCM_TRANSIENT_PATTERNS.some((pattern) => pattern.test(message))) {
+    return VerifyCredentialsStatusEnum.UNREACHABLE;
+  }
+
+  return VerifyCredentialsStatusEnum.INCONCLUSIVE;
 }

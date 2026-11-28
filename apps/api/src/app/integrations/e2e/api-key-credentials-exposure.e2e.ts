@@ -1,9 +1,10 @@
 import { ChannelFactory } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, maskSecret, SmsProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { withIntegrationStoreV2Flag } from './integration-store-v2-flag';
 
 /**
  * Regression coverage for GHSA-rgr9-mpmj-mpw8 / NV-7640:
@@ -11,12 +12,16 @@ import sinon from 'sinon';
  * from the integrations endpoints, regardless of RBAC state. OAuth tokens are
  * gated the same way.
  *
- * Session-token (JWT/dashboard) callers must keep receiving decrypted credentials
- * so dashboard flows continue to work. The exception is DELETE: it answers with the
- * environment's remaining integrations, which nobody reads credentials from, so it
+ * Session-token (JWT/dashboard) callers with access to credentials receive them with every secret masked
+ * while IS_INTEGRATION_STORE_V_2_ENABLED is on: non-secret settings as stored, secrets (and the inbound webhook
+ * signing key) as a mask of their first and last characters. With the flag off they receive them decrypted, for
+ * the previous integration store. Callers that may not see credentials never get the signing key. The exception is DELETE:
+ * it answers with the environment's remaining integrations, which nobody reads credentials from, so it
  * returns none to any caller.
  */
 describe('Integration credentials exposure to API-key auth - /integrations #novu-v2', () => {
+  withIntegrationStoreV2Flag(true);
+
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
 
@@ -38,7 +43,7 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       }
     });
 
-    it('should still return decrypted credentials when authenticated via session token', async () => {
+    it('should return credentials with masked secrets when authenticated via session token', async () => {
       const { body } = await session.testAgent.get('/v1/integrations');
 
       const sendgrid = body.data.find(
@@ -49,8 +54,9 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
 
       expect(sendgrid, 'Expected SendGrid integration fixture').to.exist;
       expect(sendgrid.credentials).to.exist;
-      expect(sendgrid.credentials.apiKey).to.equal('SG.123');
-      expect(sendgrid.credentials.secretKey).to.equal('abc');
+      expect(sendgrid.credentials.apiKey).to.equal(maskSecret('SG.123'));
+      expect(sendgrid.credentials.secretKey).to.equal(maskSecret('abc'));
+      expect(JSON.stringify(sendgrid.credentials)).to.not.contain('SG.123');
     });
   });
 
@@ -66,7 +72,7 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       }
     });
 
-    it('should still return decrypted credentials when authenticated via session token', async () => {
+    it('should return credentials with masked secrets when authenticated via session token', async () => {
       const { body } = await session.testAgent.get('/v1/integrations/active');
 
       const smsIntegration = body.data.find(
@@ -79,7 +85,7 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       expect(smsIntegration, 'Expected active Twilio integration fixture').to.exist;
       expect(smsIntegration.credentials).to.exist;
       expect(smsIntegration.credentials.accountSid).to.equal('AC123');
-      expect(smsIntegration.credentials.token).to.equal('123');
+      expect(smsIntegration.credentials.token).to.equal(maskSecret('123'));
     });
   });
 
@@ -114,7 +120,7 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       expect(stored, 'Integration should still be persisted').to.exist;
     });
 
-    it('should still return decrypted credentials when created via session token', async () => {
+    it('should return credentials with masked secrets when created via session token', async () => {
       await integrationRepository.deleteMany({
         _organizationId: session.organization._id,
         _environmentId: session.environment._id,
@@ -132,8 +138,10 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       const { body } = await session.testAgent.post('/v1/integrations').send(payload);
 
       expect(body.data.credentials).to.exist;
-      expect(body.data.credentials.apiKey).to.equal(payload.credentials.apiKey);
-      expect(body.data.credentials.secretKey).to.equal(payload.credentials.secretKey);
+      expect(body.data.credentials.apiKey).to.equal(maskSecret(payload.credentials.apiKey));
+      expect(body.data.credentials.secretKey).to.equal(maskSecret(payload.credentials.secretKey));
+      expect(JSON.stringify(body.data)).to.not.contain(payload.credentials.apiKey);
+      expect(JSON.stringify(body.data)).to.not.contain(payload.credentials.secretKey);
     });
   });
 
@@ -163,7 +171,7 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       expect(body.data).to.not.have.property('credentials');
     });
 
-    it('should still return decrypted credentials when updated via session token', async () => {
+    it('should return credentials with masked secrets when updated via session token', async () => {
       const { body: listBody } = await session.testAgent.get('/v1/integrations');
       const target = listBody.data.find(
         (integration) =>
@@ -181,8 +189,10 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       const { body } = await session.testAgent.put(`/v1/integrations/${target._id}`).send(payload);
 
       expect(body.data.credentials).to.exist;
-      expect(body.data.credentials.apiKey).to.equal(payload.credentials.apiKey);
-      expect(body.data.credentials.secretKey).to.equal(payload.credentials.secretKey);
+      expect(body.data.credentials.apiKey).to.equal(maskSecret(payload.credentials.apiKey));
+      expect(body.data.credentials.secretKey).to.equal(maskSecret(payload.credentials.secretKey));
+      expect(JSON.stringify(body.data)).to.not.contain(payload.credentials.apiKey);
+      expect(JSON.stringify(body.data)).to.not.contain(payload.credentials.secretKey);
     });
   });
 
@@ -207,7 +217,7 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       expect(body.data).to.not.have.property('credentials');
     });
 
-    it('should still return decrypted credentials when called via session token', async () => {
+    it('should return credentials with masked secrets when called via session token', async () => {
       const { body: listBody } = await session.testAgent.get('/v1/integrations');
       const target = listBody.data.find(
         (integration) =>
@@ -219,8 +229,8 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       const { body } = await session.testAgent.post(`/v1/integrations/${target._id}/set-primary`).send({});
 
       expect(body.data.credentials).to.exist;
-      expect(body.data.credentials.apiKey).to.equal('SG.123');
-      expect(body.data.credentials.secretKey).to.equal('abc');
+      expect(body.data.credentials.apiKey).to.equal(maskSecret('SG.123'));
+      expect(body.data.credentials.secretKey).to.equal(maskSecret('abc'));
       expect(body.data.primary).to.equal(true);
     });
   });
@@ -256,12 +266,12 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       expect(listed.configurations).to.not.have.property('inboundWebhookSigningKey');
     });
 
-    it('should still return the signing key to session tokens', async () => {
+    it('should return the signing key masked to session tokens', async () => {
       const sendgrid = await findSendGrid();
       const { body } = await session.testAgent.get('/v1/integrations');
 
       const listed = body.data.find((integration) => integration._id === sendgrid._id);
-      expect(listed.configurations.inboundWebhookSigningKey).to.equal(storedKey);
+      expect(listed.configurations.inboundWebhookSigningKey).to.equal(maskSecret(storedKey));
     });
 
     it('should keep the stored signing key when an update leaves it out', async () => {
@@ -398,11 +408,73 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
       expect(stored?.configurations?.inboundWebhookSigningKey).to.equal(generatedKey);
     });
 
-    it('should still return decrypted credentials and the signing key to session tokens', async () => {
+    it('should return credentials and the signing key masked to session tokens', async () => {
       const { body } = await autoConfigureSendGrid();
 
-      expect(body.data.integration.credentials.apiKey).to.equal('SG.123');
-      expect(body.data.integration.configurations.inboundWebhookSigningKey).to.equal(generatedKey);
+      expect(body.data.integration.credentials.apiKey).to.equal(maskSecret('SG.123'));
+      expect(body.data.integration.configurations.inboundWebhookSigningKey).to.equal(maskSecret(generatedKey));
     });
+  });
+});
+
+describe('Integration credentials with the integration store v2 flag off - /integrations #novu-v2', () => {
+  withIntegrationStoreV2Flag(false);
+
+  const storedKey = 'whsec_flag_off';
+  let session: UserSession;
+  const integrationRepository = new IntegrationRepository();
+
+  beforeEach(async () => {
+    session = new UserSession();
+    await session.initialize();
+
+    const sendgrid = await integrationRepository.findOne({
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+      providerId: EmailProviderIdEnum.SendGrid,
+    });
+    expect(sendgrid, 'Expected SendGrid integration fixture').to.exist;
+    await integrationRepository.update(
+      { _id: sendgrid!._id, _environmentId: session.environment._id },
+      { $set: { configurations: { inboundWebhookEnabled: true, inboundWebhookSigningKey: storedKey } } }
+    );
+  });
+
+  function findSendGrid(integrations: Array<{ providerId: string; _environmentId: string }>) {
+    return integrations.find(
+      (integration) =>
+        integration.providerId === EmailProviderIdEnum.SendGrid &&
+        integration._environmentId === session.environment._id
+    ) as { _id: string; credentials: Record<string, string>; configurations: Record<string, unknown> } | undefined;
+  }
+
+  it('should return decrypted credentials and the signing key to session tokens', async () => {
+    const { body } = await session.testAgent.get('/v1/integrations');
+
+    const sendgrid = findSendGrid(body.data);
+    expect(sendgrid, 'Expected SendGrid integration fixture').to.exist;
+    expect(sendgrid!.credentials.apiKey).to.equal('SG.123');
+    expect(sendgrid!.credentials.secretKey).to.equal('abc');
+    expect(sendgrid!.configurations.inboundWebhookSigningKey).to.equal(storedKey);
+  });
+
+  it('should return decrypted credentials from set-primary to session tokens', async () => {
+    const { body: listBody } = await session.testAgent.get('/v1/integrations');
+    const target = findSendGrid(listBody.data);
+    expect(target, 'Expected SendGrid integration fixture').to.exist;
+
+    const { body } = await session.testAgent.post(`/v1/integrations/${target!._id}/set-primary`).send({});
+
+    expect(body.data.credentials.apiKey).to.equal('SG.123');
+    expect(body.data.configurations.inboundWebhookSigningKey).to.equal(storedKey);
+  });
+
+  it('should still return neither credentials nor the signing key to API-key callers', async () => {
+    const { body } = await session.testAgent.get('/v1/integrations').set('authorization', `ApiKey ${session.apiKey}`);
+
+    const sendgrid = findSendGrid(body.data);
+    expect(sendgrid, 'Expected SendGrid integration fixture').to.exist;
+    expect(sendgrid!.credentials).to.deep.equal({});
+    expect(sendgrid!.configurations).to.not.have.property('inboundWebhookSigningKey');
   });
 });

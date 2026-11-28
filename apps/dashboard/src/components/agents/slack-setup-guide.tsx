@@ -30,9 +30,9 @@ import { buildAgentConnectionIdentifier } from '@/utils/connect-subscriber-id';
 import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
 import { CopySlackMessageButton } from './agent-code-setup-section';
+import { IntegrationCredentialsSidebar } from './integration-credentials-sidebar';
 import type { SetupMode } from './setup-guide-primitives';
 import {
-  IntegrationCredentialsSidebar,
   ListeningStatus,
   ProviderSetupStepperRail,
   SetupButton,

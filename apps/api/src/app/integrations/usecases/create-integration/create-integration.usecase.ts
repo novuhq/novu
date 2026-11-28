@@ -5,12 +5,14 @@ import {
   areNovuManagedClaudeCredentialsSet,
   areNovuSlackCredentialsSet,
   areNovuSmsCredentialsSet,
+  decryptCredentials,
   encryptCredentials,
   PinoLogger,
   resolveAgentRuntime,
 } from '@novu/application-generic';
 import {
   DalException,
+  EnvironmentEntity,
   EnvironmentRepository,
   IntegrationEntity,
   IntegrationQuery,
@@ -22,6 +24,9 @@ import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
+  EnvironmentTypeEnum,
+  IConfigurations,
+  ICredentialsDto,
   InAppProviderIdEnum,
   IntegrationKindEnum,
   providers,
@@ -30,6 +35,10 @@ import {
 } from '@novu/shared';
 import shortid from 'shortid';
 import { assertValidIntegrationRules } from '../../utils/assert-integration-rules';
+import {
+  restoreMaskedIntegrationConfigurations,
+  restoreMaskedIntegrationCredentials,
+} from '../../utils/restore-masked-integration-credentials';
 import { validateOutboundIntegrationCredentials } from '../../utils/validate-outbound-integration-credentials';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
@@ -175,6 +184,71 @@ export class CreateIntegration {
     }
   }
 
+  /**
+   * The stored secrets of the integration being duplicated. Secrets of a live environment stay there, so a copy
+   * into a development environment gets none.
+   */
+  private async getSecretsToCopy(
+    command: CreateIntegrationCommand,
+    targetEnvironment: EnvironmentEntity
+  ): Promise<{ credentials: ICredentialsDto; configurations: IConfigurations | undefined } | undefined> {
+    if (!command.secretsSourceIntegrationId) {
+      return undefined;
+    }
+
+    const source = await this.integrationRepository.findOne({
+      _id: command.secretsSourceIntegrationId,
+      _organizationId: command.organizationId,
+      providerId: command.providerId,
+    });
+    if (!source) {
+      throw new NotFoundException(`Integration with id ${command.secretsSourceIntegrationId} not found`);
+    }
+
+    const sourceEnvironment = await this.environmentRepository.findByIdAndOrganization(
+      source._environmentId,
+      command.organizationId
+    );
+    // An environment being deleted goes before its integrations; without it there is no telling it wasn't live.
+    if (!sourceEnvironment) {
+      throw new NotFoundException(`Integration with id ${command.secretsSourceIntegrationId} not found`);
+    }
+
+    const leavesLiveEnvironment =
+      sourceEnvironment.type === EnvironmentTypeEnum.PROD && targetEnvironment.type !== EnvironmentTypeEnum.PROD;
+
+    if (leavesLiveEnvironment) {
+      return undefined;
+    }
+
+    return { credentials: decryptCredentials(source.credentials ?? {}), configurations: source.configurations };
+  }
+
+  /** Masked values in the request stand for the secrets of the integration being duplicated; put those in. */
+  private async restoreMaskedSecrets(
+    command: CreateIntegrationCommand,
+    environment: EnvironmentEntity
+  ): Promise<ICredentialsDto | undefined> {
+    const secretsToCopy = await this.getSecretsToCopy(command, environment);
+
+    if (command.credentials) {
+      command.credentials = restoreMaskedIntegrationCredentials(
+        command.providerId,
+        command.credentials,
+        secretsToCopy?.credentials
+      );
+    }
+
+    if (command.configurations) {
+      command.configurations = restoreMaskedIntegrationConfigurations(
+        command.configurations,
+        secretsToCopy?.configurations
+      );
+    }
+
+    return secretsToCopy?.credentials;
+  }
+
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
     const environment = await this.environmentRepository.findByIdAndOrganization(
       command.environmentId,
@@ -183,6 +257,8 @@ export class CreateIntegration {
     if (!environment) {
       throw new NotFoundException(`Environment with id ${command.environmentId} not found`);
     }
+
+    const copiedCredentials = await this.restoreMaskedSecrets(command, environment);
 
     await this.validate(command);
     assertValidIntegrationRules(command.rules);
@@ -219,7 +295,11 @@ export class CreateIntegration {
       const name = command.name ?? defaultName;
       const identifier = command.identifier ?? `${slugify(name)}-${shortid.generate()}`;
 
-      const managedCredentials = applyManagedCredentialsOnCreate(command.providerId, command.credentials ?? {});
+      const managedCredentials = applyManagedCredentialsOnCreate(
+        command.providerId,
+        command.credentials ?? {},
+        copiedCredentials
+      );
 
       const query: IntegrationQuery = {
         name,

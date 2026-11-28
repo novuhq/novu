@@ -9,10 +9,18 @@ import {
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
+  IVerifyCredentialsResponse,
+  VerifyCredentialsStatusEnum,
 } from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
-import { IMandrilInterface, IMandrillSendOptions, IMandrillTemplateSendOptions } from './mandril.interface';
+import { classifyHttpStatus, getErrorHttpStatus, verifyCredentialsResponse } from '../../../utils/verify-credentials';
+import {
+  IMandrilInterface,
+  IMandrillSendOptions,
+  IMandrillSendResponse,
+  IMandrillTemplateSendOptions,
+} from './mandril.interface';
 
 export enum MandrillStatusEnum {
   OPENED = 'open',
@@ -32,6 +40,21 @@ export const isMandrillTemplateSendOptions = (
 ): options is IMandrillTemplateSendOptions => {
   return 'template_name' in options && 'template_content' in options && Array.isArray(options.template_content);
 };
+
+const MANDRILL_PING_REPLY = 'PONG!';
+
+/**
+ * Reads the outcome of `users.ping`. The Mailchimp client never throws: on a refusal it resolves with the
+ * request error, so anything other than the ping reply is a failure.
+ */
+function classifyMandrillPing(result: unknown): VerifyCredentialsStatusEnum {
+  if (result === MANDRILL_PING_REPLY) return VerifyCredentialsStatusEnum.VALID;
+
+  const errorName = (result as { response?: { data?: { name?: unknown } } } | undefined)?.response?.data?.name;
+  if (errorName === 'Invalid_Key') return VerifyCredentialsStatusEnum.INVALID;
+
+  return classifyHttpStatus(getErrorHttpStatus(result));
+}
 
 export class MandrillProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.Mandrill;
@@ -60,7 +83,7 @@ export class MandrillProvider extends BaseProvider implements IEmailProvider {
       bridgeProviderData,
       mailData
     ).body;
-    let response;
+    let response: IMandrillSendResponse[];
 
     if (isMandrillTemplateSendOptions(mandrillSendOption)) {
       response = await this.transporter.messages.sendTemplate(mandrillSendOption);
@@ -136,9 +159,29 @@ export class MandrillProvider extends BaseProvider implements IEmailProvider {
     ];
   }
 
+  async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
+    try {
+      return verifyCredentialsResponse(classifyMandrillPing(await this.transporter.users.ping()));
+    } catch {
+      return verifyCredentialsResponse(VerifyCredentialsStatusEnum.UNREACHABLE);
+    }
+  }
+
   async checkIntegration(): Promise<ICheckIntegrationResponse> {
     try {
-      await this.transporter.users.ping();
+      // The client resolves with the request error instead of throwing, so the reply has to be read.
+      const status = classifyMandrillPing(await this.transporter.users.ping());
+
+      if (status !== VerifyCredentialsStatusEnum.VALID) {
+        return {
+          success: false,
+          message: 'Mandrill did not accept the API key',
+          code:
+            status === VerifyCredentialsStatusEnum.INVALID
+              ? CheckIntegrationResponseEnum.BAD_CREDENTIALS
+              : CheckIntegrationResponseEnum.FAILED,
+        };
+      }
 
       return {
         success: true,
@@ -154,6 +197,7 @@ export class MandrillProvider extends BaseProvider implements IEmailProvider {
     }
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing; mirrors the untyped provider webhook body contract
   getMessageId(body: any | any[]): string[] {
     if (Array.isArray(body)) {
       return body.map((item) => item._id);
@@ -162,6 +206,7 @@ export class MandrillProvider extends BaseProvider implements IEmailProvider {
     return [body._id];
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: pre-existing; mirrors the untyped provider webhook body contract
   parseEventBody(body: any | any[], identifier: string): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
       body = body.find((item) => item._id === identifier);

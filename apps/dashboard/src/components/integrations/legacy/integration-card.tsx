@@ -15,19 +15,22 @@ import {
   RiStarSmileLine,
 } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
+import { ProviderIcon } from '@/components/integrations/components/provider-icon';
+import {
+  getDemoIntegrationTooltipMessage,
+  isDemoIntegration,
+} from '@/components/integrations/components/utils/helpers';
+import { TableIntegration } from '@/components/integrations/types';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
+import { EnvironmentBranchIcon } from '@/components/primitives/environment-branch-icon';
+import { StatusBadge, StatusBadgeIcon } from '@/components/primitives/status-badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { ROUTES } from '@/utils/routes';
+import { cn } from '@/utils/ui';
 import { getMinimumTierForFeature } from '@/utils/upgrade-tier';
-import { useFetchSubscription } from '../../../hooks/use-fetch-subscription';
-import { ROUTES } from '../../../utils/routes';
-import { cn } from '../../../utils/ui';
-import { EnvironmentBranchIcon } from '../../primitives/environment-branch-icon';
-import { StatusBadge, StatusBadgeIcon } from '../../primitives/status-badge';
-import { TableIntegration } from '../types';
-import { ProviderIcon } from './provider-icon';
-import { getDemoIntegrationTooltipMessage, isDemoIntegration } from './utils/helpers';
 
 type IntegrationCardVariant = 'default' | 'connectSheet';
 
@@ -39,6 +42,7 @@ type IntegrationCardProps = {
   variant?: IntegrationCardVariant;
 };
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing; restored unchanged from before the redesign and deleted with the legacy store
 export function IntegrationCard({
   integration,
   provider,

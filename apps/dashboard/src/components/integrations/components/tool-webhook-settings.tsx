@@ -1,4 +1,4 @@
-import { CredentialsKeyEnum } from '@novu/shared';
+import { CredentialsKeyEnum, isMaskedSecret } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { type Control, Controller, type UseFormSetValue, useWatch } from 'react-hook-form';
 import { RiBracesLine, RiCornerDownRightLine } from 'react-icons/ri';
@@ -16,6 +16,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Separator } from '@/components/primitives/separator';
 import type { IntegrationFormData } from '../types';
+import { useSecretReplacement } from './hooks/use-secret-replacement';
+import { SavedSecretField } from './saved-secret-field';
 import { ToolWebhookKeyValueField } from './tool-webhook-key-value-field';
 import { WebhookRequestSchemaEditor } from './webhook-request-schema-editor';
 
@@ -307,12 +309,59 @@ function DynamicRoutingFields({ control, setValue, isReadOnly }: ToolWebhookSett
   );
 }
 
+function SigningSecretInput({
+  value,
+  savedValue,
+  isReadOnly,
+  onChange,
+  onBlur,
+}: {
+  value: string | undefined;
+  savedValue?: string;
+  isReadOnly?: boolean;
+  onChange: (value: string) => void;
+  onBlur: () => void;
+}) {
+  const secret = useSecretReplacement({ value, savedValue, onChange });
+
+  if (secret.isSaved) {
+    return (
+      <SavedSecretField
+        label="Signing secret"
+        size="2xs"
+        maskedValue={value ?? ''}
+        isReadOnly={isReadOnly}
+        onReplace={secret.startReplacing}
+      />
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <SecretInput
+        size="2xs"
+        placeholder="Enter signing secret"
+        value={secret.inputValue}
+        disabled={isReadOnly}
+        onChange={secret.onInputChange}
+        onBlur={onBlur}
+        autoFocus={secret.isReplacing}
+      />
+      {secret.canCancel && !isReadOnly && (
+        <Button type="button" variant="secondary" mode="ghost" size="2xs" onClick={secret.cancel}>
+          Cancel
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function SigningSecretField({ control, isReadOnly }: Pick<ToolWebhookSettingsProps, 'control' | 'isReadOnly'>) {
   return (
     <Controller
       control={control}
       name={`credentials.${CredentialsKeyEnum.SecretKey}`}
-      render={({ field }) => (
+      render={({ field, formState }) => (
         <div className="flex flex-col gap-1">
           <Label className="text-text-sub py-1 text-xs font-medium">
             Signing secret
@@ -323,11 +372,14 @@ function SigningSecretField({ control, isReadOnly }: Pick<ToolWebhookSettingsPro
               className="text-text-soft"
             />
           </Label>
-          <SecretInput
-            size="2xs"
-            placeholder="Enter signing secret"
-            value={field.value ?? ''}
-            disabled={isReadOnly}
+          <SigningSecretInput
+            value={field.value}
+            savedValue={
+              isMaskedSecret(formState.defaultValues?.credentials?.[CredentialsKeyEnum.SecretKey])
+                ? formState.defaultValues?.credentials?.[CredentialsKeyEnum.SecretKey]
+                : undefined
+            }
+            isReadOnly={isReadOnly}
             onChange={field.onChange}
             onBlur={field.onBlur}
           />

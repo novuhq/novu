@@ -14,6 +14,8 @@ import {
   FieldOperatorEnum,
   InAppProviderIdEnum,
   ITenantFilterPart,
+  MASKED_SECRET_FILL,
+  maskSecret,
   PushProviderIdEnum,
   SmsProviderIdEnum,
   StepTypeEnum,
@@ -22,8 +24,11 @@ import {
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { withIntegrationStoreV2Flag } from './integration-store-v2-flag';
 
 describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () => {
+  withIntegrationStoreV2Flag(true);
+
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
   const envRepository = new EnvironmentRepository();
@@ -86,8 +91,16 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
       (fetchedIntegration) => fetchedIntegration._id === integrationId
     );
 
-    expect(integration.credentials.apiKey).to.equal(payload.credentials.apiKey);
-    expect(integration.credentials.secretKey).to.equal(payload.credentials.secretKey);
+    expect(integration.credentials.apiKey).to.equal(maskSecret(payload.credentials.apiKey));
+    expect(integration.credentials.secretKey).to.equal(maskSecret(payload.credentials.secretKey));
+
+    const stored = await integrationRepository.findOne({
+      _id: integrationId,
+      _organizationId: session.organization._id,
+    });
+    const storedCredentials = decryptCredentials(stored?.credentials ?? {});
+    expect(storedCredentials.apiKey).to.equal(payload.credentials.apiKey);
+    expect(storedCredentials.secretKey).to.equal(payload.credentials.secretKey);
   });
 
   it('should update webhook payload schema configuration', async () => {
@@ -418,6 +431,131 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
       updatedNodeMailerProviderPayload.credentials.tlsOptions
     );
     expect(nodeMailerIntegration?.active).to.equal(true);
+  });
+
+  describe('masked secrets', () => {
+    const ORIGINAL_API_KEY = 'SG.abcdefghijklmnop3f9a';
+    const MASKED_ORIGINAL_API_KEY = `SG.${MASKED_SECRET_FILL}3f9a`;
+
+    async function createSendGridIntegration() {
+      const response = await session.testAgent.post('/v1/integrations').send({
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        credentials: { apiKey: ORIGINAL_API_KEY, from: 'original@example.com' },
+        active: false,
+        check: false,
+      });
+      expect(response.status).to.equal(201);
+
+      return response.body.data._id as string;
+    }
+
+    async function findStoredCredentials(integrationId: string) {
+      const stored = await integrationRepository.findOne({
+        _id: integrationId,
+        _environmentId: session.environment._id,
+      });
+
+      return decryptCredentials(stored?.credentials ?? {});
+    }
+
+    it('should mask the inbound webhook signing key and keep it when the mask is sent back', async () => {
+      const SIGNING_KEY = 'whsec_abcdefghijklmnop1234';
+      const integrationId = await createSendGridIntegration();
+
+      const setResponse = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        configurations: { inboundWebhookEnabled: true, inboundWebhookSigningKey: SIGNING_KEY },
+        check: false,
+      });
+      expect(setResponse.status).to.equal(200);
+      expect(setResponse.body.data.configurations.inboundWebhookSigningKey).to.equal(maskSecret(SIGNING_KEY));
+
+      const { body: sessionBody } = await session.testAgent.get('/v1/integrations');
+      const listedForSession = sessionBody.data.find((integration) => integration._id === integrationId);
+      expect(listedForSession.configurations.inboundWebhookSigningKey).to.equal(maskSecret(SIGNING_KEY));
+      expect(JSON.stringify(sessionBody)).to.not.include(SIGNING_KEY);
+
+      // API-key callers may not see credentials, so they get no signing key at all.
+      const { body: apiKeyBody } = await session.testAgent
+        .get('/v1/integrations')
+        .set('authorization', `ApiKey ${session.apiKey}`);
+      const listedForApiKey = apiKeyBody.data.find((integration) => integration._id === integrationId);
+      expect(listedForApiKey.configurations).to.not.have.property('inboundWebhookSigningKey');
+      expect(JSON.stringify(apiKeyBody)).to.not.include(SIGNING_KEY);
+
+      const keepResponse = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        configurations: { inboundWebhookEnabled: false, inboundWebhookSigningKey: maskSecret(SIGNING_KEY) },
+        check: false,
+      });
+      expect(keepResponse.status).to.equal(200);
+
+      const stored = await integrationRepository.findOne({
+        _id: integrationId,
+        _environmentId: session.environment._id,
+      });
+      expect(stored?.configurations?.inboundWebhookSigningKey).to.equal(SIGNING_KEY);
+      expect(stored?.configurations?.inboundWebhookEnabled).to.equal(false);
+
+      const mismatchResponse = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        configurations: { inboundWebhookSigningKey: `xxx${MASKED_SECRET_FILL}0000` },
+        check: false,
+      });
+      expect(mismatchResponse.status).to.equal(400);
+    });
+
+    it('should keep the stored secret when its masked value is sent back', async () => {
+      const integrationId = await createSendGridIntegration();
+
+      const listed = (await session.testAgent.get('/v1/integrations')).body.data.find(
+        (integration) => integration._id === integrationId
+      );
+      expect(listed.credentials.apiKey).to.equal(MASKED_ORIGINAL_API_KEY);
+      expect(listed.credentials.apiKey).to.equal(maskSecret(ORIGINAL_API_KEY));
+      expect(listed.credentials.from).to.equal('original@example.com');
+
+      const keepResponse = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        credentials: { apiKey: listed.credentials.apiKey, from: 'changed@example.com' },
+        check: false,
+      });
+
+      expect(keepResponse.status).to.equal(200);
+      expect(keepResponse.body.data.credentials.apiKey).to.equal(MASKED_ORIGINAL_API_KEY);
+      expect(keepResponse.body.data.credentials.from).to.equal('changed@example.com');
+      expect(JSON.stringify(keepResponse.body)).to.not.contain(ORIGINAL_API_KEY);
+
+      const keptCredentials = await findStoredCredentials(integrationId);
+      expect(keptCredentials.apiKey).to.equal(ORIGINAL_API_KEY);
+      expect(keptCredentials.from).to.equal('changed@example.com');
+
+      const replacementApiKey = 'SG.zyxwvutsrqponmlk7c2d';
+      const replaceResponse = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        credentials: { apiKey: replacementApiKey, from: 'changed@example.com' },
+        check: false,
+      });
+
+      expect(replaceResponse.status).to.equal(200);
+      expect(replaceResponse.body.data.credentials.apiKey).to.equal(maskSecret(replacementApiKey));
+
+      const replacedCredentials = await findStoredCredentials(integrationId);
+      expect(replacedCredentials.apiKey).to.equal(replacementApiKey);
+      expect(replacedCredentials.from).to.equal('changed@example.com');
+    });
+
+    it('should reject a masked value that does not match the stored secret', async () => {
+      const integrationId = await createSendGridIntegration();
+
+      const response = await session.testAgent.put(`/v1/integrations/${integrationId}`).send({
+        credentials: { apiKey: `SG.${MASKED_SECRET_FILL}0000`, from: 'changed@example.com' },
+        check: false,
+      });
+
+      expect(response.status).to.equal(400);
+      expect(response.body.message).to.contain("Masked values can't be saved as credentials: apiKey");
+
+      const storedCredentials = await findStoredCredentials(integrationId);
+      expect(storedCredentials.apiKey).to.equal(ORIGINAL_API_KEY);
+      expect(storedCredentials.from).to.equal('original@example.com');
+    });
   });
 
   describe('Twilio authentication method', () => {

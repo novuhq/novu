@@ -14,6 +14,32 @@ export interface ResolvedWhatsAppAgentIntegration {
   integration: IntegrationEntity;
 }
 
+/** Resolves the WhatsApp Business integration by identifier within the given env/org. */
+export async function resolveWhatsAppIntegration(params: {
+  integrationRepository: IntegrationRepository;
+  environmentId: string;
+  organizationId: string;
+  integrationIdentifier: string;
+}): Promise<IntegrationEntity> {
+  const { integrationRepository, environmentId, organizationId, integrationIdentifier } = params;
+
+  const integration = await integrationRepository.findOne({
+    _environmentId: environmentId,
+    _organizationId: organizationId,
+    identifier: integrationIdentifier,
+  });
+
+  if (!integration) {
+    throw new NotFoundException(`Integration with identifier "${integrationIdentifier}" was not found.`);
+  }
+
+  if (integration.providerId !== ChatProviderIdEnum.WhatsAppBusiness) {
+    throw new NotFoundException(`Integration "${integrationIdentifier}" is not a WhatsApp Business integration.`);
+  }
+
+  return integration;
+}
+
 /**
  * Shared validation for the WhatsApp Embedded Signup flows: resolves the
  * WhatsApp Business integration and agent by identifier within the given
@@ -38,19 +64,12 @@ export async function resolveWhatsAppAgentIntegration(params: {
     integrationIdentifier,
   } = params;
 
-  const integration = await integrationRepository.findOne({
-    _environmentId: environmentId,
-    _organizationId: organizationId,
-    identifier: integrationIdentifier,
+  const integration = await resolveWhatsAppIntegration({
+    integrationRepository,
+    environmentId,
+    organizationId,
+    integrationIdentifier,
   });
-
-  if (!integration) {
-    throw new NotFoundException(`Integration with identifier "${integrationIdentifier}" was not found.`);
-  }
-
-  if (integration.providerId !== ChatProviderIdEnum.WhatsAppBusiness) {
-    throw new NotFoundException(`Integration "${integrationIdentifier}" is not a WhatsApp Business integration.`);
-  }
 
   const agent = await agentRepository.findOne(
     {

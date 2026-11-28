@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiHideProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CredentialsDto, StepFilterDto } from '@novu/application-generic';
 import { ChannelTypeEnum, ICreateIntegrationBodyDto, IntegrationKindEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
@@ -62,6 +62,15 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
   @ValidateNested()
   credentials?: CredentialsDto;
 
+  /**
+   * Duplicating an integration: the one whose stored secrets replace the masked values in `credentials`.
+   * Dashboard only, since no other client is ever given masked values.
+   */
+  @ApiHideProperty()
+  @IsOptional()
+  @IsMongoId()
+  secretsSourceIntegrationId?: string;
+
   @ApiPropertyOptional({
     type: Boolean,
     description: 'If the integration is active, the validation on the credentials field will run',
@@ -89,8 +98,7 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
     type: 'object',
     additionalProperties: true,
     nullable: true,
-    description:
-      'JSONLogic used at send time to select this integration. Takes precedence over `conditions`.',
+    description: 'JSONLogic used at send time to select this integration. Takes precedence over `conditions`.',
     example: {
       '==': [{ var: 'context.tenant.id' }, 'acme'],
     },

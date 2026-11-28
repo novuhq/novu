@@ -13,14 +13,10 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { shouldShowWhatsNextGuide } from '@/utils/whats-next-guide';
 import { CopyableEmailAddress } from '../../copyable-email-address';
 import { InboundAddressForm } from '../../inbound-address-form';
+import { IntegrationCredentialsSidebar } from '../../integration-credentials-sidebar';
 import { OutboundProviderSelect } from '../../outbound-provider-select';
 import { SetupGuideCard } from '../../setup-guide-card';
-import {
-  CompletedStepIndicator,
-  IntegrationCredentialsSidebar,
-  SetupButton,
-  SetupStep,
-} from '../../setup-guide-primitives';
+import { CompletedStepIndicator, SetupButton, SetupStep } from '../../setup-guide-primitives';
 import type { StepStatus } from '../../setup-guide-step-utils';
 import { useEmailSetupCredentials } from '../../use-email-setup-credentials';
 import { ConnectedBadge } from './connected-badge';
@@ -93,6 +89,7 @@ function ProductionReadyFooter({ ready }: { ready: boolean }) {
   );
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: pre-existing on next; this change only moves an import
 export function EmailWhatsNextGuide({ agent, integrationLink, justConnected = false }: EmailWhatsNextGuideProps) {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();

@@ -1,8 +1,8 @@
 import { IProviderConfig } from '@novu/shared';
 import { RiArrowRightSLine } from 'react-icons/ri';
+import { ProviderDeprecatedBadge } from '@/components/integrations/components/provider-deprecation';
+import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
-import { ProviderDeprecatedBadge } from './provider-deprecation';
-import { ProviderIcon } from './provider-icon';
 
 type IntegrationListItemProps = {
   integration: IProviderConfig;

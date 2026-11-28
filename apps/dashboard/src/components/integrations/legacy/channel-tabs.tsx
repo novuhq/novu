@@ -1,9 +1,9 @@
 import { FeatureFlagsKeysEnum, IProviderConfig } from '@novu/shared';
 import { useMemo } from 'react';
+import { INTEGRATION_CHANNELS, type IntegrationChannel } from '@/components/integrations/utils/channels';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { CHANNEL_TYPE_TO_STRING, isChannelVisibleInUi } from '@/utils/channels';
-import { INTEGRATION_CHANNELS, type IntegrationChannel } from '../utils/channels';
 import { IntegrationListItem } from './integration-list-item';
 
 type ChannelTabsProps = {

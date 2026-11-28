@@ -1,9 +1,16 @@
 import { AuthType, Infobip } from '@infobip-api/sdk';
 import { SmsProviderIdEnum } from '@novu/shared';
-import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
+import {
+  ChannelTypeEnum,
+  ISendMessageSuccessResponse,
+  ISmsOptions,
+  ISmsProvider,
+  IVerifyCredentialsResponse,
+} from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { resolveSafeInfobipBaseUrl } from '../../../utils/safe-infobip-base-url';
 import { WithPassthrough } from '../../../utils/types';
+import { verifyInfobipCredentials } from '../../../utils/verify-infobip-credentials';
 
 export class InfobipSmsProvider extends BaseProvider implements ISmsProvider {
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
@@ -27,6 +34,10 @@ export class InfobipSmsProvider extends BaseProvider implements ISmsProvider {
       apiKey: this.config.apiKey,
       authType: AuthType.ApiKey,
     });
+  }
+
+  async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
+    return verifyInfobipCredentials(this.config);
   }
 
   async sendMessage(

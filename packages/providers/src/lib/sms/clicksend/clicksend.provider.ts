@@ -1,8 +1,15 @@
 import { SmsProviderIdEnum } from '@novu/shared';
-import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
+import {
+  ChannelTypeEnum,
+  ISendMessageSuccessResponse,
+  ISmsOptions,
+  ISmsProvider,
+  IVerifyCredentialsResponse,
+} from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
+import { VERIFY_CREDENTIALS_TIMEOUT_MS, verifyCredentialsWith } from '../../../utils/verify-credentials';
 
 export class ClicksendSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Clicksend;
@@ -17,6 +24,16 @@ export class ClicksendSmsProvider extends BaseProvider implements ISmsProvider {
     }
   ) {
     super();
+  }
+
+  /** Reads the account (`GET /v3/account`) with the same username / API key pair the sends use. */
+  async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
+    return verifyCredentialsWith(() =>
+      createProviderHttpClient({ timeoutMs: VERIFY_CREDENTIALS_TIMEOUT_MS }).get(
+        'https://rest.clicksend.com/v3/account',
+        { auth: { username: this.config.username, password: this.config.apiKey } }
+      )
+    );
   }
 
   async sendMessage(

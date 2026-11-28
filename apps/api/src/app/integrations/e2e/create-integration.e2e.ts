@@ -1,18 +1,25 @@
+import { decryptCredentials } from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
+  EnvironmentTypeEnum,
   FieldOperatorEnum,
   InAppProviderIdEnum,
+  MASKED_SECRET_FILL,
+  maskSecret,
   PushProviderIdEnum,
   SmsProviderIdEnum,
   ToolProviderIdEnum,
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { withIntegrationStoreV2Flag } from './integration-store-v2-flag';
 
 describe('Create Integration - /integration (POST) #novu-v2', () => {
+  withIntegrationStoreV2Flag(true);
+
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
   const envRepository = new EnvironmentRepository();
@@ -35,8 +42,8 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
     for (const emailIntegration of emailIntegrations) {
       expect(emailIntegration.providerId).to.equal(EmailProviderIdEnum.SendGrid);
       expect(emailIntegration.channel).to.equal(ChannelTypeEnum.EMAIL);
-      expect(emailIntegration.credentials.apiKey).to.equal('SG.123');
-      expect(emailIntegration.credentials.secretKey).to.equal('abc');
+      expect(emailIntegration.credentials.apiKey).to.equal(maskSecret('SG.123'));
+      expect(emailIntegration.credentials.secretKey).to.equal(maskSecret('abc'));
       expect(emailIntegration.active).to.equal(true);
     }
   });
@@ -55,7 +62,7 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
       expect(smsIntegration.providerId).to.equal(SmsProviderIdEnum.Twilio);
       expect(smsIntegration.channel).to.equal(ChannelTypeEnum.SMS);
       expect(smsIntegration.credentials.accountSid).to.equal('AC123');
-      expect(smsIntegration.credentials.token).to.equal('123');
+      expect(smsIntegration.credentials.token).to.equal(maskSecret('123'));
       expect(smsIntegration.active).to.equal(true);
     }
   });
@@ -93,8 +100,8 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
       expect(integration.identifier).to.exist;
       expect(integration.providerId).to.equal(EmailProviderIdEnum.SendGrid);
       expect(integration.channel).to.equal(ChannelTypeEnum.EMAIL);
-      expect(integration.credentials.apiKey).to.equal(payload.credentials.apiKey);
-      expect(integration.credentials.secretKey).to.equal(payload.credentials.secretKey);
+      expect(integration.credentials.apiKey).to.equal(maskSecret(payload.credentials.apiKey));
+      expect(integration.credentials.secretKey).to.equal(maskSecret(payload.credentials.secretKey));
       expect(integration.active).to.equal(payload.active);
     }
   });
@@ -393,13 +400,208 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
     });
     expect(response.status).to.equal(201);
 
-    const integrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
-    const { credentials } = integrations.find((integration) => integration._id === response.body.data._id);
+    const stored = await integrationRepository.findOne({
+      _id: response.body.data._id,
+      _environmentId: session.environment._id,
+    });
+    const credentials = decryptCredentials(stored?.credentials ?? {});
 
     expect(credentials.authMethod).to.equal('apiKey');
     expect(credentials.apiKey).to.equal('SK123');
     expect(credentials.secretKey).to.equal('api-key-secret');
     expect(credentials.token).to.equal(undefined);
+  });
+
+  describe('masked secrets', () => {
+    const SOURCE_API_KEY = 'SG.abcdefghijklmnop3f9a';
+    const MASKED_SOURCE_API_KEY = `SG.${MASKED_SECRET_FILL}3f9a`;
+
+    async function createSendGridIntegration(environmentId: string) {
+      const response = await session.testAgent.post('/v1/integrations').send({
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        _environmentId: environmentId,
+        credentials: { apiKey: SOURCE_API_KEY, from: 'source@example.com' },
+        active: false,
+        check: false,
+      });
+      expect(response.status).to.equal(201);
+      expect(response.body.data.credentials.apiKey).to.equal(MASKED_SOURCE_API_KEY);
+
+      return response.body.data._id as string;
+    }
+
+    async function createDevelopmentTypeEnvironment() {
+      const environment = await session.createEnvironment('Staging');
+      await envRepository.update(
+        { _id: environment._id, _organizationId: session.organization._id },
+        { $set: { type: EnvironmentTypeEnum.DEV } }
+      );
+
+      return environment;
+    }
+
+    it('should not copy secrets from an integration whose environment no longer exists', async () => {
+      const orphaned = await createDevelopmentTypeEnvironment();
+      const sourceId = await createSendGridIntegration(orphaned._id);
+      await envRepository.delete({ _id: orphaned._id, _organizationId: session.organization._id });
+
+      const response = await session.testAgent.post('/v1/integrations').send({
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        name: 'Copy of an orphan',
+        credentials: { apiKey: MASKED_SOURCE_API_KEY },
+        secretsSourceIntegrationId: sourceId,
+        active: false,
+        check: false,
+      });
+
+      expect(response.status).to.equal(404);
+    });
+
+    it('should list an integration whose secret starts with the encryption prefix', async () => {
+      const PASSWORD = 'nvsk.smtp-password';
+      const created = await session.testAgent.post('/v1/integrations').send({
+        providerId: EmailProviderIdEnum.CustomSMTP,
+        channel: ChannelTypeEnum.EMAIL,
+        credentials: { host: 'smtp.example.com', port: '587', user: 'mailer', password: PASSWORD },
+        active: false,
+        check: false,
+      });
+      expect(created.status).to.equal(201);
+
+      const { status, body } = await session.testAgent.get('/v1/integrations');
+      expect(status).to.equal(200);
+
+      const listed = body.data.find((integration) => integration._id === created.body.data._id);
+      expect(listed.credentials.password).to.equal(maskSecret(PASSWORD));
+    });
+
+    async function findProductionEnvironment() {
+      const production = await envRepository.findOne({
+        name: 'Production',
+        _organizationId: session.organization._id,
+      });
+      expect(production?.type, 'Expected Production environment fixture').to.equal(EnvironmentTypeEnum.PROD);
+
+      return production!;
+    }
+
+    async function findStoredCredentials(integrationId: string, environmentId: string) {
+      const stored = await integrationRepository.findOne({ _id: integrationId, _environmentId: environmentId });
+
+      return decryptCredentials(stored?.credentials ?? {});
+    }
+
+    it('should copy the stored secrets of the source integration into another non-production environment', async () => {
+      const sourceId = await createSendGridIntegration(session.environment._id);
+      const targetEnvironment = await createDevelopmentTypeEnvironment();
+
+      const response = await session.testAgent.post('/v1/integrations').send({
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        _environmentId: targetEnvironment._id,
+        credentials: { apiKey: MASKED_SOURCE_API_KEY, from: 'copy@example.com' },
+        secretsSourceIntegrationId: sourceId,
+        active: false,
+        check: false,
+      });
+
+      expect(response.status).to.equal(201);
+      expect(response.body.data._environmentId).to.equal(targetEnvironment._id);
+      expect(response.body.data.credentials.apiKey).to.equal(MASKED_SOURCE_API_KEY);
+      expect(response.body.data.credentials.from).to.equal('copy@example.com');
+      expect(JSON.stringify(response.body)).to.not.contain(SOURCE_API_KEY);
+
+      const storedCredentials = await findStoredCredentials(response.body.data._id, targetEnvironment._id);
+      expect(storedCredentials.apiKey).to.equal(SOURCE_API_KEY);
+      expect(storedCredentials.from).to.equal('copy@example.com');
+    });
+
+    it('should reject masked credentials when no source integration is given', async () => {
+      await createSendGridIntegration(session.environment._id);
+
+      const response = await session.testAgent.post('/v1/integrations').send({
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        identifier: 'masked-without-source',
+        credentials: { apiKey: MASKED_SOURCE_API_KEY, from: 'copy@example.com' },
+        active: false,
+        check: false,
+      });
+
+      expect(response.status).to.equal(400);
+      expect(response.body.message).to.contain("Masked values can't be saved as credentials: apiKey");
+
+      const created = await integrationRepository.findOne({
+        _environmentId: session.environment._id,
+        identifier: 'masked-without-source',
+      });
+      expect(created).to.equal(null);
+    });
+
+    it('should not copy the secrets of a production integration into a development environment', async () => {
+      const production = await findProductionEnvironment();
+      const sourceId = await createSendGridIntegration(production._id);
+
+      const response = await session.testAgent.post('/v1/integrations').send({
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        _environmentId: session.environment._id,
+        identifier: 'copy-from-production',
+        credentials: { apiKey: MASKED_SOURCE_API_KEY, from: 'copy@example.com' },
+        secretsSourceIntegrationId: sourceId,
+        active: false,
+        check: false,
+      });
+
+      expect(response.status).to.equal(400);
+      expect(response.body.message).to.contain("Masked values can't be saved as credentials: apiKey");
+
+      const created = await integrationRepository.findOne({
+        _environmentId: session.environment._id,
+        identifier: 'copy-from-production',
+      });
+      expect(created).to.equal(null);
+    });
+
+    it('should copy the secrets of a production integration into another production integration', async () => {
+      const production = await findProductionEnvironment();
+      const sourceId = await createSendGridIntegration(production._id);
+
+      const response = await session.testAgent.post('/v1/integrations').send({
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        _environmentId: production._id,
+        credentials: { apiKey: MASKED_SOURCE_API_KEY, from: 'copy@example.com' },
+        secretsSourceIntegrationId: sourceId,
+        active: false,
+        check: false,
+      });
+
+      expect(response.status).to.equal(201);
+
+      const storedCredentials = await findStoredCredentials(response.body.data._id, production._id);
+      expect(storedCredentials.apiKey).to.equal(SOURCE_API_KEY);
+    });
+
+    it('should not copy secrets for an API key caller', async () => {
+      const sourceId = await createSendGridIntegration(session.environment._id);
+
+      const response = await session.testAgent
+        .post('/v1/integrations')
+        .set('authorization', `ApiKey ${session.apiKey}`)
+        .send({
+          providerId: EmailProviderIdEnum.SendGrid,
+          channel: ChannelTypeEnum.EMAIL,
+          credentials: { apiKey: MASKED_SOURCE_API_KEY, from: 'copy@example.com' },
+          secretsSourceIntegrationId: sourceId,
+          active: false,
+          check: false,
+        });
+
+      expect(response.status).to.equal(400);
+    });
   });
 
   it('should not calculate primary and priority fields when is not active', async () => {

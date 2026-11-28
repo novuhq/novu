@@ -16,7 +16,6 @@ import {
   CreateLayoutPage,
   CreateWorkflowPage,
   ErrorPage,
-  IntegrationsListPage,
   InvitationAcceptPage,
   LayoutsPage,
   OrganizationListPage,
@@ -37,8 +36,11 @@ import { SubscribersPage } from '@/pages/subscribers';
 import { TranslationSettingsPage } from '@/pages/translation-settings-page';
 import { WebhooksPage } from '@/pages/webhooks-page';
 import { ConnectSubscriberProvider } from './components/connect/connect-subscriber-provider';
-import { CreateIntegrationSidebar } from './components/integrations/components/create-integration-sidebar';
-import { UpdateIntegrationSidebar } from './components/integrations/components/update-integration-sidebar';
+import {
+  CreateIntegrationSidebarRoute,
+  IntegrationStorePageRoute,
+  UpdateIntegrationSidebarRoute,
+} from './components/integrations/integration-store-routes';
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
 import { WorkflowAgentAssignment } from './components/workflow-editor/workflow-agent-assignment';
 import { EE_AUTH_PROVIDER, IS_CLOUD, IS_SELF_HOSTED, IS_SELF_HOSTED_CE } from './config';
@@ -713,7 +715,7 @@ const router = createBrowserRouter([
             path: ROUTES.INTEGRATIONS,
             element: (
               <ProtectedRoute permission={PermissionsEnum.INTEGRATION_READ}>
-                <IntegrationsListPage />
+                <IntegrationStorePageRoute />
               </ProtectedRoute>
             ),
             children: [
@@ -721,7 +723,7 @@ const router = createBrowserRouter([
                 path: ROUTES.INTEGRATIONS_CONNECT,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.INTEGRATION_WRITE} isDrawerRoute>
-                    <CreateIntegrationSidebar isOpened />
+                    <CreateIntegrationSidebarRoute />
                   </ProtectedRoute>
                 ),
               },
@@ -729,7 +731,7 @@ const router = createBrowserRouter([
                 path: ROUTES.INTEGRATIONS_CONNECT_PROVIDER,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.INTEGRATION_WRITE} isDrawerRoute>
-                    <CreateIntegrationSidebar isOpened />
+                    <CreateIntegrationSidebarRoute />
                   </ProtectedRoute>
                 ),
               },
@@ -743,7 +745,7 @@ const router = createBrowserRouter([
                     }
                     isDrawerRoute
                   >
-                    <UpdateIntegrationSidebar isOpened />
+                    <UpdateIntegrationSidebarRoute />
                   </ProtectedRoute>
                 ),
               },

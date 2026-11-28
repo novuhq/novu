@@ -19,6 +19,7 @@ import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   CalculateLimitNovuIntegration,
   CalculateLimitNovuIntegrationCommand,
+  decryptCredentials,
   FeatureFlagsService,
   GetActiveIntegrations,
   GetActiveIntegrationsCommand,
@@ -28,7 +29,7 @@ import {
   PinoLogger,
   RequirePermissions,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository, IntegrationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, type IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import {
   ApiAuthSchemeEnum,
   ApiServiceLevelEnum,
@@ -37,6 +38,9 @@ import {
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
+  isMaskedSecret,
+  maskSecretConfigurations,
+  maskSecretCredentials,
   PermissionsEnum,
   UserSessionData,
 } from '@novu/shared';
@@ -79,6 +83,7 @@ import { IssueIntegrationStoreTelegramMobileLinkResponseDto } from './dtos/issue
 import { LinkChannelEndpointRequestDto } from './dtos/link-channel-endpoint-request.dto';
 import { LinkChannelEndpointResponseDto } from './dtos/link-channel-endpoint-response.dto';
 import { SlackQuickSetupRequestDto, SlackQuickSetupResponseDto } from './dtos/slack-quick-setup.dto';
+import { TestIntegrationConnectionResponseDto } from './dtos/test-integration-connection-response.dto';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
 import {
   WhatsAppEmbeddedSignupRequestDto,
@@ -126,6 +131,8 @@ import { SetIntegrationAsPrimaryCommand } from './usecases/set-integration-as-pr
 import { SetIntegrationAsPrimary } from './usecases/set-integration-as-primary/set-integration-as-primary.usecase';
 import { SlackQuickSetupCommand } from './usecases/slack-quick-setup/slack-quick-setup.command';
 import { SlackQuickSetup } from './usecases/slack-quick-setup/slack-quick-setup.usecase';
+import { TestIntegrationConnectionCommand } from './usecases/test-integration-connection/test-integration-connection.command';
+import { TestIntegrationConnection } from './usecases/test-integration-connection/test-integration-connection.usecase';
 import { UpdateIntegrationCommand } from './usecases/update-integration/update-integration.command';
 import { UpdateIntegration } from './usecases/update-integration/update-integration.usecase';
 import { IssueWhatsAppSignupLinkCommand } from './usecases/whatsapp/issue-whatsapp-signup-link.command';
@@ -136,6 +143,7 @@ import { WhatsAppEmbeddedSignupAvailabilityCommand } from './usecases/whatsapp/w
 import { WhatsAppEmbeddedSignupAvailability } from './usecases/whatsapp/whatsapp-embedded-signup-availability.usecase';
 import { WhatsAppValidateTokenCommand } from './usecases/whatsapp/whatsapp-validate-token.command';
 import { WhatsAppValidateToken } from './usecases/whatsapp/whatsapp-validate-token.usecase';
+import { restoreMaskedIntegrationCredentials } from './utils/restore-masked-integration-credentials';
 
 @ApiCommonResponses()
 @Controller('/integrations')
@@ -165,6 +173,7 @@ export class IntegrationsController {
     private generateAzureSetupOauthUrlUsecase: GenerateAzureSetupOauthUrl,
     private azureSetupOauthCallbackUsecase: AzureSetupOauthCallback,
     private msTeamsHealthCheckUsecase: MsTeamsHealthCheck,
+    private testIntegrationConnectionUsecase: TestIntegrationConnection,
     private whatsAppValidateTokenUsecase: WhatsAppValidateToken,
     private whatsAppEmbeddedSignupUsecase: WhatsAppEmbeddedSignup,
     private whatsAppEmbeddedSignupAvailabilityUsecase: WhatsAppEmbeddedSignupAvailability,
@@ -195,17 +204,19 @@ export class IntegrationsController {
   @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async listIntegrations(@UserSession() user: UserSessionData): Promise<IntegrationResponseDto[]> {
-    const canAccessCredentials = await this.canUserAccessCredentials(user);
+    const credentialsView = await this.getCredentialsView(user);
 
-    return await this.getIntegrationsUsecase.execute(
+    const integrations = await this.getIntegrationsUsecase.execute(
       GetIntegrationsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        returnCredentials: canAccessCredentials,
+        returnCredentials: credentialsView !== 'none',
         scopeToEnvironment: isEnvironmentScopedListScheme(user.scheme),
       })
     );
+
+    return integrations.map((integration) => presentDecrypted(credentialsView, integration));
   }
 
   @Get('/active')
@@ -224,17 +235,19 @@ export class IntegrationsController {
   @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async getActiveIntegrations(@UserSession() user: UserSessionData): Promise<IntegrationResponseDto[]> {
-    const canAccessCredentials = await this.canUserAccessCredentials(user);
+    const credentialsView = await this.getCredentialsView(user);
 
-    return await this.getActiveIntegrationsUsecase.execute(
+    const integrations = await this.getActiveIntegrationsUsecase.execute(
       GetActiveIntegrationsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        returnCredentials: canAccessCredentials,
+        returnCredentials: credentialsView !== 'none',
         scopeToEnvironment: isEnvironmentScopedListScheme(user.scheme),
       })
     );
+
+    return integrations.map((integration) => presentDecrypted(credentialsView, integration));
   }
 
   @Get('/webhook/provider/:providerOrIntegrationId/status')
@@ -284,7 +297,7 @@ export class IntegrationsController {
     try {
       assertEnvironmentScopedAccess(user.scheme, user.environmentId, body._environmentId);
 
-      const canAccessCredentials = await this.canUserAccessCredentials(user);
+      const credentialsView = await this.getCredentialsView(user);
       const integration = await this.createIntegrationUsecase.execute(
         CreateIntegrationCommand.create({
           userId: user._id,
@@ -296,6 +309,8 @@ export class IntegrationsController {
           channel: body.channel,
           kind: body.kind,
           credentials: body.credentials,
+          // Only callers who may see an integration's credentials may copy its secrets.
+          secretsSourceIntegrationId: credentialsView !== 'none' ? body.secretsSourceIntegrationId : undefined,
           active: body.active ?? false,
           check: body.check ?? false,
           conditions: body.conditions,
@@ -304,15 +319,7 @@ export class IntegrationsController {
         })
       );
 
-      if (canAccessCredentials) {
-        return GetDecryptedIntegrations.getDecryptedCredentials(integration);
-      }
-
-      const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
-
-      return GetDecryptedIntegrations.withoutConfigurationSecrets(
-        integrationWithoutCredentials
-      ) as IntegrationResponseDto;
+      return presentStored(credentialsView, integration);
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -343,7 +350,7 @@ export class IntegrationsController {
     try {
       assertEnvironmentScopedAccess(user.scheme, user.environmentId, body._environmentId);
 
-      const canAccessCredentials = await this.canUserAccessCredentials(user);
+      const credentialsView = await this.getCredentialsView(user);
       const integration = await this.updateIntegrationUsecase.execute(
         UpdateIntegrationCommand.create({
           userId: user._id,
@@ -363,15 +370,7 @@ export class IntegrationsController {
         })
       );
 
-      if (canAccessCredentials) {
-        return GetDecryptedIntegrations.getDecryptedCredentials(integration);
-      }
-
-      const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
-
-      return GetDecryptedIntegrations.withoutConfigurationSecrets(
-        integrationWithoutCredentials
-      ) as IntegrationResponseDto;
+      return presentStored(credentialsView, integration);
     } catch (e) {
       if (e.message.includes('Integration validation failed') || e.message.includes('Cast to embedded')) {
         throw new BadRequestException(e.message);
@@ -408,17 +407,18 @@ export class IntegrationsController {
       })
     );
 
-    if (!result.integration || (await this.canUserAccessCredentials(user))) {
+    if (!result.integration) {
       return result;
     }
 
-    return {
-      ...result,
-      integration: {
-        ...GetDecryptedIntegrations.withoutConfigurationSecrets(result.integration),
-        credentials: {},
-      },
-    };
+    // The usecase works on the decrypted integration, so its secrets are masked or dropped here.
+    const credentialsView = await this.getCredentialsView(user);
+    const integration = presentDecrypted(credentialsView, {
+      ...result.integration,
+      credentials: credentialsView === 'none' ? {} : result.integration.credentials,
+    });
+
+    return { ...result, integration };
   }
 
   @Post('/:integrationId/set-primary')
@@ -443,7 +443,7 @@ export class IntegrationsController {
     @UserSession() user: UserSessionData,
     @Param('integrationId') integrationId: string
   ): Promise<IntegrationResponseDto> {
-    const canAccessCredentials = await this.canUserAccessCredentials(user);
+    const credentialsView = await this.getCredentialsView(user);
     const integration = await this.setIntegrationAsPrimaryUsecase.execute(
       SetIntegrationAsPrimaryCommand.create({
         userId: user._id,
@@ -454,15 +454,7 @@ export class IntegrationsController {
       })
     );
 
-    if (canAccessCredentials) {
-      return GetDecryptedIntegrations.getDecryptedCredentials(integration);
-    }
-
-    const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
-
-    return GetDecryptedIntegrations.withoutConfigurationSecrets(
-      integrationWithoutCredentials
-    ) as IntegrationResponseDto;
+    return presentStored(credentialsView, integration);
   }
 
   @Delete('/:integrationId')
@@ -620,6 +612,28 @@ export class IntegrationsController {
     );
 
     return { url };
+  }
+
+  /**
+   * "Verify integration" from the integration store: checks the stored credentials against the provider
+   * with a read-only call (retrying transient failures) and reports the outcome. It changes nothing itself.
+   */
+  @Post('/:integrationId/test-connection')
+  @HttpCode(HttpStatus.OK)
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  async testIntegrationConnection(
+    @UserSession() user: UserSessionData,
+    @Param('integrationId') integrationId: string
+  ): Promise<TestIntegrationConnectionResponseDto> {
+    return this.testIntegrationConnectionUsecase.execute(
+      TestIntegrationConnectionCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        integrationId,
+      })
+    );
   }
 
   /**
@@ -909,7 +923,7 @@ export class IntegrationsController {
       WhatsAppValidateTokenCommand.create({
         userId: user._id,
         organizationId: user.organizationId,
-        accessToken: body.accessToken,
+        accessToken: await this.resolveWhatsAppAccessToken(user, body),
         phoneNumberIdentification: body.phoneNumberIdentification,
         businessAccountId: body.businessAccountId,
       })
@@ -1109,6 +1123,30 @@ export class IntegrationsController {
     }
   }
 
+  // Declared before '/:integrationIdentifier/mobile-link', which would otherwise take 'telegram' as an identifier.
+  @Post('/telegram/mobile-link')
+  @ApiResponse(IssueIntegrationStoreTelegramMobileLinkResponseDto, 200)
+  @ApiOperation({
+    summary: 'Issue a short-lived Telegram mobile setup link for the integration store',
+    description:
+      'Returns an opaque, single-use, short-lived setup token plus a mobile URL. The visitor pastes the BotFather token on the linked landing page and the consume endpoint creates a brand-new Telegram integration in the current environment.',
+  })
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  @HttpCode(HttpStatus.OK)
+  async createTelegramMobileLink(
+    @UserSession() user: UserSessionData
+  ): Promise<IssueIntegrationStoreTelegramMobileLinkResponseDto> {
+    return this.issueIntegrationStoreTelegramMobileLinkUsecase.execute(
+      IssueIntegrationStoreTelegramMobileLinkCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+      })
+    );
+  }
+
   @Post('/:integrationIdentifier/mobile-link')
   @ExternalApiAccessible()
   @KeylessAccessible()
@@ -1161,29 +1199,6 @@ export class IntegrationsController {
     }
   }
 
-  @Post('/telegram/mobile-link')
-  @ApiResponse(IssueIntegrationStoreTelegramMobileLinkResponseDto, 200)
-  @ApiOperation({
-    summary: 'Issue a short-lived Telegram mobile setup link for the integration store',
-    description:
-      'Returns an opaque, single-use, short-lived setup token plus a mobile URL. The visitor pastes the BotFather token on the linked landing page and the consume endpoint creates a brand-new Telegram integration in the current environment.',
-  })
-  @ApiExcludeEndpoint()
-  @RequireAuthentication()
-  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
-  @HttpCode(HttpStatus.OK)
-  async createTelegramMobileLink(
-    @UserSession() user: UserSessionData
-  ): Promise<IssueIntegrationStoreTelegramMobileLinkResponseDto> {
-    return this.issueIntegrationStoreTelegramMobileLinkUsecase.execute(
-      IssueIntegrationStoreTelegramMobileLinkCommand.create({
-        userId: user._id,
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-      })
-    );
-  }
-
   @Post('/:integrationId/slack-quick-setup')
   @ExternalApiAccessible()
   @ApiResponse(SlackQuickSetupResponseDto, 201)
@@ -1208,10 +1223,62 @@ export class IntegrationsController {
         integrationId,
         agentId: body.agentId,
         configToken: body.configToken,
+        appName: body.appName,
         subscriberId: body.subscriberId,
         connectionIdentifier: body.connectionIdentifier,
       })
     );
+  }
+
+  /**
+   * The dashboard only has a saved token as its mask. Sent with the integration it came from, the mask stands
+   * for that integration's stored token.
+   */
+  private async resolveWhatsAppAccessToken(
+    user: UserSessionData,
+    body: WhatsAppValidateTokenRequestDto
+  ): Promise<string> {
+    if (!body.integrationId || !isMaskedSecret(body.accessToken)) {
+      return body.accessToken;
+    }
+
+    const integration = await this.integrationRepository.findOne({
+      _id: body.integrationId,
+      _organizationId: user.organizationId,
+      _environmentId: user.environmentId,
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+    });
+    if (!integration) {
+      throw new NotFoundException(`Integration with id ${body.integrationId} not found`);
+    }
+
+    const restored = restoreMaskedIntegrationCredentials(
+      integration.providerId,
+      { apiToken: body.accessToken },
+      decryptCredentials(integration.credentials ?? {})
+    );
+
+    return restored.apiToken;
+  }
+
+  /**
+   * How this caller sees stored secrets: not at all, masked (the redesigned integration store), or in full (the
+   * previous store, which edits the decrypted values). Masking follows `IS_INTEGRATION_STORE_V_2_ENABLED` so the
+   * store that reads the response is the one that understands it.
+   */
+  private async getCredentialsView(user: UserSessionData): Promise<CredentialsView> {
+    if (!(await this.canUserAccessCredentials(user))) {
+      return 'none';
+    }
+
+    const isIntegrationStoreV2Enabled = await this.featureFlagsService.getFlag({
+      organization: { _id: user.organizationId },
+      user: { _id: user._id },
+      key: FeatureFlagsKeysEnum.IS_INTEGRATION_STORE_V_2_ENABLED,
+      defaultValue: false,
+    });
+
+    return isIntegrationStoreV2Enabled ? 'masked' : 'full';
   }
 
   private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {
@@ -1255,4 +1322,57 @@ export class IntegrationsController {
 
     return user.permissions.includes(PermissionsEnum.INTEGRATION_WRITE);
   }
+}
+
+type CredentialsView = 'none' | 'masked' | 'full';
+
+type PresentableIntegration = { providerId: string; credentials?: object; configurations?: object };
+
+/** An integration whose credentials are already decrypted (the list usecases, auto-configure), as the caller sees it. */
+function presentDecrypted<T extends PresentableIntegration>(view: CredentialsView, integration: T): T {
+  if (view === 'masked') return withDecryptedSecretsMasked(integration);
+  if (view === 'full') return integration;
+
+  return GetDecryptedIntegrations.withoutConfigurationSecrets(integration);
+}
+
+/** An integration as the repository returns it, with its credentials still encrypted, as the caller sees it. */
+function presentStored(view: CredentialsView, integration: IntegrationEntity): IntegrationResponseDto {
+  if (view === 'masked') return withStoredSecretsMasked(integration) as IntegrationResponseDto;
+  if (view === 'full') return GetDecryptedIntegrations.getDecryptedCredentials(integration) as IntegrationResponseDto;
+
+  const { credentials: _credentials, ...integrationWithoutCredentials } = integration;
+
+  return GetDecryptedIntegrations.withoutConfigurationSecrets(integrationWithoutCredentials as IntegrationResponseDto);
+}
+
+/** Settings as a dashboard member with access to credentials gets them back: the signing key as a mask. */
+function withMaskedConfigurations<T extends { configurations?: object }>(integration: T): T {
+  if (!integration.configurations) {
+    return integration;
+  }
+
+  return { ...integration, configurations: maskSecretConfigurations(integration.configurations) };
+}
+
+/**
+ * What a dashboard member with access to credentials gets back: the settings as stored, and each secret as a
+ * mask of its first and last characters. A full secret never leaves the API.
+ *
+ * For an integration whose credentials are already decrypted (the list usecases, auto-configure). Decrypting
+ * twice would treat a secret that happens to start with the encryption prefix as encrypted, and throw.
+ */
+function withDecryptedSecretsMasked<T extends PresentableIntegration>(integration: T): T {
+  return withMaskedConfigurations({
+    ...integration,
+    credentials: maskSecretCredentials(integration.providerId, integration.credentials ?? {}),
+  });
+}
+
+/** The same for an integration as the repository returns it, with its credentials still encrypted. */
+function withStoredSecretsMasked<T extends PresentableIntegration>(integration: T): T {
+  return withDecryptedSecretsMasked({
+    ...integration,
+    credentials: decryptCredentials(integration.credentials ?? {}),
+  });
 }

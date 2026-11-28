@@ -1,12 +1,39 @@
+import type { IIntegration } from '@novu/shared';
 import {
   AgentRuntimeProviderIdEnum,
+  ChannelTypeEnum,
   ChatProviderIdEnum,
   ConfigConfiguration,
   CredentialsKeyEnum,
   EmailProviderIdEnum,
   IConfigCredential,
+  PushProviderIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
+
+export const CHANNEL_LABELS: Record<ChannelTypeEnum, string> = {
+  [ChannelTypeEnum.IN_APP]: 'In-app',
+  [ChannelTypeEnum.EMAIL]: 'Email',
+  [ChannelTypeEnum.SMS]: 'SMS',
+  [ChannelTypeEnum.CHAT]: 'Chat',
+  [ChannelTypeEnum.PUSH]: 'Push',
+  [ChannelTypeEnum.TOOL]: 'Tool',
+};
+
+/** A channel as a noun in a sentence: "email", "push", but "SMS". Empty without a channel. */
+export function channelNoun(channel?: ChannelTypeEnum): string {
+  if (!channel) return '';
+  const label = CHANNEL_LABELS[channel];
+
+  return label === label.toUpperCase() ? label : label.toLowerCase();
+}
+
+/** The API returns the stored `createdAt` and `updatedAt`, but the shared type doesn't declare them. */
+export function getIntegrationTimestamp(integration: IIntegration, field: 'createdAt' | 'updatedAt') {
+  const value = (integration as IIntegration & Partial<Record<'createdAt' | 'updatedAt', unknown>>)[field];
+
+  return typeof value === 'string' ? value : undefined;
+}
 
 export function isDemoIntegration(providerId: string) {
   return (
@@ -89,4 +116,75 @@ export function cleanCredentials(credentials: Record<string, unknown>): Record<s
   }
 
   return cleaned;
+}
+
+/** Primary integrations can't have routing conditions; making one primary removes them. */
+export function hasRoutingConditions(integration: IIntegration) {
+  return (
+    (!!integration.rules && Object.keys(integration.rules).length > 0) ||
+    (!!integration.conditions && integration.conditions.length > 0)
+  );
+}
+
+// Self-hosted installs can't reach the Novu team's inbox, so they ask for providers on GitHub.
+export const GITHUB_NEW_ISSUE_URL = 'https://github.com/novuhq/novu/issues/new/choose';
+
+/** The switch that turns on an email provider's activity tracking; Novu adds the webhook once the integration exists. */
+export const ACTIVITY_TRACKING_ENABLER = 'inboundWebhookEnabled';
+
+/** Providers set up with the guided credentials steps: where to get them, the form, and tracking where it applies. */
+const GUIDED_SETUP_PROVIDERS = [
+  EmailProviderIdEnum.Resend,
+  EmailProviderIdEnum.SendGrid,
+  EmailProviderIdEnum.SES,
+  SmsProviderIdEnum.Twilio,
+  PushProviderIdEnum.FCM,
+  PushProviderIdEnum.APNS,
+] as const;
+export type GuidedSetupProviderId = (typeof GUIDED_SETUP_PROVIDERS)[number];
+
+export function isGuidedSetupProvider(providerId?: string): providerId is GuidedSetupProviderId {
+  return GUIDED_SETUP_PROVIDERS.some((id) => id === providerId);
+}
+
+/**
+ * Guided email providers whose tracking switch starts on: Novu adds or offers their delivery webhook after create.
+ * Push tracking needs work in the user's app, so it starts off and nothing runs after create.
+ */
+export function hasGuidedActivityTracking(providerId?: string) {
+  return providerId === EmailProviderIdEnum.Resend || providerId === EmailProviderIdEnum.SendGrid;
+}
+
+/**
+ * Guided email providers whose tracking is finished right after create: Novu adds the delivery webhook, or opens
+ * the integration with the webhook URL to add by hand (always the case for SES).
+ */
+export function tracksDeliveryAfterCreate(providerId?: string) {
+  return hasGuidedActivityTracking(providerId) || providerId === EmailProviderIdEnum.SES;
+}
+
+/** Providers whose create flow uses the setup layout: Quick setup / Manual, Advanced settings and the new footer. */
+export function usesProviderSetupLayout(providerId?: string) {
+  return (
+    providerId === ChatProviderIdEnum.Slack ||
+    providerId === ChatProviderIdEnum.Telegram ||
+    providerId === ChatProviderIdEnum.MsTeams ||
+    providerId === ChatProviderIdEnum.WhatsAppBusiness ||
+    isGuidedSetupProvider(providerId)
+  );
+}
+
+const SECURE_CREDENTIALS = [
+  CredentialsKeyEnum.ApiKey,
+  CredentialsKeyEnum.ApiToken,
+  CredentialsKeyEnum.SecretKey,
+  CredentialsKeyEnum.Token,
+  CredentialsKeyEnum.Password,
+  CredentialsKeyEnum.ServiceAccount,
+  CredentialsKeyEnum.SigningSecret,
+];
+
+/** Secrets: masked in the form. */
+export function isSecureCredential(credential: IConfigCredential) {
+  return SECURE_CREDENTIALS.includes(credential.key as CredentialsKeyEnum);
 }

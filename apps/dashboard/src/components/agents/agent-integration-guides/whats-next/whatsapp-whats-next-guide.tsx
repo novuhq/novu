@@ -10,13 +10,9 @@ import { useInSessionMilestone } from '@/hooks/use-in-session-milestone';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { useWhatsNextGuideSession } from '@/hooks/use-whats-next-default-expanded';
 import { shouldShowWhatsNextGuide } from '@/utils/whats-next-guide';
+import { IntegrationCredentialsSidebar } from '../../integration-credentials-sidebar';
 import { SetupGuideCard } from '../../setup-guide-card';
-import {
-  CompletedStepIndicator,
-  IntegrationCredentialsSidebar,
-  SetupButton,
-  SetupStep,
-} from '../../setup-guide-primitives';
+import { CompletedStepIndicator, SetupButton, SetupStep } from '../../setup-guide-primitives';
 import type { StepStatus } from '../../setup-guide-step-utils';
 import { ConnectedBadge } from './connected-badge';
 

@@ -1,7 +1,8 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { decryptCredentials, FeatureFlagsService, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import { AgentIntegrationRepository, AgentRepository, type IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum, type ICredentials } from '@novu/shared';
+import { isAgentWebhookUrl } from '../../../agents/channels/shared/resolve-agent-integration-webhook.util';
 import { ConfigureWhatsAppWebhookCommand } from '../../../agents/channels/whatsapp/configure-whatsapp-webhook/configure-whatsapp-webhook.command';
 import { ConfigureWhatsAppWebhook } from '../../../agents/channels/whatsapp/configure-whatsapp-webhook/configure-whatsapp-webhook.usecase';
 import { humanRelayProfile } from '../../../agents/human-relay/human-relay-identity';
@@ -12,6 +13,7 @@ import { UpdateIntegration } from '../update-integration/update-integration.usec
 import {
   type ResolvedWhatsAppAgentIntegration,
   resolveWhatsAppAgentIntegration,
+  resolveWhatsAppIntegration,
 } from './resolve-whatsapp-agent-integration.utils';
 import { WhatsAppBusinessProfile } from './whatsapp-business-profile.service';
 import { getNovuWhatsAppPlatformConfig } from './whatsapp-credentials.utils';
@@ -22,6 +24,7 @@ import {
   generateWhatsAppRegistrationPin,
   getPhoneNumberDetails,
   listWabaPhoneNumbers,
+  listWabaSubscribedApps,
   type PhoneNumberDetailsResponse,
   registerWhatsAppPhoneNumber,
 } from './whatsapp-graph-api.utils';
@@ -70,15 +73,30 @@ export class WhatsAppEmbeddedSignup {
       };
     }
 
-    const { agent, integration } = await resolveWhatsAppAgentIntegration({
-      agentRepository: this.agentRepository,
-      integrationRepository: this.integrationRepository,
-      agentIntegrationRepository: this.agentIntegrationRepository,
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      agentIdentifier: command.agentIdentifier,
-      integrationIdentifier: command.integrationIdentifier,
-    });
+    // The integration store connects a number with no agent: only the credentials are saved. Linking an agent
+    // does not register the webhook by itself; the agent setup guide does (ConfigureWhatsAppWebhook, or this
+    // use case run again with the agent). The signup is refused when the business account already delivers
+    // to another integration's agent, see `findWebhookConflict`.
+    const agentIdentifier = command.agentIdentifier;
+    const { agent, integration } = agentIdentifier
+      ? await resolveWhatsAppAgentIntegration({
+          agentRepository: this.agentRepository,
+          integrationRepository: this.integrationRepository,
+          agentIntegrationRepository: this.agentIntegrationRepository,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          agentIdentifier,
+          integrationIdentifier: command.integrationIdentifier,
+        })
+      : {
+          agent: undefined,
+          integration: await resolveWhatsAppIntegration({
+            integrationRepository: this.integrationRepository,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            integrationIdentifier: command.integrationIdentifier,
+          }),
+        };
 
     const exchanged = await this.exchangeCode(platformConfig, command.code, integration._id);
     if (typeof exchanged !== 'string') {
@@ -100,6 +118,13 @@ export class WhatsAppEmbeddedSignup {
       return verified;
     }
     const { businessDisplayPhone } = verified;
+
+    if (!agent) {
+      const conflict = await this.findWebhookConflict(accessToken, wabaId, integration, command);
+      if (conflict) {
+        return conflict;
+      }
+    }
 
     const nextCredentials: ICredentials = {
       ...(existingCredentials ?? {}),
@@ -131,6 +156,17 @@ export class WhatsAppEmbeddedSignup {
 
     const phoneRegistrationWarning = await this.registerNumber(accessToken, phoneNumberId, integration._id);
 
+    if (!agent || !agentIdentifier) {
+      return {
+        success: true,
+        integrationId: integration._id,
+        integrationIdentifier: integration.identifier,
+        wabaId,
+        displayPhoneNumber: businessDisplayPhone,
+        phoneRegistrationWarning,
+      };
+    }
+
     await this.applyRelayProfile(agent, integration._id, command, { accessToken, phoneNumberId, isNovuManaged: true });
 
     const webhookResult = await this.configureWhatsAppWebhook.execute(
@@ -138,7 +174,7 @@ export class WhatsAppEmbeddedSignup {
         userId: command.userId,
         organizationId: command.organizationId,
         environmentId: command.environmentId,
-        agentIdentifier: command.agentIdentifier,
+        agentIdentifier,
         integrationIdentifier: command.integrationIdentifier,
       })
     );
@@ -321,6 +357,108 @@ export class WhatsAppEmbeddedSignup {
     }
 
     return { businessDisplayPhone };
+  }
+
+  /**
+   * The webhook callback is set per business account, not per number, and a signup with no agent leaves it as
+   * it is. If it points at another integration's agent, that agent would keep receiving this account's messages
+   * while the credentials move here, so the signup is refused. Nothing on Meta's side is changed: the other
+   * agent may be using another number of the same account. A callback of an agent linked to this integration
+   * is fine. Answers with the failure to return, or undefined when there is no conflict.
+   */
+  private async findWebhookConflict(
+    accessToken: string,
+    wabaId: string,
+    integration: IntegrationEntity,
+    command: WhatsAppEmbeddedSignupCommand
+  ): Promise<WhatsAppEmbeddedSignupResponseDto | undefined> {
+    const unreadable: WhatsAppEmbeddedSignupResponseDto = {
+      success: false,
+      error: {
+        code: 'meta_validation_failed',
+        message: 'Could not check the webhook of the WhatsApp Business Account with Meta. Try again.',
+      },
+    };
+
+    let callbacks: string[];
+    try {
+      const subscribedApps = await listWabaSubscribedApps(accessToken, wabaId);
+      const metaError = extractMetaError(subscribedApps.body);
+
+      if (metaError || subscribedApps.statusCode >= 400) {
+        this.logger.warn(
+          { integrationId: integration._id, wabaId, statusCode: subscribedApps.statusCode, metaError },
+          'WhatsApp embedded signup: could not read the subscribed apps of the business account'
+        );
+
+        return unreadable;
+      }
+
+      callbacks = (subscribedApps.body.data ?? [])
+        .map((app) => app.override_callback_uri?.trim() ?? '')
+        .filter((callback) => callback && isAgentWebhookUrl(callback));
+    } catch (err) {
+      this.logger.warn(
+        { err, integrationId: integration._id, wabaId },
+        'WhatsApp embedded signup: subscribed apps lookup failed'
+      );
+
+      return unreadable;
+    }
+
+    for (const callback of callbacks) {
+      if (!(await this.isOwnAgentWebhook(callback, integration, command))) {
+        this.logger.warn(
+          { integrationId: integration._id, wabaId },
+          'WhatsApp embedded signup: business account already delivers to another agent webhook'
+        );
+
+        return {
+          success: false,
+          error: {
+            code: 'webhook_in_use',
+            message:
+              'This WhatsApp Business Account already delivers its messages to another Novu agent. Disconnect it there first, or use Manual setup with your own Meta app.',
+          },
+        };
+      }
+    }
+
+    return undefined;
+  }
+
+  /** True when the callback is the webhook of an agent linked to this integration, in this environment. */
+  private async isOwnAgentWebhook(
+    callback: string,
+    integration: IntegrationEntity,
+    command: WhatsAppEmbeddedSignupCommand
+  ): Promise<boolean> {
+    let segments: string[];
+    try {
+      segments = new URL(callback).pathname.split('/').filter(Boolean);
+    } catch {
+      return false;
+    }
+
+    // `/v1/agents/{agentId}/webhook/{integrationIdentifier}`
+    const integrationIdentifier = segments.at(-1);
+    const agentId = segments.at(-3) ?? '';
+
+    if (integrationIdentifier !== integration.identifier || !/^[a-f0-9]{24}$/i.test(agentId)) {
+      return false;
+    }
+
+    const link = await this.agentIntegrationRepository.findOne(
+      {
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _agentId: agentId,
+        _integrationId: integration._id,
+      },
+      ['_id']
+    );
+
+    return !!link;
   }
 
   /** Registers the number for the Cloud API. Best-effort: returns a warning to show, never fails the signup. */

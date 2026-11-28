@@ -14,8 +14,8 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { IntegrationCredentialsSidebar } from './integration-credentials-sidebar';
 import {
-  IntegrationCredentialsSidebar,
   ListeningStatus,
   ProviderSetupStepperRail,
   SetupButton,

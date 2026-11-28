@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, IAttachmentOptions } from '../template/template.interface';
 import { ChannelData } from './channel-data.type';
-import { CheckIntegrationResponseEnum } from './provider.enum';
+import { CheckIntegrationResponseEnum, VerifyCredentialsStatusEnum } from './provider.enum';
 
 export interface IProvider {
   id: string;
@@ -15,6 +15,17 @@ export interface IProvider {
     message?: string;
     configurations?: unknown;
   }>;
+  /**
+   * Checks the configured credentials with a cheap, read-only call that sends nothing.
+   * Must not throw for provider answers: classify them into a {@link VerifyCredentialsStatusEnum}.
+   * The message is shown to the user, so it must never echo credentials or raw upstream errors.
+   */
+  verifyCredentials?: () => Promise<IVerifyCredentialsResponse>;
+}
+
+export interface IVerifyCredentialsResponse {
+  status: VerifyCredentialsStatusEnum;
+  message?: string;
 }
 
 export interface IEmailAlternative {

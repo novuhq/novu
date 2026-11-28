@@ -12,9 +12,9 @@ import { usePhotonDeviceAuth } from '@/hooks/use-photon-device-auth';
 import { useRemovePhotonWebhooks } from '@/hooks/use-remove-photon-webhooks';
 import { ConnectWebhookPanel, StaleNovuWebhooksWarning } from './imessage-guide-panels';
 import { ImessageIntegrationSelect } from './imessage-integration-select';
+import { IntegrationCredentialsSidebar } from './integration-credentials-sidebar';
 import { PhotonInboundTestPanel, type PhotonRecipientRegistration, PhotonRegisterPanel } from './photon-optin-panels';
 import {
-  IntegrationCredentialsSidebar,
   ListeningStatus,
   ProviderSetupStepperRail,
   ReadOnlyValueRow,

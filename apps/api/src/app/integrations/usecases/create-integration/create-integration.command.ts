@@ -29,6 +29,11 @@ export class CreateIntegrationCommand extends EnvironmentCommand {
   @IsOptional()
   credentials?: ICredentialsDto;
 
+  /** The integration whose stored secrets replace the masked values in `credentials`, when duplicating one. */
+  @IsOptional()
+  @IsString()
+  secretsSourceIntegrationId?: string;
+
   @IsOptional()
   active: boolean;
 

@@ -3,6 +3,7 @@ import {
   IEnvironment,
   IIntegration,
   IntegrationKindEnum,
+  type ITestIntegrationConnectionResponse,
   type WhatsAppSignupLinkStatus,
 } from '@novu/shared';
 
@@ -25,6 +26,8 @@ export type CreateIntegrationData = {
   channel?: ChannelTypeEnum;
   kind?: IntegrationKindEnum;
   credentials: Record<string, unknown>;
+  /** Duplicating: the integration whose stored secrets replace the masked values in `credentials`. */
+  secretsSourceIntegrationId?: string;
   configurations?: Record<string, string>;
   name: string;
   identifier?: string;
@@ -32,6 +35,8 @@ export type CreateIntegrationData = {
   primary?: boolean;
   _environmentId?: string;
   rules?: Record<string, unknown> | null;
+  /** Legacy routing filters; the API ignores them when `rules` is set. */
+  conditions?: IIntegration['conditions'];
 };
 
 export enum CheckIntegrationResponseEnum {
@@ -136,7 +141,12 @@ export async function autoConfigureIntegration(integrationId: string, environmen
   return response.data;
 }
 
-export async function updateIntegration(integrationId: string, data: UpdateIntegrationData, environment: IEnvironment) {
+/** Updates only the fields given; the rest of the integration stays as it is. */
+export async function updateIntegration(
+  integrationId: string,
+  data: Partial<UpdateIntegrationData>,
+  environment: IEnvironment
+) {
   return await put<IIntegration>(`/integrations/${integrationId}`, {
     body: data,
     environment: environment,
@@ -145,7 +155,10 @@ export async function updateIntegration(integrationId: string, data: UpdateInteg
 
 export type SlackQuickSetupParams = {
   configToken: string;
-  agentId: string;
+  /** The Slack app's name; defaults to the integration name. */
+  appName?: string;
+  /** Leave out to create a notifications app, which only sends messages. */
+  agentId?: string;
   subscriberId?: string;
   connectionIdentifier?: string;
 };
@@ -154,11 +167,13 @@ export async function slackQuickSetup(
   integrationId: string,
   params: SlackQuickSetupParams,
   environment: IEnvironment
-): Promise<void> {
-  await post(`/integrations/${integrationId}/slack-quick-setup`, {
+): Promise<{ appId?: string }> {
+  const response = await post<{ data: { appId?: string } }>(`/integrations/${integrationId}/slack-quick-setup`, {
     body: params,
     environment,
   });
+
+  return response.data ?? {};
 }
 
 export type WhatsAppEmbeddedSignupParams = {
@@ -166,7 +181,8 @@ export type WhatsAppEmbeddedSignupParams = {
   wabaId: string;
   phoneNumberId: string;
   integrationIdentifier: string;
-  agentIdentifier: string;
+  /** Leave out to only save the credentials, with no agent webhook, as the integration store does. */
+  agentIdentifier?: string;
 };
 
 export type WhatsAppEmbeddedSignupResult = {
@@ -217,6 +233,19 @@ export async function getAzureSetupOauthUrl(
 ): Promise<{ url: string }> {
   const { data } = await get<{ data: { url: string } }>(
     `/integrations/${integrationId}/msteams-azure-setup/oauth-url`,
+    { environment }
+  );
+
+  return data;
+}
+
+/** Checks the integration's stored credentials against its provider. Read-only: it never pauses anything itself. */
+export async function testIntegrationConnection(
+  integrationId: string,
+  environment: IEnvironment
+): Promise<ITestIntegrationConnectionResponse> {
+  const { data } = await post<{ data: ITestIntegrationConnectionResponse }>(
+    `/integrations/${integrationId}/test-connection`,
     { environment }
   );
 
@@ -401,6 +430,7 @@ export async function completeWhatsAppSignupPublic(
   return unwrapEnvelope(data) as WhatsAppEmbeddedSignupResult;
 }
 
+// biome-ignore lint/plugin: pre-existing; raw response bodies are parsed by each caller
 async function safeJson(response: Response): Promise<unknown> {
   try {
     return await response.json();
@@ -414,6 +444,7 @@ async function safeJson(response: Response): Promise<unknown> {
  * `{ data: ... }` envelope from the API's `ResponseInterceptor` must be
  * unwrapped manually.
  */
+// biome-ignore lint/plugin: pre-existing; raw response bodies are parsed by each caller
 function unwrapEnvelope(data: unknown): unknown {
   if (data && typeof data === 'object' && 'data' in (data as Record<string, unknown>)) {
     return (data as { data: unknown }).data;

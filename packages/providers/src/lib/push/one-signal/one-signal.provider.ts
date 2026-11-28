@@ -1,10 +1,17 @@
 import { PushProviderIdEnum } from '@novu/shared';
 
-import { IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
+import {
+  IPushOptions,
+  IPushProvider,
+  ISendMessageSuccessResponse,
+  IVerifyCredentialsResponse,
+  VerifyCredentialsStatusEnum,
+} from '@novu/stateless';
 import { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { CasingEnum } from '../../../base.provider';
 import { createProviderHttpClient } from '../../../utils/http';
 import { WithPassthrough } from '../../../utils/types';
+import { VERIFY_CREDENTIALS_TIMEOUT_MS, verifyCredentialsWith } from '../../../utils/verify-credentials';
 import { PushBaseProvider } from '../push.base-provider';
 
 export class OneSignalPushProvider extends PushBaseProvider implements IPushProvider {
@@ -28,6 +35,23 @@ export class OneSignalPushProvider extends PushBaseProvider implements IPushProv
     this.axiosInstance = createProviderHttpClient({
       baseURL: config.apiVersion === 'externalId' ? this.BASE_URL_USER_MODEL : this.BASE_URL_PLAYER_MODEL,
     });
+  }
+
+  /**
+   * Lists one notification of the app (`GET /notifications?app_id=…&limit=1`). This endpoint takes the same
+   * App API key and app id the sends use (unlike `GET /apps/{id}`, which needs the organization key), so a 403
+   * here means sends would be refused too.
+   */
+  async verifyCredentials(): Promise<IVerifyCredentialsResponse> {
+    return verifyCredentialsWith(
+      () =>
+        this.axiosInstance.get('/notifications', {
+          params: { app_id: this.config.appId, limit: 1 },
+          headers: { Authorization: `Basic ${this.config.apiKey}` },
+          timeout: VERIFY_CREDENTIALS_TIMEOUT_MS,
+        }),
+      (httpStatus) => (httpStatus === 403 ? VerifyCredentialsStatusEnum.INVALID : undefined)
+    );
   }
 
   async sendMessage(

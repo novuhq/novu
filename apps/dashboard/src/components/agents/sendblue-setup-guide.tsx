@@ -9,8 +9,8 @@ import { useRemoveSendblueWebhooks } from '@/hooks/use-remove-sendblue-webhooks'
 import { useSendSendblueTestMessage } from '@/hooks/use-send-sendblue-test-message';
 import { ConnectWebhookPanel, SendTestMessagePanel, StaleNovuWebhooksWarning } from './imessage-guide-panels';
 import { ImessageIntegrationSelect } from './imessage-integration-select';
+import { IntegrationCredentialsSidebar } from './integration-credentials-sidebar';
 import {
-  IntegrationCredentialsSidebar,
   ListeningStatus,
   ProviderSetupStepperRail,
   ReadOnlyValueRow,

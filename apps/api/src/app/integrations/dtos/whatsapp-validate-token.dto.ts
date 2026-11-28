@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 import type { WhatsAppValidateTokenError } from '../usecases/whatsapp/whatsapp-validate-token.usecase';
 
@@ -8,6 +8,15 @@ export class WhatsAppValidateTokenRequestDto {
   @IsString()
   @IsNotEmpty()
   accessToken: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    description:
+      'The saved integration the access token belongs to. With it, a masked access token stands for the stored one.',
+  })
+  @IsMongoId()
+  @IsOptional()
+  integrationId?: string;
 
   @ApiPropertyOptional({
     type: String,

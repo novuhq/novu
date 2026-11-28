@@ -1,9 +1,13 @@
+import { decryptCredentials } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, maskSecret } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { withIntegrationStoreV2Flag } from './integration-store-v2-flag';
 
 describe('Get Decrypted Integrations - /integrations (GET) #novu-v2', () => {
+  withIntegrationStoreV2Flag(true);
+
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
 
@@ -12,7 +16,7 @@ describe('Get Decrypted Integrations - /integrations (GET) #novu-v2', () => {
     await session.initialize();
   });
 
-  it('should get active decrypted integration', async () => {
+  it('should get the active integration with masked secrets, stored encrypted', async () => {
     const payload = {
       providerId: EmailProviderIdEnum.Mailgun,
       channel: ChannelTypeEnum.EMAIL,
@@ -38,8 +42,8 @@ describe('Get Decrypted Integrations - /integrations (GET) #novu-v2', () => {
     const mailgun = activeEmailIntegrations.find((el) => el.providerId === EmailProviderIdEnum.Mailgun);
 
     expect(mailgun.providerId).to.equal('mailgun');
-    expect(mailgun.credentials.apiKey).to.equal('123');
-    expect(mailgun.credentials.secretKey).to.equal('abc');
+    expect(mailgun.credentials.apiKey).to.equal(maskSecret('123'));
+    expect(mailgun.credentials.secretKey).to.equal(maskSecret('abc'));
     expect(mailgun.active).to.equal(true);
 
     const environmentIntegrations = await integrationRepository.findByEnvironmentId(session.environment._id);
@@ -57,5 +61,9 @@ describe('Get Decrypted Integrations - /integrations (GET) #novu-v2', () => {
     expect(encryptedStoredIntegration?.credentials.secretKey).to.contains('nvsk.');
     expect(encryptedStoredIntegration?.credentials.secretKey).to.not.equal('abc');
     expect(encryptedStoredIntegration?.active).to.equal(true);
+
+    const storedCredentials = decryptCredentials(encryptedStoredIntegration?.credentials ?? {});
+    expect(storedCredentials.apiKey).to.equal('123');
+    expect(storedCredentials.secretKey).to.equal('abc');
   });
 });
