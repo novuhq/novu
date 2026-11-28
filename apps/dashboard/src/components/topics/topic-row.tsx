@@ -57,7 +57,7 @@ export const TopicRow = ({ topic }: TopicRowProps) => {
   const [searchParams] = useSearchParams();
 
   const topicLink = `${buildRoute(ROUTES.TOPICS_EDIT, {
-    topicKey: topic.key,
+    topicKey: encodeURIComponent(topic.key),
     environmentSlug: currentEnvironment?.slug ?? '',
   })}?${searchParams.toString()}`;
 
@@ -84,9 +84,7 @@ export const TopicRow = ({ topic }: TopicRowProps) => {
 
   return (
     <>
-      <TableRow
-        className="group relative isolate cursor-pointer"
-      >
+      <TableRow className="group relative isolate cursor-pointer">
         <TopicTableCell to={topicLink}>
           <div className="flex items-center">
             <span className="max-w-[300px] truncate font-medium">{topic.name}</span>

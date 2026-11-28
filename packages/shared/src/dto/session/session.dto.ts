@@ -15,6 +15,7 @@ export interface ISubscriberJwtDto {
   contextKeys: string[];
   aud: 'widget_user';
   authMethod?: SubscriberSessionAuthMethodEnum.TOKEN;
+  scope?: string[];
 }
 
 export interface ISessionDto {

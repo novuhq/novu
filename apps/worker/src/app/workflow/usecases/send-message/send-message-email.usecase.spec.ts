@@ -641,3 +641,171 @@ describe('SendMessageEmail - agent sender / reply-to precedence', () => {
     });
   });
 });
+
+describe('SendMessageEmail - email recipient overrides', () => {
+  const SUBSCRIBER_EMAIL = 'subscriber@test.com';
+  const INTEGRATION_FROM = 'integration@test.com';
+
+  function buildUsecase() {
+    const messageRepository = {
+      create: sinon.stub().resolves({ _id: 'msg_1' }),
+      update: sinon.stub().resolves(undefined),
+      updateMessageStatus: sinon.stub().resolves(undefined),
+    };
+
+    const usecase = new SendMessageEmail(
+      {} as never,
+      {} as never,
+      messageRepository as never,
+      {} as never,
+      { execute: sinon.stub().resolves(undefined) } as never,
+      { execute: sinon.stub() } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { getFlag: sinon.stub().resolves(true) } as never,
+      {} as never,
+      { execute: sinon.stub().resolves(undefined) } as never,
+      {} as never,
+      {} as never
+    );
+
+    sinon.stub(usecase as never, 'getIntegration').resolves({
+      integration: {
+        _id: 'integration_1',
+        providerId: EmailProviderIdEnum.SendGrid,
+        credentials: { from: INTEGRATION_FROM },
+      },
+    });
+    sinon.stub(usecase as never, 'processVariants').resolves(undefined);
+    sinon.stub(usecase as never, 'getOverrideLayoutId').resolves(undefined);
+    sinon.stub(usecase as never, 'sendSelectedIntegrationExecution').resolves(undefined);
+    sinon.stub(usecase as never, 'storeContent').returns(false);
+
+    return usecase;
+  }
+
+  function buildCommand(emailOverrides: Record<string, unknown>) {
+    return SendMessageChannelCommand.create({
+      environmentId: 'env_1',
+      organizationId: 'org_1',
+      userId: 'user_1',
+      identifier: 'wf-identifier',
+      payload: {},
+      overrides: { email: emailOverrides },
+      transactionId: 'txn_1',
+      notificationId: 'notif_1',
+      _templateId: 'tpl_1',
+      subscriberId: 'sub_1',
+      _subscriberId: '_sub_1',
+      jobId: 'job_1',
+      tags: [],
+      contextKeys: [],
+      compileContext: {
+        subscriber: { subscriberId: 'sub_1', email: SUBSCRIBER_EMAIL },
+      } as never,
+      bridgeData: {
+        outputs: { subject: 'Hello', body: '<html><body>Hi</body></html>' },
+      } as never,
+      step: {
+        stepId: 'email-step',
+        template: { _id: 'mt_1', type: ChannelTypeEnum.EMAIL, subject: 'Hello', content: '' },
+      } as never,
+      job: {
+        _id: 'job_1',
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        _subscriberId: '_sub_1',
+        subscriberId: 'sub_1',
+        _notificationId: 'notif_1',
+        _templateId: 'tpl_1',
+        transactionId: 'txn_1',
+        identifier: 'wf-identifier',
+        type: ChannelTypeEnum.EMAIL,
+        step: { stepId: 'email-step' },
+      } as never,
+    });
+  }
+
+  async function sendWithEmailOverrides(emailOverrides: Record<string, unknown>) {
+    const send = sinon.stub().resolves({ id: 'provider_send_1' });
+    sinon.stub(MailFactory.prototype, 'getHandler').returns({ send } as never);
+
+    const result = await buildUsecase().execute(buildCommand(emailOverrides));
+
+    return { result, send };
+  }
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  const cases: Array<{ name: string; overrides: Record<string, unknown>; expected: Record<string, unknown> }> = [
+    {
+      name: 'appends override to after the subscriber email and applies from, text, cc and bcc',
+      overrides: {
+        to: ['override-to@novu.co'],
+        from: 'override-from@novu.co',
+        text: 'text',
+        cc: ['cc@novu.co'],
+        bcc: ['bcc@novu.co'],
+      },
+      expected: {
+        to: [SUBSCRIBER_EMAIL, 'override-to@novu.co'],
+        from: 'override-from@novu.co',
+        text: 'text',
+        cc: ['cc@novu.co'],
+        bcc: ['bcc@novu.co'],
+      },
+    },
+    {
+      name: 'keeps only the subscriber email when override to is empty',
+      overrides: { to: [] },
+      expected: { to: [SUBSCRIBER_EMAIL], cc: [], bcc: [] },
+    },
+    {
+      name: 'appends override to when replaceToRecipient is false',
+      overrides: { replaceToRecipient: false, to: ['extra@novu.co'] },
+      expected: { to: [SUBSCRIBER_EMAIL, 'extra@novu.co'] },
+    },
+    {
+      name: 'replaces the subscriber email with override to when replaceToRecipient is true',
+      overrides: { replaceToRecipient: true, to: ['override-only@novu.co'] },
+      expected: { to: ['override-only@novu.co'] },
+    },
+    {
+      name: 'keeps to empty when replaceToRecipient is true with an explicit empty to and bcc only',
+      overrides: { replaceToRecipient: true, to: [], bcc: ['bcc-only@novu.co'] },
+      expected: { to: [], bcc: ['bcc-only@novu.co'] },
+    },
+    {
+      name: 'keeps to empty when replaceToRecipient is true with an explicit empty to and cc only',
+      overrides: { replaceToRecipient: true, to: [], cc: ['cc-only@novu.co'] },
+      expected: { to: [], cc: ['cc-only@novu.co'] },
+    },
+    {
+      name: 'uses from as to when replaceToRecipient is true with bcc only and no to',
+      overrides: { replaceToRecipient: true, bcc: ['bcc-only@novu.co'] },
+      expected: { to: [INTEGRATION_FROM], bcc: ['bcc-only@novu.co'] },
+    },
+  ];
+
+  for (const { name, overrides, expected } of cases) {
+    it(name, async () => {
+      const { result, send } = await sendWithEmailOverrides(overrides);
+
+      expect(result.status).to.equal(SendMessageStatus.SUCCESS);
+      expect(send.firstCall.args[0]).to.deep.include(expected);
+    });
+  }
+
+  for (const overrides of [{ replaceToRecipient: true }, { replaceToRecipient: true, to: [] }]) {
+    it(`fails without sending when replaceToRecipient has no to, cc or bcc: ${JSON.stringify(overrides)}`, async () => {
+      const { result, send } = await sendWithEmailOverrides(overrides);
+
+      expect(result.status).to.equal(SendMessageStatus.FAILED);
+      expect(send.called).to.equal(false);
+    });
+  }
+});

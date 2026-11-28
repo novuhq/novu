@@ -2,7 +2,11 @@ import { UnauthorizedException } from '@nestjs/common';
 import { SubscriberEntity } from '@novu/dal';
 import { ContextPayload, SubscriberSessionAuthMethodEnum } from '@novu/shared';
 import jwt from 'jsonwebtoken';
-import { SubscriberLoginProfile, TokenVerification } from '../../../shared/services/novu-tokens.service';
+import {
+  SubscriberLoginProfile,
+  SubscriberTokenScopeEnum,
+  TokenVerification,
+} from '../../../shared/services/novu-tokens.service';
 import { invalidHmacHashError } from '../../utils/encryption';
 
 export type SubscriberLoginGrant =
@@ -14,7 +18,10 @@ export type SubscriberLoginGrant =
       expiresAt: number;
       profile?: SubscriberLoginProfile;
       context?: ContextPayload;
+      scope: SubscriberTokenScopeEnum[];
     };
+
+const SCOPES = new Set<unknown>(Object.values(SubscriberTokenScopeEnum));
 
 export function subscriberTokenExpiredError(): UnauthorizedException {
   return new UnauthorizedException({
@@ -36,7 +43,8 @@ export function parseSubscriberLoginGrant(verification: TokenVerification): Subs
     !isNonEmptyString(claims.iss) ||
     !isNonEmptyString(claims.sub) ||
     typeof claims.exp !== 'number' ||
-    'topic' in claims
+    'topic' in claims ||
+    !isValidScope(claims.scope)
   ) {
     throw invalidHmacHashError();
   }
@@ -52,10 +60,20 @@ export function parseSubscriberLoginGrant(verification: TokenVerification): Subs
     expiresAt: claims.exp,
     profile: claims.subscriber,
     context: claims.context,
+    scope: claims.scope ?? [],
   };
 }
 
-export function signTokenSession(subscriber: SubscriberEntity, contextKeys: string[], expiresAt: number): string {
+function isValidScope(scope: unknown): boolean {
+  return scope === undefined || (Array.isArray(scope) && scope.every((value) => SCOPES.has(value)));
+}
+
+export function signTokenSession(
+  subscriber: SubscriberEntity,
+  contextKeys: string[],
+  expiresAt: number,
+  scope: SubscriberTokenScopeEnum[]
+): string {
   return jwt.sign(
     {
       _id: subscriber._id,
@@ -67,6 +85,7 @@ export function signTokenSession(subscriber: SubscriberEntity, contextKeys: stri
       subscriberId: subscriber.subscriberId,
       contextKeys,
       authMethod: SubscriberSessionAuthMethodEnum.TOKEN,
+      scope,
       exp: expiresAt,
     },
     `${process.env.JWT_SECRET}`,

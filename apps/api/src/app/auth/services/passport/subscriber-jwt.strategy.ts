@@ -1,8 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ApiAuthSchemeEnum, ISubscriberJwt } from '@novu/shared';
+import { ApiAuthSchemeEnum, ISubscriberJwt, SubscriberSessionAuthMethodEnum } from '@novu/shared';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { SubscriberSession } from '../../../shared/framework/user.decorator';
+import { SubscriberTokenScopeEnum } from '../../../shared/services/novu-tokens.service';
 import { AuthService } from '../auth.service';
 
 @Injectable()
@@ -36,6 +37,10 @@ export class JwtSubscriberStrategy extends PassportStrategy(Strategy, 'subscribe
       contextKeys: payload.contextKeys,
       scheme: ApiAuthSchemeEnum.BEARER,
       authMethod: payload.authMethod,
+      scope:
+        payload.authMethod === SubscriberSessionAuthMethodEnum.TOKEN
+          ? (payload.scope as SubscriberTokenScopeEnum[] | undefined)
+          : undefined,
     };
   }
 }

@@ -151,16 +151,15 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', (
     expect(delayedJobs?.[1]?.status).to.equal(JobStatusEnum.CANCELED);
   });
 
-  it.skip('should cancel a digest after it has already digested some triggers', async () => {
+  it('should promote the next merged trigger when the main digest is cancelled', async () => {
     template = await session.createTemplate({
       steps: [
         {
           type: StepTypeEnum.DIGEST,
           content: '',
           metadata: {
-            unit: DigestUnitEnum.SECONDS,
-            amount: 1,
-            digestKey: 'id',
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
             type: DigestTypeEnum.REGULAR,
           },
         },
@@ -171,429 +170,47 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', (
       ],
     });
 
-    const { result: result1 } = await novuClient.trigger({
-      workflowId: template.triggers[0].identifier,
-      to: [subscriber.subscriberId],
-      payload: {
-        customVar: 'trigger_1_data',
-      },
-    });
-
-    const { result: result2 } = await novuClient.trigger({
-      workflowId: template.triggers[0].identifier,
-      to: [subscriber.subscriberId],
-      payload: {
-        customVar: 'trigger_2_data',
-      },
-    });
-
-    const { result: result3 } = await novuClient.trigger({
-      workflowId: template.triggers[0].identifier,
-      to: [subscriber.subscriberId],
-      payload: {
-        customVar: 'trigger_2_data',
-      },
-    });
-
-    // Wait for trigger2 to be merged to trigger1
-    await session.waitForJobCompletion();
-
-    await cancelEvent(result2.transactionId!);
-
-    await session.waitForWorkflowQueueCompletion();
-    await session.waitForSubscriberQueueCompletion();
-
-    const digestJobs = await jobRepository.find(
-      {
-        _environmentId: session.environment._id,
-        _templateId: template._id,
-        type: StepTypeEnum.DIGEST,
-      },
-      undefined,
-      { sort: { createdAt: 1 } }
-    );
-
-    expect(digestJobs.length).to.eql(3);
-
-    expect(digestJobs[0]!.status).to.eql(JobStatusEnum.COMPLETED);
-    expect(digestJobs[1]!.status).to.eql(JobStatusEnum.CANCELED);
-    expect(digestJobs[2]!.status).to.eql(JobStatusEnum.MERGED);
-
-    const jobs = await jobRepository.find(
-      {
-        _environmentId: session.environment._id,
-        _templateId: template._id,
-        type: StepTypeEnum.IN_APP,
-      },
-      undefined,
-      { sort: { createdAt: 1 } }
-    );
-
-    const rootTrigger = jobs[0];
-    expect(rootTrigger.status).to.eql(JobStatusEnum.COMPLETED);
-    expect(rootTrigger.payload.customVar).to.eql('trigger_1_data');
-    expect(rootTrigger.digest?.events?.length).to.eql(2);
-    expect(rootTrigger.digest?.events?.[0].customVar).to.eql('trigger_1_data');
-    expect(rootTrigger.digest?.events?.[1].customVar).to.eql('trigger_3_data');
-
-    const secondCancelledTrigger = jobs[1];
-    expect(secondCancelledTrigger.payload.customVar).to.eql('trigger_2_data');
-    expect(secondCancelledTrigger.status).to.eql(JobStatusEnum.CANCELED);
-
-    const thirdMergedTrigger = jobs[2];
-    expect(thirdMergedTrigger.payload.customVar).to.eql('trigger_3_data');
-    expect(thirdMergedTrigger.status).to.eql(JobStatusEnum.MERGED);
-  });
-
-  it.skip('should be able to cancel 1st main digest', async () => {
-    template = await session.createTemplate({
-      steps: [
-        {
+    // One trigger at a time, so the first digest is the main one and the merge order is fixed.
+    const transactionIds: string[] = [];
+    for (const expectedStatus of [JobStatusEnum.DELAYED, JobStatusEnum.MERGED, JobStatusEnum.MERGED]) {
+      const { result } = await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [subscriber.subscriberId],
+      });
+      const digestJob = await pollForJobStatusChange({
+        jobRepository,
+        query: {
+          _environmentId: session.environment._id,
+          transactionId: result.transactionId,
           type: StepTypeEnum.DIGEST,
-          content: '',
-          metadata: {
-            unit: DigestUnitEnum.SECONDS,
-            amount: 1,
-            digestKey: 'id',
-            type: DigestTypeEnum.REGULAR,
-          },
         },
-        {
-          type: StepTypeEnum.IN_APP,
-          content: 'Hello world {{step.events.length}}' as string,
-        },
-      ],
-    });
+        timeout: 15000,
+      });
 
-    const { result: result1 } = await novuClient.trigger({
-      workflowId: template.triggers[0].identifier,
-      to: [subscriber.subscriberId],
-      payload: {
-        customVar: 'trigger_1_data',
-      },
-    });
-    await new Promise((resolve) => {
-      setTimeout(resolve, 100);
-    });
-    const { result: result2 } = await novuClient.trigger({
-      workflowId: template.triggers[0].identifier,
-      to: [subscriber.subscriberId],
-      payload: {
-        customVar: 'trigger_2_data',
-      },
-    });
+      expect(digestJob?.status).to.equal(expectedStatus);
+      transactionIds.push(result.transactionId!);
+    }
 
-    // Wait for trigger2 to be merged to trigger1
-    await session.waitForJobCompletion(template?._id);
-    await cancelEvent(result1.transactionId!);
+    const [mainTransactionId, followerTransactionId, lastTransactionId] = transactionIds;
 
-    const { result: result3 } = await novuClient.trigger({
-      workflowId: template.triggers[0].identifier,
-      to: [subscriber.subscriberId],
-      payload: {
-        customVar: 'trigger_3_data',
-      },
-    });
+    await cancelEvent(mainTransactionId);
 
-    await session.waitForJobCompletion(template?._id);
+    const findJob = (transactionId: string, type: StepTypeEnum) =>
+      jobRepository.findOne({ _environmentId: session.environment._id, transactionId, type });
+    const [mainDigest, mainInApp, followerDigest, followerInApp, lastDigest] = await Promise.all([
+      findJob(mainTransactionId, StepTypeEnum.DIGEST),
+      findJob(mainTransactionId, StepTypeEnum.IN_APP),
+      findJob(followerTransactionId, StepTypeEnum.DIGEST),
+      findJob(followerTransactionId, StepTypeEnum.IN_APP),
+      findJob(lastTransactionId, StepTypeEnum.DIGEST),
+    ]);
 
-    const delayedJobs = await jobRepository.find(
-      {
-        _environmentId: session.environment._id,
-        _templateId: template._id,
-        type: StepTypeEnum.DIGEST,
-      },
-      undefined,
-      { sort: { createdAt: 1 } }
-    );
-
-    expect(delayedJobs.length).to.eql(3);
-
-    const cancelledDigestJobs = await jobRepository.find(
-      {
-        _environmentId: session.environment._id,
-        _templateId: template._id,
-        status: JobStatusEnum.CANCELED,
-        type: StepTypeEnum.DIGEST,
-        transactionId: result1.transactionId,
-      },
-      undefined,
-      { sort: { createdAt: 1 } }
-    );
-
-    expect(cancelledDigestJobs.length).to.eql(1);
-
-    const inpAppJobs = await jobRepository.find(
-      {
-        _environmentId: session.environment._id,
-        _templateId: template._id,
-        type: StepTypeEnum.IN_APP,
-      },
-      undefined,
-      { sort: { createdAt: 1 } }
-    );
-
-    const firstMainCanceledTrigger = inpAppJobs[0];
-    expect(firstMainCanceledTrigger.status).to.eql(JobStatusEnum.CANCELED);
-    expect(firstMainCanceledTrigger.payload.customVar).to.eql('trigger_1_data');
-    expect(firstMainCanceledTrigger.digest?.events?.length).to.eql(0);
-
-    const secondTrigger = inpAppJobs[1];
-    expect(secondTrigger.payload.customVar).to.eql('trigger_2_data');
-    expect(secondTrigger.status).to.eql(JobStatusEnum.COMPLETED);
-    expect(secondTrigger.digest?.events?.length).to.eql(2);
-    expect(secondTrigger.digest?.events?.[0].customVar).to.eql('trigger_2_data');
-    expect(secondTrigger.digest?.events?.[1].customVar).to.eql('trigger_3_data');
-
-    const thirdMergedTrigger = inpAppJobs[2];
-    expect(thirdMergedTrigger.payload.customVar).to.eql('trigger_3_data');
-    expect(thirdMergedTrigger.digest?.events?.length).to.eql(0);
-    expect(thirdMergedTrigger.status).to.eql(JobStatusEnum.MERGED);
-  });
-
-  it.skip('should be able to cancel 1st main digest and then its follower', async () => {
-    template = await session.createTemplate({
-      steps: [
-        {
-          type: StepTypeEnum.DIGEST,
-          content: '',
-          metadata: {
-            unit: DigestUnitEnum.SECONDS,
-            amount: 1,
-            digestKey: 'id',
-            type: DigestTypeEnum.REGULAR,
-          },
-        },
-        {
-          type: StepTypeEnum.IN_APP,
-          content: 'Hello world {{step.events.length}}' as string,
-        },
-      ],
-    });
-    const { result: result1 } = await novuClient.trigger({
-      workflowId: template.triggers[0].identifier,
-      to: [subscriber.subscriberId],
-      payload: {
-        customVar: 'trigger_1_data',
-      },
-    });
-    await new Promise((resolve) => {
-      setTimeout(resolve, 100);
-    });
-    const { result: result2 } = await novuClient.trigger({
-      workflowId: template.triggers[0].identifier,
-      to: [subscriber.subscriberId],
-      payload: {
-        customVar: 'trigger_2_data',
-      },
-    });
-
-    // Wait for trigger2 to be merged to trigger1
-    const mainDigest = result1.transactionId;
-    await session.waitForJobCompletion(template?._id);
-    await cancelEvent(mainDigest!);
-    const { result: result3 } = await novuClient.trigger({
-      workflowId: template.triggers[0].identifier,
-      to: [subscriber.subscriberId],
-      payload: {
-        customVar: 'trigger_3_data',
-      },
-    });
-
-    // Wait for trigger3 to be merged to trigger2
-    const followerDigest = result2.transactionId;
-    await session.waitForJobCompletion(template?._id);
-    await cancelEvent(followerDigest!);
-    const { result: result4 } = await novuClient.trigger({
-      workflowId: template.triggers[0].identifier,
-      to: [subscriber.subscriberId],
-      payload: {
-        customVar: 'trigger_4_data',
-      },
-    });
-
-    await session.waitForJobCompletion(template?._id);
-
-    const delayedJobs = await jobRepository.find(
-      {
-        _environmentId: session.environment._id,
-        _templateId: template._id,
-        type: StepTypeEnum.DIGEST,
-      },
-      undefined,
-      { sort: { createdAt: 1 } }
-    );
-
-    expect(delayedJobs.length).to.eql(4);
-
-    const cancelledDigestJobs = await jobRepository.find(
-      {
-        _environmentId: session.environment._id,
-        _templateId: template._id,
-        type: StepTypeEnum.DIGEST,
-        transactionId: [result1.transactionId, result2.transactionId],
-      },
-      undefined,
-      { sort: { createdAt: 1 } }
-    );
-
-    expect(cancelledDigestJobs.length).to.eql(2);
-
-    const inpAppJobs = await jobRepository.find(
-      {
-        _environmentId: session.environment._id,
-        _templateId: template._id,
-        type: StepTypeEnum.IN_APP,
-      },
-      undefined,
-      { sort: { createdAt: 1 } }
-    );
-    const firstMainCanceledTrigger = inpAppJobs[0];
-    expect(firstMainCanceledTrigger.status).to.eql(JobStatusEnum.CANCELED);
-    expect(firstMainCanceledTrigger.payload.customVar).to.eql('trigger_1_data');
-    expect(firstMainCanceledTrigger.digest?.events?.length).to.eql(0);
-
-    const secondFollowerCanceledTrigger = inpAppJobs[1];
-    expect(secondFollowerCanceledTrigger.status).to.eql(JobStatusEnum.CANCELED);
-    expect(secondFollowerCanceledTrigger.payload.customVar).to.eql('trigger_2_data');
-    expect(secondFollowerCanceledTrigger.digest?.events?.length).to.eql(0);
-
-    const thirdTriggerLatestFollower = inpAppJobs[2];
-    expect(thirdTriggerLatestFollower.payload.customVar).to.eql('trigger_3_data');
-    expect(thirdTriggerLatestFollower.status).to.eql(JobStatusEnum.COMPLETED);
-    expect(thirdTriggerLatestFollower.digest?.events?.length).to.eql(2);
-    expect(thirdTriggerLatestFollower.digest?.events?.[0].customVar).to.eql('trigger_3_data');
-    expect(thirdTriggerLatestFollower.digest?.events?.[1].customVar).to.eql('trigger_4_data');
-
-    const fourthMergedTrigger = inpAppJobs[3];
-    expect(fourthMergedTrigger.payload.customVar).to.eql('trigger_4_data');
-    expect(fourthMergedTrigger.digest?.events?.length).to.eql(0);
-    expect(fourthMergedTrigger.status).to.eql(JobStatusEnum.MERGED);
-  });
-
-  it.skip('should be able to cancel 1st main digest and then its follower and last merged notification', async () => {
-    template = await session.createTemplate({
-      steps: [
-        {
-          type: StepTypeEnum.DIGEST,
-          content: '',
-          metadata: {
-            unit: DigestUnitEnum.SECONDS,
-            amount: 1,
-            digestKey: 'id',
-            type: DigestTypeEnum.REGULAR,
-          },
-        },
-        {
-          type: StepTypeEnum.IN_APP,
-          content: 'Hello world {{step.events.length}}' as string,
-        },
-      ],
-    });
-
-    const { result: result1 } = await novuClient.trigger({
-      workflowId: template.triggers[0].identifier,
-      to: [subscriber.subscriberId],
-      payload: {
-        customVar: 'trigger_1_data',
-      },
-    });
-    await new Promise((resolve) => {
-      setTimeout(resolve, 100);
-    });
-    const { result: result2 } = await novuClient.trigger({
-      workflowId: template.triggers[0].identifier,
-      to: [subscriber.subscriberId],
-      payload: {
-        customVar: 'trigger_2_data',
-      },
-    });
-
-    const mainDigest = result1.transactionId;
-    await session.waitForJobCompletion(template?._id);
-    await cancelEvent(mainDigest!);
-
-    const { result: result3 } = await novuClient.trigger({
-      workflowId: template.triggers[0].identifier,
-      to: [subscriber.subscriberId],
-      payload: {
-        customVar: 'trigger_3_data',
-      },
-    });
-
-    // Wait for trigger3 to be merged to trigger2
-    const followerDigest = result2.transactionId;
-    await session.waitForJobCompletion(template?._id);
-    await cancelEvent(followerDigest!);
-
-    const { result } = await novuClient.trigger({
-      workflowId: template.triggers[0].identifier,
-      to: [subscriber.subscriberId],
-      payload: {
-        customVar: 'trigger_4_data',
-      },
-    });
-
-    const { transactionId } = result;
-
-    // Wait for trigger4 to be merged to trigger3
-    await session.waitForJobCompletion(template?._id);
-    await cancelEvent(transactionId!);
-
-    const delayedJobs = await jobRepository.find(
-      {
-        _environmentId: session.environment._id,
-        _templateId: template._id,
-        type: StepTypeEnum.DIGEST,
-      },
-      undefined,
-      { sort: { createdAt: 1 } }
-    );
-
-    expect(delayedJobs.length).to.eql(4);
-
-    const cancelledDigestJobs = await jobRepository.find(
-      {
-        _environmentId: session.environment._id,
-        _templateId: template._id,
-        type: StepTypeEnum.DIGEST,
-        transactionId: [result1.transactionId, result2.transactionId, result.transactionId],
-      },
-      undefined,
-      { sort: { createdAt: 1 } }
-    );
-
-    expect(cancelledDigestJobs.length).to.eql(3);
-
-    const inpAppJobs = await jobRepository.find(
-      {
-        _environmentId: session.environment._id,
-        _templateId: template._id,
-        type: StepTypeEnum.IN_APP,
-      },
-      undefined,
-      { sort: { createdAt: 1 } }
-    );
-
-    const firstMainCanceledTrigger = inpAppJobs[0];
-    expect(firstMainCanceledTrigger.status).to.eql(JobStatusEnum.CANCELED);
-    expect(firstMainCanceledTrigger.payload.customVar).to.eql('trigger_1_data');
-    expect(firstMainCanceledTrigger.digest?.events?.length).to.eql(0);
-
-    const secondFollowerCanceledTrigger = inpAppJobs[1];
-    expect(secondFollowerCanceledTrigger.status).to.eql(JobStatusEnum.CANCELED);
-    expect(secondFollowerCanceledTrigger.payload.customVar).to.eql('trigger_2_data');
-    expect(secondFollowerCanceledTrigger.digest?.events?.length).to.eql(0);
-
-    const thirdTriggerLatestFollower = inpAppJobs[2];
-    expect(thirdTriggerLatestFollower.payload.customVar).to.eql('trigger_3_data');
-    expect(thirdTriggerLatestFollower.status).to.eql(JobStatusEnum.COMPLETED);
-    expect(thirdTriggerLatestFollower.digest?.events?.length).to.eql(1);
-    expect(thirdTriggerLatestFollower.digest?.events?.[0].customVar).to.eql('trigger_3_data');
-
-    const fourthMergedTrigger = inpAppJobs[3];
-    expect(fourthMergedTrigger.payload.customVar).to.eql('trigger_4_data');
-    expect(fourthMergedTrigger.digest?.events?.length).to.eql(0);
-    expect(fourthMergedTrigger.status).to.eql(JobStatusEnum.CANCELED);
+    expect(mainDigest?.status).to.equal(JobStatusEnum.CANCELED);
+    expect(mainInApp?.status).to.equal(JobStatusEnum.CANCELED);
+    expect(followerDigest?.status).to.equal(JobStatusEnum.DELAYED);
+    expect(followerDigest?._mergedDigestId).to.not.exist;
+    expect(followerInApp?.status).to.equal(JobStatusEnum.PENDING);
+    expect(lastDigest?.status).to.equal(JobStatusEnum.MERGED);
+    expect(lastDigest?._mergedDigestId).to.equal(followerDigest?._id);
   });
 });

@@ -21,7 +21,9 @@ import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
 import {
   assertCanReconnectChannelConnection,
+  assertCanWriteConnection,
   resolveCallerContextKeys,
+  WorkspaceTarget,
 } from '../../../../channel-connections/usecases/channel-connection.utils';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
@@ -64,6 +66,7 @@ export class SlackOauthCallback {
     const stateData = await this.decodeSlackState(command.state);
     const integration = await this.getIntegration(stateData);
     const credentials = await this.getIntegrationCredentials(integration);
+    const target = stateData.mode === 'link_user' ? null : await this.resolveWorkspaceTarget(stateData, integration);
 
     const authData = await this.exchangeCodeForAuthData(command.providerCode, credentials);
 
@@ -83,8 +86,8 @@ export class SlackOauthCallback {
        * use only the webhook URL to maintain clear separation of concerns.
        */
       await this.createIncomingWebhookEndpoint(stateData, integration, authData);
-    } else {
-      const connection = await this.upsertWorkspaceConnection(stateData, integration, authData);
+    } else if (target) {
+      const connection = await this.upsertWorkspaceConnection(stateData, integration, target, authData);
       if (stateData.autoLinkUser === true && stateData.subscriberId && authData.authed_user?.id) {
         await this.createChannelEndpoint.execute(
           CreateChannelEndpointCommand.create({
@@ -189,9 +192,19 @@ export class SlackOauthCallback {
     });
   }
 
+  /** Finds the connection a connect flow would write and checks the caller may write it, before any provider call. */
+  private async resolveWorkspaceTarget(stateData: StateData, integration: IntegrationEntity): Promise<WorkspaceTarget> {
+    const subscriberId = stateData.connectionMode === 'shared' ? undefined : stateData.subscriberId;
+    const existingConnection = await this.findExistingConnection(stateData, integration, subscriberId);
+    assertCanWriteConnection(stateData, existingConnection);
+
+    return { subscriberId, existingConnection };
+  }
+
   private async upsertWorkspaceConnection(
     stateData: StateData,
     integration: IntegrationEntity,
+    { subscriberId, existingConnection }: WorkspaceTarget,
     authData: {
       access_token: string;
       refresh_token?: string;
@@ -200,9 +213,6 @@ export class SlackOauthCallback {
       bot_user_id?: string;
     }
   ): Promise<ChannelConnectionEntity> {
-    const isSharedMode = stateData.connectionMode === 'shared';
-    const subscriberId = isSharedMode ? undefined : stateData.subscriberId;
-    const existingConnection = await this.findExistingConnection(stateData, integration, subscriberId);
     const auth = buildConnectionAuthFromOAuth(authData);
     // `bot_user_id` (the bot's Slack `U…` identity in this workspace) is required for channel-mention
     // detection in multi-workspace mode — persist it so the inbound adapter can bind it per request.
@@ -212,6 +222,7 @@ export class SlackOauthCallback {
       return await this.updateChannelConnection.execute(
         UpdateChannelConnectionCommand.create({
           identifier: existingConnection.identifier,
+          channelConnectionId: existingConnection._id,
           organizationId: stateData.organizationId,
           environmentId: stateData.environmentId,
           auth,

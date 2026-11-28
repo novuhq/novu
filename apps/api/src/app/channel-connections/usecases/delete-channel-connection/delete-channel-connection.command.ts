@@ -1,4 +1,4 @@
-import { IsDefined, IsMongoId, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDefined, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
 export class DeleteChannelConnectionCommand extends EnvironmentCommand {
@@ -15,4 +15,9 @@ export class DeleteChannelConnectionCommand extends EnvironmentCommand {
   @IsOptional()
   @IsMongoId()
   channelConnectionId?: string;
+
+  /** `false` when the caller may not delete a shared connection (Inbox session without the scope). Omitted means allowed. */
+  @IsOptional()
+  @IsBoolean()
+  canManageSharedConnections?: boolean;
 }

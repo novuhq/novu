@@ -728,11 +728,13 @@ export class ConversationActivityLedger {
     const revisions = await this.activityRepository.findMessageRevisions(environmentId, conversationId, [
       existing.platformMessageId,
     ]);
-    if (revisions.length === 0) {
+    // A delete Slack sends again must still find the version the agent read, so deletes don't fold here.
+    const edits = revisions.filter((revision) => revision.type === ConversationActivityTypeEnum.EDIT);
+    if (edits.length === 0) {
       return existing;
     }
 
-    return foldCurrentMessage(existing, revisions);
+    return foldCurrentMessage(existing, edits);
   }
 
   async findSourceActivity(

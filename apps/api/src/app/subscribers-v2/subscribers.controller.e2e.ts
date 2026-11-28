@@ -2,7 +2,6 @@ import { Novu } from '@novu/api';
 import { SubscriberResponseDto } from '@novu/api/models/components';
 import { OrderDirection } from '@novu/api/models/operations';
 import { SubscribersControllerSearchSubscribersRequest } from '@novu/api/src/models/operations';
-import { SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { randomBytes } from 'crypto';
@@ -11,7 +10,6 @@ import { initNovuClassSdk } from '../shared/helpers/e2e/sdk/e2e-sdk.helper';
 let session: UserSession;
 
 describe('Subscriber Controller E2E API Testing #novu-v2', () => {
-  const subscriberRepository = new SubscriberRepository();
   let novuClient: Novu;
   beforeEach(async () => {
     session = new UserSession();
@@ -287,25 +285,6 @@ describe('Subscriber Controller E2E API Testing #novu-v2', () => {
         const sortedIds = [...allIds].sort((a, b) => (!a || !b ? 0 : b.localeCompare(a)));
         expect(allIds).to.deep.equal(sortedIds);
       });
-    });
-  });
-  describe('Create Subscriber', () => {
-    it.skip(`should not create multiple subscribers when multiple triggers are made        
-         with the same not created subscribers `, async () => {
-      for (let i = 0; i < 2; i += 1) {
-        const subscriberId = `not-created-twice-subscriber${i}`;
-        await Promise.all([
-          novuClient.subscribers.create({ subscriberId, firstName: 'TestSubFName', lastName: 'TestSubLName' }),
-          novuClient.subscribers.create({ subscriberId, firstName: 'TestSubFName', lastName: 'TestSubLName' }),
-        ]);
-
-        const subscribers = await subscriberRepository.find({
-          _environmentId: session.environment._id,
-          subscriberId,
-        });
-
-        expect(subscribers.length).to.equal(1);
-      }
     });
   });
 

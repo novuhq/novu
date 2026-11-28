@@ -43,6 +43,8 @@ export type StateData = {
   mode?: OAuthMode;
   connectionMode?: ConnectionMode;
   autoLinkUser?: boolean;
+  /** `false` when the caller may not create or replace a shared connection. Absent means allowed: API-key callers and states minted before this field. */
+  canManageSharedConnections?: boolean;
 };
 
 export const SLACK_DEFAULT_OAUTH_SCOPES = [
@@ -77,16 +79,7 @@ export class GenerateSlackOauthUrl {
     await this.assertResourceExists(command);
 
     const { clientId } = await this.getIntegrationCredentials(command.integration);
-    const secureState = await this.createSecureState(
-      command.integration,
-      command.subscriberId,
-      command.context,
-      command.connectionIdentifier,
-      command.mode,
-      command.connectionMode,
-      command.autoLinkUser,
-      command.contextKeys
-    );
+    const secureState = await this.createSecureState(command);
 
     const resolvedScope = command.mode === 'link_user' ? undefined : await this.resolveBotScopes(command);
 
@@ -172,17 +165,9 @@ export class GenerateSlackOauthUrl {
     return `${this.SLACK_OAUTH_URL}${oauthParams.toString()}`;
   }
 
-  private async createSecureState(
-    integration: IntegrationEntity,
-    subscriberId?: string,
-    context?: ContextPayload,
-    connectionIdentifier?: string,
-    mode?: OAuthMode,
-    connectionMode?: ConnectionMode,
-    autoLinkUser?: boolean,
-    contextKeys?: string[]
-  ): Promise<string> {
-    const { _environmentId, _organizationId, identifier, providerId } = integration;
+  private async createSecureState(command: GenerateSlackOauthUrlCommand): Promise<string> {
+    const { subscriberId, context, connectionIdentifier, mode, connectionMode, autoLinkUser, contextKeys } = command;
+    const { _environmentId, _organizationId, identifier, providerId } = command.integration;
 
     // A session-validated context is carried as trusted keys; drop the raw payload
     // so a mismatched body.context can never ride along in the signed state.
@@ -201,6 +186,7 @@ export class GenerateSlackOauthUrl {
       mode,
       connectionMode,
       autoLinkUser,
+      canManageSharedConnections: command.canManageSharedConnections,
     };
 
     const payload = JSON.stringify(stateData);

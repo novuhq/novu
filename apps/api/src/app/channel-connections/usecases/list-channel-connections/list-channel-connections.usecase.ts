@@ -26,20 +26,12 @@ export class ListChannelConnections {
       _organizationId: command.user.organizationId,
     };
 
-    if (command.subscriberId) {
-      if (command.connectionMode === 'subscriber') {
-        filter.subscriberId = command.subscriberId;
-      } else if (command.connectionMode === 'shared') {
-        filter.subscriberId = null;
-      } else {
-        // Default: return the subscriber's own connections plus any shared ones.
-        // Pushed under `$and` so it composes with the context clause and survives
-        // the cursor-pagination helper's own top-level `$or`.
-        filter.$and = [
-          ...(filter.$and ?? []),
-          { $or: [{ subscriberId: command.subscriberId }, { subscriberId: null }] },
-        ];
-      }
+    if (command.connectionMode === 'subscriber') {
+      filter.subscriberId = command.subscriberId || { $ne: null };
+    } else if (command.connectionMode === 'shared') {
+      filter.subscriberId = null;
+    } else if (command.subscriberId) {
+      filter.$and = [...(filter.$and ?? []), { $or: [{ subscriberId: command.subscriberId }, { subscriberId: null }] }];
     }
 
     if (command.channel) {

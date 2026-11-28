@@ -3,6 +3,7 @@ import { UserSession } from '@novu/application-generic';
 import { SubscriberEntity } from '@novu/dal';
 import { ApiAuthSchemeEnum, SubscriberSessionAuthMethodEnum } from '@novu/shared';
 import jwt from 'jsonwebtoken';
+import { SubscriberTokenScopeEnum } from '../services/novu-tokens.service';
 
 export { UserSession };
 
@@ -12,6 +13,7 @@ export interface SubscriberSession extends SubscriberEntity {
   contextKeys: string[];
   scheme: ApiAuthSchemeEnum;
   authMethod?: SubscriberSessionAuthMethodEnum.TOKEN;
+  scope?: SubscriberTokenScopeEnum[];
 }
 
 export const SubscriberSession = createParamDecorator((data, ctx) => {
