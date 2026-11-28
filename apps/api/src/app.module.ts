@@ -38,7 +38,6 @@ import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { InboxModule } from './app/inbox/inbox.module';
 import { IntegrationModule } from './app/integrations/integrations.module';
 import { InternalModule } from './app/internal/internal.module';
-import { InvitesModule } from './app/invites/invites.module';
 import { LayoutsV1Module } from './app/layouts-v1/layouts-v1.module';
 import { LayoutsV2Module } from './app/layouts-v2/layouts.module';
 import { MessagesModule } from './app/messages/messages.module';
@@ -183,10 +182,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
 
 const enterpriseModules = enterpriseImports();
 
-if (!isClerkEnabled()) {
-  const communityModules = [InvitesModule];
-  baseModules.push(...communityModules);
-} else if (process.env.IS_SELF_HOSTED !== 'true') {
+if (isClerkEnabled() && process.env.IS_SELF_HOSTED !== 'true') {
   baseModules.push(PartnerIntegrationsModule);
 }
 

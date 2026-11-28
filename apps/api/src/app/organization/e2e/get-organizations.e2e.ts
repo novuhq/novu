@@ -4,7 +4,7 @@ import {
   OrganizationEntity,
   PartnerTypeEnum,
 } from '@novu/dal';
-import { MemberRoleEnum } from '@novu/shared';
+import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
@@ -28,24 +28,13 @@ describe('Get organizations - /organizations (GET) #novu-v0-os', async () => {
     thirdSession = new UserSession();
     await thirdSession.initialize();
 
-    await session.testAgent
-      .post('/v1/invites/bulk')
-      .send({
-        invitees: [
-          {
-            email: 'dddd@asdas.com',
-            role: MemberRoleEnum.OSS_MEMBER,
-          },
-        ],
-      })
-      .expect(201);
-
-    const members = await memberRepository.getOrganizationMembers(session.organization._id);
-    const invitee = members.find((i) => !i._userId);
-
     thirdOldOrganization = thirdSession.organization;
 
-    await thirdSession.testAgent.post(`/v1/invites/${invitee.invite.token}/accept`).expect(201);
+    await memberRepository.addMember(session.organization._id, {
+      _userId: thirdSession.user._id,
+      roles: [MemberRoleEnum.OSS_ADMIN],
+      memberStatus: MemberStatusEnum.ACTIVE,
+    });
   });
 
   it('should see all organizations that you are a part of', async () => {
