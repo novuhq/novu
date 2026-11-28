@@ -1,0 +1,40 @@
+---
+title: "Groundmail Email Integration with Novu"
+sidebarTitle: 'Groundmail'
+description: "Connect Groundmail to Novu to send transactional emails through workflows. Store your Groundmail API key in the Novu dashboard and deliver via the Groundmail sending API."
+---
+
+You can use the [Groundmail](https://groundmail.dev) provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.
+
+## Getting Started
+
+To use the Groundmail provider in the email channel, you will need a Groundmail account and an API key to add to the Groundmail integration on the Novu platform.
+
+## Get API Key
+
+- Log in to your Groundmail account.
+- Open **API Keys** and create a key with the `emails:send` scope. Keys start with `gm_`.
+
+To try the integration without delivering mail, create a test key (starts with `gm_test_`). See the [Groundmail testing guide](https://docs.groundmail.dev/testing).
+
+## Authenticate your sender identity
+
+Emails must be sent from a verified domain. Add and verify your domain in the Groundmail dashboard before sending. See the [Groundmail documentation](https://docs.groundmail.dev) for details.
+
+## Create a Groundmail integration with Novu
+
+- Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-groundmail) page on Novu.
+- Click on Add a Provider.
+- Select Groundmail.
+- Enter your Groundmail API key, the From email address, and the Sender name.
+- Click on Save.
+
+You should now be able to send notifications using Groundmail in Novu.
+
+## Provider options
+
+Novu forwards the email subject, HTML and text bodies, `cc`, `bcc`, reply-to, attachments and custom headers. Header names you set are sent exactly as given.
+
+Each send carries an `Idempotency-Key` built from the Novu job id, which stays the same when Novu retries that job. Groundmail keeps the key for 24 hours. If a retry repeats a send Groundmail already accepted, Groundmail returns the original result instead of sending again. If the retried email differs from the first attempt, Groundmail rejects it with a conflict error and the step fails rather than sending a second copy.
+
+To store tags on the email in Groundmail, pass `tags` in the step's custom data, either as an object (`{ order_id: "ord_123" }`) or as a list of `{ name, value }` pairs. Up to 10 tags are kept.

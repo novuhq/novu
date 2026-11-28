@@ -2,6 +2,7 @@ export * from './anypost.handler';
 export * from './braze.handler';
 export * from './email-webhook.handler';
 export * from './emailjs.handler';
+export * from './groundmail.handler';
 export * from './infobip.handler';
 export * from './mailersend.handler';
 export * from './mailgun.handler';
