@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getCopilotSurface, isPendingCopilotMode, resolveCopilotMode } from './copilot-mode';
+import { advanceVisitCopilotMode, getCopilotSurface, isPendingCopilotMode, resolveCopilotMode } from './copilot-mode';
 
 const settledWithoutReview = { isPending: false, isError: false, hasPendingChanges: false };
 
@@ -60,6 +60,63 @@ describe('resolveCopilotMode', () => {
         legacyChat: { isPending: false, isError: true, hasPendingChanges: true },
       })
     ).toBe('web-chat-popover');
+  });
+});
+
+describe('advanceVisitCopilotMode', () => {
+  it.each(['web-chat-sidebar', 'web-chat-popover'] as const)(
+    'starts a first visit on %s without awaiting a review when nothing is held',
+    (liveMode) => {
+      expect(advanceVisitCopilotMode(undefined, liveMode, liveMode)).toEqual({
+        mode: liveMode,
+        isAwaitingLegacyReview: false,
+      });
+    }
+  );
+
+  it.each(['web-chat-sidebar', 'web-chat-popover'] as const)(
+    'marks a legacy visit as awaiting its review when the flags ask for %s',
+    (liveMode) => {
+      expect(advanceVisitCopilotMode(undefined, 'legacy', liveMode)).toEqual({
+        mode: 'legacy',
+        isAwaitingLegacyReview: true,
+      });
+    }
+  );
+
+  it('does not mark a legacy visit as awaiting a review when the flags ask for legacy', () => {
+    expect(advanceVisitCopilotMode(undefined, 'legacy', 'legacy')).toEqual({
+      mode: 'legacy',
+      isAwaitingLegacyReview: false,
+    });
+  });
+
+  it.each(['web-chat-sidebar', 'web-chat-popover'] as const)(
+    'moves a visit awaiting its review to %s once the review is done',
+    (liveMode) => {
+      expect(advanceVisitCopilotMode({ mode: 'legacy', isAwaitingLegacyReview: true }, liveMode, liveMode)).toEqual({
+        mode: liveMode,
+        isAwaitingLegacyReview: false,
+      });
+    }
+  );
+
+  it('keeps a visit on the legacy sidebar while its review is still open', () => {
+    const awaiting = { mode: 'legacy', isAwaitingLegacyReview: true } as const;
+
+    expect(advanceVisitCopilotMode(awaiting, 'legacy', 'web-chat-sidebar')).toBe(awaiting);
+  });
+
+  it('never moves a flag-driven legacy visit mid-visit, so a running generation is not stopped', () => {
+    const legacyVisit = { mode: 'legacy', isAwaitingLegacyReview: false } as const;
+
+    expect(advanceVisitCopilotMode(legacyVisit, 'web-chat-sidebar', 'web-chat-sidebar')).toBe(legacyVisit);
+  });
+
+  it('keeps a web-chat visit on its mode when the flags change mid-visit', () => {
+    const webChatVisit = { mode: 'web-chat-sidebar', isAwaitingLegacyReview: false } as const;
+
+    expect(advanceVisitCopilotMode(webChatVisit, 'web-chat-popover', 'web-chat-popover')).toBe(webChatVisit);
   });
 });
 

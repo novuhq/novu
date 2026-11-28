@@ -66,3 +66,27 @@ export function resolveCopilotMode({
 
   return hasLegacyChangesToReview ? 'legacy' : liveMode;
 }
+
+/** The mode a workflow visit runs on. `isAwaitingLegacyReview` is a legacy visit that only stays legacy to finish a review. */
+export type VisitCopilotMode = { mode: CopilotMode; isAwaitingLegacyReview: boolean };
+
+/**
+ * Fixes a visit's mode on the first resolved one. A visit held on the legacy sidebar for unreviewed changes moves on to
+ * the live web-chat mode once they are kept or discarded, so the user does not have to reload to leave the old view.
+ * A legacy visit that is legacy because the flags say so never moves mid-visit: that would stop its running generation.
+ */
+export function advanceVisitCopilotMode(
+  current: VisitCopilotMode | undefined,
+  resolvedMode: CopilotMode,
+  liveMode: CopilotMode
+): VisitCopilotMode {
+  if (!current) {
+    return { mode: resolvedMode, isAwaitingLegacyReview: resolvedMode === 'legacy' && isWebChatMode(liveMode) };
+  }
+
+  if (current.isAwaitingLegacyReview && resolvedMode !== 'legacy') {
+    return { mode: resolvedMode, isAwaitingLegacyReview: false };
+  }
+
+  return current;
+}
