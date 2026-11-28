@@ -316,7 +316,7 @@
     "@novu/agent-event-protocol": "workspace:*",
     "@novu/stateless": "workspace:*",
     "@langchain/core": "^1.1.44",
-    "@nestjs/common": "11.1.27",
+    "@nestjs/common": "12.6.0",
     "@sveltejs/kit": "^3.3.1",
     "@types/aws-lambda": "^8.10.141",
     "@types/express": "^4.17.13",

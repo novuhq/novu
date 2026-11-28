@@ -1,5 +1,13 @@
-import { DynamicModule, Logger, Module, OnApplicationShutdown, Provider, Type } from '@nestjs/common';
-import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
+import {
+  DynamicModule,
+  FactoryProvider,
+  ForwardReference,
+  Logger,
+  Module,
+  OnApplicationShutdown,
+  Provider,
+  Type,
+} from '@nestjs/common';
 import {
   AttachmentRehydrator,
   BulkCreateExecutionDetails,
@@ -19,6 +27,7 @@ import {
   GetSubscriberSchedule,
   GetSubscriberTemplatePreference,
   GetTopicSubscribersUseCase,
+  INovuWorker,
   InboundDomainRouteDelivery,
   InMemoryProviderService,
   MsTeamsTokenService,
@@ -234,12 +243,11 @@ const USE_CASES = [
 ];
 
 const PROVIDERS: Provider[] = [RedisThrottleService, MsTeamsTokenService, RotatingConnectionTokenService];
-const activeWorkersToken: any = {
+const activeWorkersToken: FactoryProvider<INovuWorker[]> = {
   provide: 'ACTIVE_WORKERS',
-  useFactory: (...args: any[]) => {
-    return args;
-  },
-  inject: ACTIVE_WORKERS,
+  useFactory: (...workers: INovuWorker[]) => workers,
+  // Every active worker provider is a class, so this keeps them all and narrows the type for `inject`.
+  inject: ACTIVE_WORKERS.filter((worker): worker is Type => typeof worker === 'function'),
 };
 
 const memoryQueueService = {

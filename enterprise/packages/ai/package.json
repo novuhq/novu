@@ -27,7 +27,7 @@
     "@langchain/langgraph-checkpoint-mongodb": "^1.1.6",
     "@langchain/openai": "^1.2.4",
     "@modelcontextprotocol/sdk": "^1.31.0",
-    "@nestjs/swagger": "11.4.7",
+    "@nestjs/swagger": "12.1.2",
     "@novu/application-generic": "workspace:*",
     "@novu/dal": "workspace:*",
     "@novu/ee-auth": "workspace:*",
@@ -50,7 +50,7 @@
     "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
-    "@nestjs/testing": "11.1.27",
+    "@nestjs/testing": "12.6.0",
     "@types/chai": "^4.2.11",
     "@types/mocha": "^10.0.8",
     "@types/node": "^22.0.0",
@@ -62,7 +62,7 @@
     "typescript": "6.0.3"
   },
   "peerDependencies": {
-    "@nestjs/common": "11.1.27",
-    "@nestjs/core": "11.1.27"
+    "@nestjs/common": "12.6.0",
+    "@nestjs/core": "12.6.0"
   }
 }

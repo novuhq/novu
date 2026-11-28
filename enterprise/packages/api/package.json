@@ -15,7 +15,7 @@
     "@novu/application-generic": "workspace:*",
     "@novu/dal": "workspace:*",
     "@novu/ee-auth": "workspace:*",
-    "@nestjs/swagger": "11.4.7",
+    "@nestjs/swagger": "12.1.2",
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
     "@types/express": "4.17.17",
@@ -31,7 +31,7 @@
     "typescript": "6.0.3"
   },
   "peerDependencies": {
-    "@nestjs/common": "11.1.27",
-    "@nestjs/core": "11.1.27"
+    "@nestjs/common": "12.6.0",
+    "@nestjs/core": "12.6.0"
   }
 }
