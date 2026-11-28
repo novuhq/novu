@@ -8,6 +8,13 @@ interface ResolveActivityRetentionRangeOptions {
   before?: string;
 }
 
+type ResolveActivityRetentionStartOptions = Pick<ResolveActivityRetentionRangeOptions, 'organizationId' | 'after'>;
+
+interface AssertWithinActivityRetentionOptions {
+  organizationId: string;
+  createdAt: Date;
+}
+
 export interface ActivityRetentionRange {
   after?: string;
   before?: string;
@@ -63,6 +70,30 @@ function getActivityRetentionPolicy(organization: OrganizationEntity): ActivityR
   };
 }
 
+function isBeforeRetentionWindow(date: Date, earliestAllowedDate: Date): boolean {
+  if (process.env.NODE_ENV === 'local') {
+    return false;
+  }
+
+  const bufferedEarliestAllowedDate = new Date(
+    earliestAllowedDate.getTime() - RETENTION_DST_BUFFER_MS - RETENTION_REQUEST_DELAY_MS
+  );
+
+  return date < bufferedEarliestAllowedDate;
+}
+
+const RANGE_EXCEEDS_RETENTION = "Requested date range exceeds your plan's retention period.";
+const RECORD_EXCEEDS_RETENTION = "This activity is older than your plan's retention period.";
+
+function retentionExceeded(reason: string, earliestAllowedDate: Date): HttpException {
+  return new HttpException(
+    `${reason} ` +
+      `The earliest accessible date for your plan is ${earliestAllowedDate.toISOString().split('T')[0]}. ` +
+      `Please upgrade your plan to access older activities.`,
+    HttpStatus.PAYMENT_REQUIRED
+  );
+}
+
 @Injectable()
 export class ActivityRetentionService {
   constructor(private organizationRepository: CommunityOrganizationRepository) {}
@@ -72,12 +103,7 @@ export class ActivityRetentionService {
     after,
     before,
   }: ResolveActivityRetentionRangeOptions): Promise<ActivityRetentionRange> {
-    const organization = await this.organizationRepository.findById(organizationId);
-    if (!organization) {
-      throw new HttpException('Organization not found', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    const policy = getActivityRetentionPolicy(organization);
+    const policy = await this.getPolicy(organizationId);
     const effectiveAfterDate = after ? parseAndValidateDate(after, 'after') : undefined;
     const effectiveBeforeDate = before ? parseAndValidateDate(before, 'before') : undefined;
 
@@ -96,25 +122,61 @@ export class ActivityRetentionService {
 
     assertValidChronology(resolvedAfterDate, resolvedBeforeDate);
 
-    const bufferedEarliestAllowedDate = new Date(
-      earliestAllowedDate.getTime() - RETENTION_DST_BUFFER_MS - RETENTION_REQUEST_DELAY_MS
-    );
-
     if (
-      process.env.NODE_ENV !== 'local' &&
-      (resolvedAfterDate < bufferedEarliestAllowedDate || resolvedBeforeDate < bufferedEarliestAllowedDate)
+      isBeforeRetentionWindow(resolvedAfterDate, earliestAllowedDate) ||
+      isBeforeRetentionWindow(resolvedBeforeDate, earliestAllowedDate)
     ) {
-      throw new HttpException(
-        `Requested date range exceeds your plan's retention period. ` +
-          `The earliest accessible date for your plan is ${earliestAllowedDate.toISOString().split('T')[0]}. ` +
-          `Please upgrade your plan to access older activities.`,
-        HttpStatus.PAYMENT_REQUIRED
-      );
+      throw retentionExceeded(RANGE_EXCEEDS_RETENTION, earliestAllowedDate);
     }
 
     return {
       after: resolvedAfterDate.toISOString(),
       before: resolvedBeforeDate.toISOString(),
     };
+  }
+
+  /** For endpoints that filter by a start date only: no end date is implied, so a start in the future is not an error. */
+  async resolveAfter({ organizationId, after }: ResolveActivityRetentionStartOptions): Promise<string | undefined> {
+    const policy = await this.getPolicy(organizationId);
+    const afterDate = after ? parseAndValidateDate(after, 'after') : undefined;
+
+    if (policy.kind === 'unlimited') {
+      return afterDate?.toISOString();
+    }
+
+    const earliestAllowedDate = new Date(Date.now() - policy.durationMs);
+
+    if (!afterDate) {
+      return earliestAllowedDate.toISOString();
+    }
+
+    if (isBeforeRetentionWindow(afterDate, earliestAllowedDate)) {
+      throw retentionExceeded(RANGE_EXCEEDS_RETENTION, earliestAllowedDate);
+    }
+
+    return afterDate.toISOString();
+  }
+
+  /** For by-ID reads: a record that a list endpoint can no longer return is not readable by its ID either. */
+  async assertWithinRetention({ organizationId, createdAt }: AssertWithinActivityRetentionOptions): Promise<void> {
+    const policy = await this.getPolicy(organizationId);
+    if (policy.kind === 'unlimited') {
+      return;
+    }
+
+    const earliestAllowedDate = new Date(Date.now() - policy.durationMs);
+
+    if (isBeforeRetentionWindow(createdAt, earliestAllowedDate)) {
+      throw retentionExceeded(RECORD_EXCEEDS_RETENTION, earliestAllowedDate);
+    }
+  }
+
+  private async getPolicy(organizationId: string): Promise<ActivityRetentionPolicy> {
+    const organization = await this.organizationRepository.findById(organizationId);
+    if (!organization) {
+      throw new HttpException('Organization not found', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    return getActivityRetentionPolicy(organization);
   }
 }

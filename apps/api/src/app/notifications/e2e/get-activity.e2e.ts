@@ -1,9 +1,11 @@
 import { Novu } from '@novu/api';
 import { ActivityNotificationResponseDto } from '@novu/api/models/components';
 import { MessageRepository, NotificationRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
-import { JobStatusEnum, StepTypeEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, ChannelTypeEnum, JobStatusEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { subDays } from 'date-fns';
+import { Types } from 'mongoose';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async () => {
@@ -71,6 +73,33 @@ describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async (
     });
 
     novuClient = initNovuClassSdk(session);
+  });
+
+  it("should reject an event older than the plan's retention window", async () => {
+    const notificationId = new Types.ObjectId();
+    const createdAt = subDays(new Date(), 3);
+    await notificationRepository._model.collection.insertOne({
+      _id: notificationId,
+      _environmentId: new Types.ObjectId(session.environment._id),
+      _organizationId: new Types.ObjectId(session.organization._id),
+      _templateId: new Types.ObjectId(template._id),
+      _subscriberId: new Types.ObjectId(session.subscriberProfile?._id),
+      transactionId: notificationId.toString(),
+      channels: [ChannelTypeEnum.IN_APP],
+      payload: {},
+      createdAt,
+      updatedAt: createdAt,
+    });
+
+    const { body } = await session.testAgent.get(`/v1/notifications/${notificationId}`).expect(402);
+
+    expect(body.message).to.contain("older than your plan's retention period");
+
+    await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
+
+    const { body: businessBody } = await session.testAgent.get(`/v1/notifications/${notificationId}`).expect(200);
+
+    expect(businessBody.data._id).to.equal(notificationId.toString());
   });
 
   it('should return traces in activity feed when traces feature flag is enabled', async () => {

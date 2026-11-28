@@ -32,5 +32,13 @@ Some limits are fixed constraints that apply to all plans and cannot be customiz
 - **Topic subscription identifier**: A subscription `identifier` supplied when adding subscribers to a topic must not exceed **512 characters**. Longer values are rejected. Omit the field to let Novu generate an identifier automatically.
 
 ## Frequently Asked Questions
+### Does activity feed retention apply to the API?
+Yes. The activity endpoints return only activity from inside your plan's retention window:
+
+- List endpoints, such as `GET /v1/notifications`, `GET /v1/activity/workflow-runs` and `GET /v1/activity/requests`, search the whole window when you don't send a start date. A start date older than the window returns `402 Payment Required`.
+- Endpoints that read one record by ID, such as `GET /v1/activity/workflow-runs/{workflowRunId}`, return `402 Payment Required` for a record older than the window.
+
+Self-hosted deployments are not limited by plan.
+
 ### What happens if I exceed the default workflow or step limit?
 Exceeding the default limit will prohibit the creation of new workflow or step in the same workflow. On the Free and Pro plans, you also cannot enable (activate) a workflow once you have reached your plan's active workflow limit — pause another active workflow first, or upgrade to activate more. We recommend upgrading to a higher plan to avoid any restrictions. [Contact support](mailto:support@novu.co) to help with the upgrade.

@@ -12,6 +12,28 @@ const LOGS_DATE_RANGE_OPTIONS = [
   { value: '2160', label: '90 Days', ms: 90 * 24 * 60 * 60 * 1000 }, // 90 * 24
 ];
 
+function getLogsRetentionMs({
+  organization,
+  apiServiceLevel,
+}: {
+  organization: OrganizationLike;
+  apiServiceLevel?: ApiServiceLevelEnum;
+}): number {
+  const isLegacyFreeTier =
+    apiServiceLevel === ApiServiceLevelEnum.FREE && organization && organization.createdAt < new Date('2025-02-28');
+
+  // legacy free can go up to 30 days
+  if (isLegacyFreeTier) {
+    return 30 * 24 * 60 * 60 * 1000;
+  }
+
+  return getFeatureForTierAsNumber(
+    FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
+    IS_SELF_HOSTED ? ApiServiceLevelEnum.UNLIMITED : apiServiceLevel || ApiServiceLevelEnum.FREE,
+    true
+  );
+}
+
 export function buildLogsDateFilters({
   organization,
   apiServiceLevel,
@@ -19,22 +41,10 @@ export function buildLogsDateFilters({
   organization: OrganizationLike;
   apiServiceLevel?: ApiServiceLevelEnum;
 }) {
-  const maxActivityFeedRetentionMs = getFeatureForTierAsNumber(
-    FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
-    IS_SELF_HOSTED ? ApiServiceLevelEnum.UNLIMITED : apiServiceLevel || ApiServiceLevelEnum.FREE,
-    true
-  );
-
+  const maxRetentionMs = getLogsRetentionMs({ organization, apiServiceLevel });
   const now = new Date();
 
   return LOGS_DATE_RANGE_OPTIONS.map((option) => {
-    const isLegacyFreeTier =
-      apiServiceLevel === ApiServiceLevelEnum.FREE && organization && organization.createdAt < new Date('2025-02-28');
-
-    // legacy free can go up to 30 days
-    const legacyFreeMaxRetentionMs = 30 * 24 * 60 * 60 * 1000;
-    const maxRetentionMs = isLegacyFreeTier ? legacyFreeMaxRetentionMs : maxActivityFeedRetentionMs;
-
     return {
       disabled: option.ms > maxRetentionMs,
       label: option.label,
@@ -68,4 +78,29 @@ export function getMaxAvailableLogsDateRange({
       .getTime()
       .toString()
   );
+}
+
+/**
+ * The API rejects a createdGte older than the plan's retention window, and searches the whole window when it is left
+ * out. A createdGte at or before the window start is left out, so a page left open or a saved link keeps working.
+ */
+export function toRequestLogsCreatedGte({
+  createdGte,
+  subscription,
+  organization,
+  now = new Date(),
+}: {
+  createdGte?: number;
+  subscription?: GetSubscriptionDto | null;
+  organization?: OrganizationLike | null;
+  now?: Date;
+}): number | undefined {
+  if (createdGte === undefined || IS_SELF_HOSTED || !organization || !subscription) {
+    return createdGte;
+  }
+
+  const retentionStart =
+    now.getTime() - getLogsRetentionMs({ organization, apiServiceLevel: subscription.apiServiceLevel });
+
+  return createdGte <= retentionStart ? undefined : createdGte;
 }

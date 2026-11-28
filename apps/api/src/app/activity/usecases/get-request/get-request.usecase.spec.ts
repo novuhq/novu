@@ -1,3 +1,4 @@
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { expect } from 'chai';
 import { stub } from 'sinon';
 import { GetRequestCommand } from './get-request.command';
@@ -28,7 +29,7 @@ describe('GetRequest', () => {
     subscriber_id: null,
   };
 
-  function buildUsecase() {
+  function buildUsecase(assertWithinRetention = stub().resolves()) {
     const requestLogRepository = {
       findOne: stub().resolves({
         data: {
@@ -43,12 +44,21 @@ describe('GetRequest', () => {
       }),
     };
     const traceLogRepository = { find: stub().resolves({ data: [trace] }) };
+    const activityRetentionService = { assertWithinRetention };
 
-    return new GetRequest(requestLogRepository as never, traceLogRepository as never);
+    return {
+      usecase: new GetRequest(
+        requestLogRepository as never,
+        traceLogRepository as never,
+        activityRetentionService as never
+      ),
+      traceLogRepository,
+      assertWithinRetention,
+    };
   }
 
   it('keeps raw trace data only when the caller may read it', async () => {
-    const usecase = buildUsecase();
+    const { usecase } = buildUsecase();
 
     const withRaw = await usecase.execute(command);
     const withoutRaw = await usecase.execute(
@@ -57,5 +67,30 @@ describe('GetRequest', () => {
 
     expect(withRaw.traces[0].rawData).to.equal(trace.raw_data);
     expect(withoutRaw.traces[0]).to.include({ title: 'Workflow execution failed', rawData: '' });
+  });
+
+  it("checks the request's creation time against the plan's retention window", async () => {
+    const { usecase, assertWithinRetention } = buildUsecase();
+
+    await usecase.execute(command);
+
+    expect(assertWithinRetention.firstCall.args[0]).to.deep.equal({
+      organizationId: 'organization-id',
+      createdAt: new Date('2026-11-20T10:00:00.000Z'),
+    });
+  });
+
+  it('returns the 402 for a request older than the window without reading its traces', async () => {
+    const retentionError = new HttpException('older than your plan', HttpStatus.PAYMENT_REQUIRED);
+    const { usecase, traceLogRepository } = buildUsecase(stub().rejects(retentionError));
+
+    try {
+      await usecase.execute(command);
+      expect.fail('Expected the retention check to reject the request');
+    } catch (error) {
+      expect(error).to.equal(retentionError);
+    }
+
+    expect(traceLogRepository.find.called).to.equal(false);
   });
 });

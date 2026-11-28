@@ -11,10 +11,12 @@ describe('ActivityRetentionService', () => {
   let organizationRepository: CommunityOrganizationRepository;
   let sandbox: sinon.SinonSandbox;
   let originalIsSelfHosted: string | undefined;
+  let originalNodeEnv: typeof process.env.NODE_ENV;
 
   beforeEach(async () => {
     sandbox = sinon.createSandbox();
     originalIsSelfHosted = process.env.IS_SELF_HOSTED;
+    originalNodeEnv = process.env.NODE_ENV;
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -33,6 +35,7 @@ describe('ActivityRetentionService', () => {
   afterEach(() => {
     sandbox.restore();
     process.env.IS_SELF_HOSTED = originalIsSelfHosted;
+    process.env.NODE_ENV = originalNodeEnv;
   });
 
   function stubOrganization(apiServiceLevel: ApiServiceLevelEnum, createdAt = new Date('2025-03-01')) {
@@ -146,6 +149,109 @@ describe('ActivityRetentionService', () => {
     const range = await service.resolve({ organizationId: 'org-123' });
 
     expect(range).to.deep.equal({ after: undefined, before: undefined });
+  });
+
+  describe('resolveAfter', () => {
+    const dayMs = 24 * 60 * 60 * 1000;
+    const now = new Date('2026-11-26T12:00:00.000Z');
+
+    it('defaults to the start of the retention window', async () => {
+      sandbox.useFakeTimers(now);
+      stubOrganization(ApiServiceLevelEnum.PRO);
+
+      expect(await service.resolveAfter({ organizationId: 'org-123' })).to.equal(
+        new Date(now.getTime() - 7 * dayMs).toISOString()
+      );
+    });
+
+    it('accepts a start ahead of the server clock, since no end date is implied', async () => {
+      sandbox.useFakeTimers(now);
+      stubOrganization(ApiServiceLevelEnum.PRO);
+      const ahead = new Date(now.getTime() + 5 * 1000).toISOString();
+
+      expect(await service.resolveAfter({ organizationId: 'org-123', after: ahead })).to.equal(ahead);
+    });
+
+    it('rejects a start older than the window with 402', async () => {
+      sandbox.useFakeTimers(now);
+      stubOrganization(ApiServiceLevelEnum.PRO);
+
+      try {
+        await service.resolveAfter({
+          organizationId: 'org-123',
+          after: new Date(now.getTime() - 8 * dayMs).toISOString(),
+        });
+        expect.fail('Expected the start to exceed retention');
+      } catch (error) {
+        expect(error).to.be.instanceOf(HttpException);
+        expect((error as HttpException).getStatus()).to.equal(HttpStatus.PAYMENT_REQUIRED);
+        expect((error as HttpException).message).to.contain(
+          "Requested date range exceeds your plan's retention period"
+        );
+      }
+    });
+
+    it('leaves the start unbounded when self-hosted', async () => {
+      process.env.IS_SELF_HOSTED = 'true';
+      stubOrganization(ApiServiceLevelEnum.FREE);
+
+      expect(await service.resolveAfter({ organizationId: 'org-123' })).to.equal(undefined);
+      expect(await service.resolveAfter({ organizationId: 'org-123', after: '2020-01-01T00:00:00.000Z' })).to.equal(
+        '2020-01-01T00:00:00.000Z'
+      );
+    });
+  });
+
+  describe('assertWithinRetention', () => {
+    const hourMs = 60 * 60 * 1000;
+    const dayMs = 24 * hourMs;
+    const requestDelayMs = 60 * 1000;
+    const now = new Date('2026-11-26T12:00:00.000Z');
+
+    async function expectPaymentRequired(createdAt: Date) {
+      try {
+        await service.assertWithinRetention({ organizationId: 'org-123', createdAt });
+        expect.fail('Expected the record to be outside retention');
+      } catch (error) {
+        expect(error).to.be.instanceOf(HttpException);
+        expect((error as HttpException).getStatus()).to.equal(HttpStatus.PAYMENT_REQUIRED);
+        expect((error as HttpException).message).to.contain('The earliest accessible date for your plan is 2026-11-19');
+      }
+    }
+
+    it('allows a record inside the window, including the daylight-saving buffer and request delay', async () => {
+      sandbox.useFakeTimers(now);
+      stubOrganization(ApiServiceLevelEnum.PRO);
+
+      await service.assertWithinRetention({ organizationId: 'org-123', createdAt: now });
+      await service.assertWithinRetention({
+        organizationId: 'org-123',
+        createdAt: new Date(now.getTime() - 7 * dayMs - hourMs - requestDelayMs),
+      });
+    });
+
+    it('rejects a record older than the window with 402', async () => {
+      sandbox.useFakeTimers(now);
+      stubOrganization(ApiServiceLevelEnum.PRO);
+
+      await expectPaymentRequired(new Date(now.getTime() - 7 * dayMs - hourMs - requestDelayMs - 1));
+    });
+
+    it('keeps every record readable when self-hosted', async () => {
+      process.env.IS_SELF_HOSTED = 'true';
+      sandbox.useFakeTimers(now);
+      stubOrganization(ApiServiceLevelEnum.FREE);
+
+      await service.assertWithinRetention({ organizationId: 'org-123', createdAt: new Date('2020-01-01') });
+    });
+
+    it('keeps every record readable in local development', async () => {
+      process.env.NODE_ENV = 'local';
+      sandbox.useFakeTimers(now);
+      stubOrganization(ApiServiceLevelEnum.FREE);
+
+      await service.assertWithinRetention({ organizationId: 'org-123', createdAt: new Date('2020-01-01') });
+    });
   });
 
   it('rejects invalid and reversed dates at the shared boundary', async () => {
