@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { ChannelConnectionRepository } from '@novu/dal';
+import { assertCanManageSharedConnections, isSharedConnection } from '../channel-connection.utils';
 import { DeleteChannelConnectionCommand } from './delete-channel-connection.command';
 
 @Injectable()
@@ -18,6 +19,10 @@ export class DeleteChannelConnection {
 
     if (!channelConnection) {
       throw new NotFoundException(`Channel connection with identifier '${command.identifier}' not found`);
+    }
+
+    if (isSharedConnection(channelConnection)) {
+      assertCanManageSharedConnections(command.canManageSharedConnections !== false);
     }
 
     await this.channelConnectionRepository.delete({

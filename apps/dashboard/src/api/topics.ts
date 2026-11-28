@@ -95,7 +95,7 @@ export const updateTopic = async ({
   topicKey: string;
   topic: Partial<Topic>;
 }) => {
-  const { data } = await patchV2<{ data: Topic }>(`/topics/${topicKey}`, {
+  const { data } = await patchV2<{ data: Topic }>(`/topics/${encodeURIComponent(topicKey)}`, {
     environment,
     body: topic,
   });

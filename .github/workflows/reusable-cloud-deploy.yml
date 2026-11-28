@@ -1,0 +1,389 @@
+name: Cloud deploy wave
+
+# One wave of "Deploy to Novu Cloud" (deploy.yml): everything that ships to a
+# set of GitHub environments. deploy.yml calls it once per wave, with the plan
+# produced by .github/workflows/scripts/deploy-plan.mjs.
+
+on:
+  workflow_call:
+    inputs:
+      wave:
+        description: "JSON wave from deploy-plan.mjs: migration_envs, deploy_matrix, nr_matrix, thalamus, socket_workers, mcp_servers"
+        required: true
+        type: string
+      build_environment:
+        description: "GitHub environment to build and push the images in. Empty to skip the build (the images already exist)."
+        required: false
+        type: string
+        default: ""
+      build_services:
+        description: "JSON array of services to build"
+        required: false
+        type: string
+        default: "[]"
+      runner:
+        description: "Build runner: blacksmith or github"
+        required: false
+        type: string
+        default: blacksmith
+
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+
+permissions:
+  contents: read
+
+jobs:
+  run-clickhouse-migrations:
+    if: fromJson(inputs.wave).migration_envs[0] != null
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env: ${{ fromJson(inputs.wave).migration_envs }}
+    environment: ${{ matrix.env }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          submodules: true
+          fetch-depth: 0
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+
+      - name: Whitelist Runner IP
+        id: whitelist
+        uses: novuhq/clickhouse-cloud-whitelist-ip-action@7594062e821f1f28af7673bf82e4df9ca2e78636 # v1.0.0
+        with:
+          clickhouse-org-id: ${{ secrets.CLICKHOUSE_ORG_ID }}
+          clickhouse-service-id: ${{ secrets.CLICKHOUSE_SERVICE_ID }}
+          clickhouse-api-key-id: ${{ secrets.CLICKHOUSE_API_KEY_ID }}
+          clickhouse-api-key-secret: ${{ secrets.CLICKHOUSE_API_KEY_SECRET }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+        with:
+          version: 11.28.2
+          run_install: false
+
+      - name: Setup Node Version
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22.23.5"
+          cache: "pnpm"
+
+      - name: Install Dependencies
+        shell: bash
+        run: pnpm ci
+      - name: Run ClickHouse Migrations
+        working-directory: apps/api
+        env:
+          CH_MIGRATIONS_HOST: ${{ secrets.CLICK_HOUSE_URL }}
+          CH_MIGRATIONS_USER: ${{ secrets.CLICK_HOUSE_USER }}
+          CH_MIGRATIONS_PASSWORD: ${{ secrets.CLICK_HOUSE_PASSWORD }}
+          CH_MIGRATIONS_DB: ${{ secrets.CLICK_HOUSE_DATABASE }}
+        run: pnpm run clickhouse:migrate:prod
+
+  # Builds run alongside the ClickHouse migrations; `deploy` still waits for both.
+  build:
+    if: inputs.build_environment != '' && fromJson(inputs.build_services)[0] != null
+    timeout-minutes: 60
+    runs-on: ${{ inputs.runner == 'github' && 'ubuntu-latest' || 'blacksmith-8vcpu-ubuntu-2404' }}
+    environment: ${{ inputs.build_environment }}
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix:
+        service: ${{ fromJson(inputs.build_services) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          submodules: true
+          fetch-depth: 0
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+        with:
+          version: 11.28.2
+          run_install: false
+
+      - name: Setup Node Version
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22.23.5"
+          cache: "pnpm"
+
+      - name: Install Dependencies
+        shell: bash
+        run: pnpm ci
+
+      - name: Set Up Docker Buildx (Blacksmith)
+        if: inputs.runner != 'github'
+        uses: useblacksmith/setup-docker-builder@a592b831ebb20e68f7cf47329cf2c3c67b8a7655 # v1
+
+      - name: Set Up Docker Buildx (GitHub)
+        if: inputs.runner == 'github'
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gha-build-${{ github.run_id }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@fa648b43de3d4d023bcb3f89ed6940096949c419 # v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ vars.ECR_PREFIX }}
+          SERVICE: ${{ matrix.service }}
+          IMAGE_TAG: ${{ github.sha }}
+          DOCKER_BUILD_ARGUMENTS: >
+            --platform=linux/amd64
+            --output=type=image,name=$REGISTRY/$REPOSITORY/$SERVICE,push-by-digest=true,name-canonical=true
+        run: |
+          cd apps/$SERVICE && pnpm run docker:build
+          docker tag novu-$SERVICE $REGISTRY/$REPOSITORY/$SERVICE:latest
+          docker tag novu-$SERVICE $REGISTRY/$REPOSITORY/$SERVICE:$IMAGE_TAG
+          docker push $REGISTRY/$REPOSITORY/$SERVICE:latest
+          docker push $REGISTRY/$REPOSITORY/$SERVICE:$IMAGE_TAG
+
+  deploy:
+    name: deploy (${{ matrix.target.env }}, ${{ matrix.target.service_name }})
+    needs: [build, run-clickhouse-migrations]
+    # `build` is skipped in waves that reuse the images of an earlier wave.
+    if: |
+      !cancelled() &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
+      fromJson(inputs.wave).deploy_matrix[0] != null
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix:
+        target: ${{ fromJson(inputs.wave).deploy_matrix }}
+
+    environment: ${{ matrix.target.env }}
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gha-deploy-${{ github.run_id }}
+
+      # Production images are built in us-east-1 and reach the other regions
+      # through ECR replication, which can trail the push by a few minutes.
+      - name: Wait for the image in this region
+        env:
+          REPOSITORY: ${{ vars.ECR_PREFIX }}/${{ matrix.target.image }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          for attempt in $(seq 1 40); do
+            if output=$(aws ecr describe-images \
+              --repository-name "$REPOSITORY" \
+              --image-ids imageTag="$IMAGE_TAG" \
+              --query 'imageDetails[0].imageDigest' \
+              --output text 2>&1); then
+              echo "Found $REPOSITORY:$IMAGE_TAG ($output)"
+              exit 0
+            fi
+
+            if [[ "$output" != *ImageNotFoundException* ]]; then
+              echo "$output"
+              echo "::error::Could not look up $REPOSITORY:$IMAGE_TAG in ECR."
+              exit 1
+            fi
+
+            echo "Waiting for $REPOSITORY:$IMAGE_TAG to be replicated (attempt $attempt of 40)"
+            sleep 15
+          done
+
+          echo "::error::$REPOSITORY:$IMAGE_TAG did not reach this region's ECR within 10 minutes. Check the ECR replication rules of the build region."
+          exit 1
+
+      - name: Download task definition
+        env:
+          ECS_PREFIX: ${{ vars.ECS_PREFIX }}
+          TASK_NAME: ${{ matrix.target.task_name }}
+        run: |
+          aws ecs describe-task-definition --task-definition ${ECS_PREFIX}-${TASK_NAME} \
+          --query taskDefinition > task-definition.json
+
+      - name: Render Amazon ECS task definition
+        id: render-web-container
+        uses: aws-actions/amazon-ecs-render-task-definition@39c13cf530718ffeb524ec8ee0c15882bcb13842
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ vars.ECS_PREFIX }}-${{ matrix.target.container_name }}
+          image: ${{secrets.ECR_URI}}/${{ vars.ECR_PREFIX }}/${{ matrix.target.image }}:${{ github.sha }}
+
+      - name: Deploy to Amazon ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@3e7310352de91b71a906e60c22af629577546002
+        with:
+          task-definition: ${{ steps.render-web-container.outputs.task-definition }}
+          service: ${{ vars.ECS_PREFIX }}-${{ matrix.target.service_name }}
+          cluster: ${{ vars.ECS_PREFIX }}-${{ matrix.target.cluster_name }}
+          wait-for-service-stability: true
+
+  deploy_thalamus_observer:
+    if: fromJson(inputs.wave).thalamus[0] != null
+    name: Deploy thalamus-observer (${{ matrix.target.wrangler_env }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ matrix.target.gh_environment }}
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        target: ${{ fromJson(inputs.wave).thalamus }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+        with:
+          version: 11.28.2
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --filter @novu/thalamus-observer-worker...
+
+      - name: Deploy with Wrangler
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_ENV: ${{ matrix.target.wrangler_env }}
+        run: |
+          pnpm --filter @novu/thalamus-observer-worker exec wrangler deploy \
+            --env "$WRANGLER_ENV" \
+            --message "GitHub Actions"
+
+  deploy_socket_worker:
+    if: fromJson(inputs.wave).socket_workers[0] != null
+    name: Deploy socket-worker (${{ matrix.target.wrangler_env }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ matrix.target.gh_environment }}
+    permissions:
+      contents: read
+    strategy:
+      # Don't cancel one region's deploy halfway because the other failed
+      fail-fast: false
+      matrix:
+        target: ${{ fromJson(inputs.wave).socket_workers }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+        with:
+          version: 11.28.2
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --filter @novu/socket-worker...
+
+      - name: Deploy with Wrangler
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_ENV: ${{ matrix.target.wrangler_env }}
+        run: |
+          pnpm --filter @novu/socket-worker exec wrangler deploy \
+            --env "$WRANGLER_ENV" \
+            --message "GitHub Actions"
+
+  deploy_mcp_server:
+    if: fromJson(inputs.wave).mcp_servers[0] != null
+    name: Deploy mcp-server (${{ matrix.target.wrangler_env }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ matrix.target.gh_environment }}
+    # Runs that target the same Worker queue here, whatever services they selected
+    concurrency:
+      group: cf-worker-mcp-server-${{ matrix.target.wrangler_env }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    strategy:
+      # Don't cancel one region's deploy halfway because the other failed
+      fail-fast: false
+      matrix:
+        target: ${{ fromJson(inputs.wave).mcp_servers }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+        with:
+          version: 11.28.2
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --filter @novu/mcp-server...
+
+      - name: Deploy with Wrangler
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_ENV: ${{ matrix.target.wrangler_env }}
+        run: |
+          pnpm --filter @novu/mcp-server exec wrangler deploy \
+            --env "$WRANGLER_ENV" \
+            --message "GitHub Actions"
+
+  new_relic_release:
+    name: new_relic_release (${{ matrix.target.env }}, ${{ matrix.target.nr }})
+    needs: deploy
+    # Explicit result check: with the default `success()`, a skipped `build`
+    # upstream of `deploy` would skip this job too.
+    if: |
+      !cancelled() &&
+      needs.deploy.result == 'success' &&
+      fromJson(inputs.wave).nr_matrix[0] != null
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: ${{ fromJson(inputs.wave).nr_matrix }}
+    environment: ${{ matrix.target.env }}
+
+    steps:
+      - name: New Relic Application Deployment Marker
+        uses: newrelic/deployment-marker-action@8c1d1c009e7ee18ed2bda1e068d59867fdaa91c4 # v2.3.0
+        with:
+          region: EU
+          apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
+          guid: ${{ matrix.target.nr == 'api' && secrets.NEW_RELIC_API_GUID || matrix.target.nr == 'worker' && secrets.NEW_RELIC_Worker_GUID }}
+          version: "${{ github.sha }}"
+          user: "${{ github.actor }}"
+          description: "Novu Cloud Deployment"

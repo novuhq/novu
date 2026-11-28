@@ -718,9 +718,6 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
     // same MCP simply hits the warm cache instead. Doing it reliably would
     // require either an explicit dev-mode cache-clear endpoint
     // (test-scoped) or DI gymnastics that are out of scope here.
-    it.skip('refuses to proceed when the AS does not advertise registration_endpoint (mcp_no_dcr_support)', () => {
-      // Intentionally skipped; covered by unit tests for `McpOAuthDiscoveryService`.
-    });
   });
 
   /**

@@ -69,7 +69,11 @@ import { GetOrganizationSettingsCommand } from '../../../organization/usecases/g
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { ScheduleDto } from '../../../shared/dtos/schedule';
 import { isHmacValidForAnyKey } from '../../../shared/helpers/is-valid-hmac';
-import { NovuTokens, SubscriberLoginProfile } from '../../../shared/services/novu-tokens.service';
+import {
+  NovuTokens,
+  SubscriberLoginProfile,
+  SubscriberTokenScopeEnum,
+} from '../../../shared/services/novu-tokens.service';
 import {
   SubscriberSessionAuthStatsService,
   SubscriberSessionSourceEnum,
@@ -97,7 +101,7 @@ const MAX_NOTIFICATIONS_COUNT = 100;
 
 type SessionAuth =
   | { method: SubscriberSessionAuthMethodEnum.HMAC | SubscriberSessionAuthMethodEnum.NONE }
-  | { method: SubscriberSessionAuthMethodEnum.TOKEN; expiresAt: number };
+  | { method: SubscriberSessionAuthMethodEnum.TOKEN; expiresAt: number; scope: SubscriberTokenScopeEnum[] };
 
 interface SessionIdentity {
   environment: EnvironmentEntity;
@@ -210,7 +214,7 @@ export class Session {
 
     const [token, organization] = await Promise.all([
       auth.method === SubscriberSessionAuthMethodEnum.TOKEN
-        ? signTokenSession(subscriberEntity, contextKeys, auth.expiresAt)
+        ? signTokenSession(subscriberEntity, contextKeys, auth.expiresAt, auth.scope)
         : this.authService.getSubscriberWidgetToken(subscriberEntity, contextKeys),
       this.organizationRepository.findById(environment._organizationId),
     ]);
@@ -371,7 +375,7 @@ export class Session {
       inAppIntegration: await this.selectInAppIntegration(environment),
       subscriber: { ...grant.profile, subscriberId: grant.subscriberId },
       context: grant.context,
-      auth: { method: SubscriberSessionAuthMethodEnum.TOKEN, expiresAt: grant.expiresAt },
+      auth: { method: SubscriberSessionAuthMethodEnum.TOKEN, expiresAt: grant.expiresAt, scope: grant.scope },
     };
   }
 

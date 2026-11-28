@@ -20,8 +20,9 @@ export class ListChannelConnectionsQueryDto extends CursorPaginationQueryDto<
 
   @ApiPropertyOptional({
     description:
-      'Scope results relative to the subscriber. `subscriber` returns only the subscriber-owned ' +
-      'connections, `shared` returns only shared (workspace-level) connections. Omit to return both.',
+      'Filter by connection owner. `subscriber` returns only subscriber-owned connections (only that ' +
+      "subscriber's when `subscriberId` is set). `shared` returns only shared (workspace-level) connections. " +
+      "When omitted, returns all connections, or only the subscriber's own when `subscriberId` is set.",
     enum: ['subscriber', 'shared'],
     example: 'shared',
   })

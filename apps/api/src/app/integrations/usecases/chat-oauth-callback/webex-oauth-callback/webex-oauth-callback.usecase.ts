@@ -13,7 +13,9 @@ import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
 import {
   assertCanReconnectChannelConnection,
+  assertCanWriteConnection,
   resolveCallerContextKeys,
+  WorkspaceTarget,
 } from '../../../../channel-connections/usecases/channel-connection.utils';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
@@ -64,13 +66,14 @@ export class WebexOauthCallback {
     const stateData = await this.decodeWebexState(command.state);
     const integration = await this.getIntegration(stateData);
     const credentials = await this.getIntegrationCredentials(integration);
+    const target = stateData.mode === 'link_user' ? null : await this.resolveWorkspaceTarget(stateData, integration);
     const tokenData = await this.exchangeCodeForAuthData(command.providerCode, credentials);
     const person = await this.getCurrentPerson(tokenData.access_token, credentials);
 
     if (stateData.mode === 'link_user') {
       await this.linkUserEndpoint(stateData, integration, person);
-    } else {
-      const connection = await this.upsertWorkspaceConnection(stateData, integration, tokenData, person);
+    } else if (target) {
+      const connection = await this.upsertWorkspaceConnection(stateData, integration, target, tokenData, person);
 
       if (stateData.autoLinkUser === true && stateData.subscriberId) {
         await this.createWebexPersonEndpoint(
@@ -344,15 +347,22 @@ export class WebexOauthCallback {
     }
   }
 
+  /** Finds the connection a connect flow would write and checks the caller may write it, before any provider call. */
+  private async resolveWorkspaceTarget(stateData: StateData, integration: IntegrationEntity): Promise<WorkspaceTarget> {
+    const subscriberId = stateData.connectionMode === 'shared' ? undefined : stateData.subscriberId;
+    const existingConnection = await this.findExistingConnection(stateData, integration, subscriberId);
+    assertCanWriteConnection(stateData, existingConnection);
+
+    return { subscriberId, existingConnection };
+  }
+
   private async upsertWorkspaceConnection(
     stateData: StateData,
     integration: IntegrationEntity,
+    { subscriberId, existingConnection }: WorkspaceTarget,
     tokenData: WebexTokenResponse,
     person: WebexPersonResponse
   ): Promise<ChannelConnectionEntity> {
-    const isSharedMode = stateData.connectionMode === 'shared';
-    const subscriberId = isSharedMode ? undefined : stateData.subscriberId;
-    const existingConnection = await this.findExistingConnection(stateData, integration, subscriberId);
     const auth = buildConnectionAuthFromOAuth(tokenData);
     const workspace = this.buildWorkspace(person);
 
@@ -360,6 +370,7 @@ export class WebexOauthCallback {
       return await this.updateChannelConnection.execute(
         UpdateChannelConnectionCommand.create({
           identifier: existingConnection.identifier,
+          channelConnectionId: existingConnection._id,
           organizationId: stateData.organizationId,
           environmentId: stateData.environmentId,
           auth,

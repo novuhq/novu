@@ -569,8 +569,10 @@ describe('Agent access rule #novu-v2', () => {
         text: string;
         author: { userId: string; fullName: string; userName: string; isBot: boolean };
         isMention: boolean;
-        metadata: { dateSent: Date };
+        metadata: { dateSent: Date; edited?: boolean; editedAt?: Date };
         raw: Record<string, unknown>;
+        formatted?: Record<string, unknown>;
+        attachments?: Record<string, unknown>[];
       }
 
       beforeEach(() => {
@@ -633,8 +635,29 @@ describe('Agent access rule #novu-v2', () => {
         );
       }
 
+      async function editRich(message: SlackMessage, next: Pick<SlackMessage, 'text' | 'formatted' | 'attachments'>) {
+        const previousMessage = { ...message };
+        Object.assign(message, { formatted: undefined, attachments: undefined }, next, {
+          raw: { ...message.raw, text: next.text },
+          metadata: { ...message.metadata, edited: true, editedAt: new Date() },
+        });
+
+        await testServer
+          .getService(AgentInboundHandler)
+          .handleMessageUpdated(
+            ctx.agentId,
+            await resolveConfig(),
+            sharedThread() as never,
+            { ...message } as never,
+            previousMessage as never
+          );
+      }
+
       async function remove(message: SlackMessage) {
-        slackThread.splice(slackThread.indexOf(message), 1);
+        const index = slackThread.indexOf(message);
+        if (index >= 0) {
+          slackThread.splice(index, 1);
+        }
 
         await testServer.getService(AgentInboundHandler).handleMessageDeleted(ctx.agentId, await resolveConfig(), {
           threadId,
@@ -728,6 +751,78 @@ describe('Agent access rule #novu-v2', () => {
           ]);
         }
         expect(await inboundHistory('operator_timeline')).to.include(injection);
+      });
+
+      it("does not send a refused edit's formatting or attachment once its author is admitted again", async () => {
+        const subscriberId = await seedSlackSubscriber('U_SHARED_RICH', { tier: 'gold' });
+        await setRule({ '==': [{ var: 'subscriber.data.tier' }, 'gold'] });
+        await agentRepository.update(
+          { _id: ctx.agentId, _environmentId: ctx.session.environment._id },
+          { $set: { bridgeUrl: 'https://bridge.example.com/api/novu' } }
+        );
+        const setTier = (tier: string) =>
+          subscriberRepository.update(
+            { _environmentId: ctx.session.environment._id, subscriberId },
+            { $set: { 'data.tier': tier } }
+          );
+        const refusedEdit = {
+          text: `${injection} here`,
+          formatted: {
+            type: 'root',
+            children: [
+              {
+                type: 'paragraph',
+                children: [
+                  { type: 'strong', children: [{ type: 'text', value: injection }] },
+                  { type: 'text', value: ' ' },
+                  { type: 'link', url: 'https://evil.example/refund', children: [{ type: 'text', value: 'here' }] },
+                ],
+              },
+            ],
+          },
+          attachments: [
+            {
+              type: 'file',
+              name: 'refund-instructions.pdf',
+              mimeType: 'application/pdf',
+              size: 12,
+              url: 'https://files.example/refund-instructions.pdf',
+            },
+          ],
+        };
+
+        const order = await post('U_SHARED_RICH', 'My order number is 42');
+        const damage = await post('U_SHARED_RICH', 'It arrived damaged');
+        await setTier('silver');
+        await editRich(order, refusedEdit);
+        await editRich(damage, refusedEdit);
+        await setTier('gold');
+        await editRich(order, { text: 'My order number is 43' });
+        await remove(damage);
+        // Slack sends the delete again when Novu doesn't answer in time.
+        await remove(damage);
+
+        expect(bridgeCalls.map((call) => call.event)).to.deep.equal([
+          AgentEventEnum.ON_MESSAGE,
+          AgentEventEnum.ON_MESSAGE,
+          AgentEventEnum.ON_MESSAGE_UPDATED,
+          AgentEventEnum.ON_MESSAGE_DELETED,
+          AgentEventEnum.ON_MESSAGE_DELETED,
+        ]);
+        const bridgeExecutor = testServer.getService(BridgeExecutorService);
+        const [updated, deleted, redelivered] = await Promise.all(
+          bridgeCalls.slice(2).map(async (call) => (await bridgeExecutor.prepareSignedBridgeRequest(call)).payload)
+        );
+        expect(updated.message?.text).to.equal('My order number is 43');
+        expect(updated.previousMessage).to.deep.include({ text: 'My order number is 42' });
+        expect(deleted.message).to.deep.include({ text: 'It arrived damaged' });
+        expect(redelivered.message).to.deep.include({ text: 'It arrived damaged' });
+        for (const payload of [updated, deleted, redelivered]) {
+          const sent = JSON.stringify(payload);
+          expect(sent).to.not.include(injection);
+          expect(sent).to.not.include('evil.example');
+          expect(sent).to.not.include('refund-instructions.pdf');
+        }
       });
 
       it('keeps what an unknown sender wrote or edited to a restricted agent out of the history the agent gets', async () => {

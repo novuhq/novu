@@ -29,7 +29,10 @@ import {
 } from '@novu/shared';
 import type { Request } from 'express';
 import { ListChannelConnectionsQueryDto } from '../channel-connections/dtos/list-channel-connections-query.dto';
-import { canCallerManageChannelConnection } from '../channel-connections/usecases/channel-connection.utils';
+import {
+  canCallerManageChannelConnection,
+  hasSharedConnectionsScope,
+} from '../channel-connections/usecases/channel-connection.utils';
 import { DeleteChannelConnectionCommand } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.command';
 import { DeleteChannelConnection } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.usecase';
 import { GetChannelConnectionCommand } from '../channel-connections/usecases/get-channel-connection/get-channel-connection.command';
@@ -57,6 +60,7 @@ import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SubscriberSession } from '../shared/framework/user.decorator';
 import { RequestWithReqId } from '../shared/middleware/request-id.middleware';
+import { SubscriberTokensRequirement } from '../shared/services/subscriber-tokens-requirement.service';
 import { getClientIp } from '../shared/utils/client-ip';
 import {
   GetSubscriberGlobalPreference,
@@ -157,7 +161,8 @@ export class InboxController {
     private generateConnectOauthUrlUsecase: GenerateConnectOauthUrl,
     private generateLinkUserOauthUrlUsecase: GenerateLinkUserOauthUrl,
     private issueTelegramSubscriberLinkUsecase: IssueTelegramSubscriberLink,
-    private integrationRepository: IntegrationRepository
+    private integrationRepository: IntegrationRepository,
+    private subscriberTokensRequirement: SubscriberTokensRequirement
   ) {}
 
   @KeylessAccessible()
@@ -781,8 +786,24 @@ export class InboxController {
         organizationId: subscriberSession._organizationId,
         identifier,
         channelConnectionId: channelConnection._id,
+        canManageSharedConnections: await this.canManageSharedConnections(subscriberSession),
       })
     );
+  }
+
+  /**
+   * A browser session may create, replace or delete a shared (subscriber-less) connection when its
+   * login token carried `channels:shared`, or when the environment does not require tokens.
+   */
+  private async canManageSharedConnections(session: SubscriberSession): Promise<boolean> {
+    if (hasSharedConnectionsScope(session)) {
+      return true;
+    }
+
+    return !(await this.subscriberTokensRequirement.isRequired({
+      organizationId: session._organizationId,
+      environmentId: session._environmentId,
+    }));
   }
 
   private async loadChannelConnectionForSubscriber(
@@ -893,6 +914,7 @@ export class InboxController {
         scope: body.scope,
         connectionMode: body.connectionMode,
         autoLinkUser: body.autoLinkUser,
+        canManageSharedConnections: await this.canManageSharedConnections(subscriberSession),
       })
     );
 

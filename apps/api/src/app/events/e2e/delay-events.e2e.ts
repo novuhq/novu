@@ -244,47 +244,6 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
     expect(messages[0].content).to.include('Digested Events 2');
   });
 
-  // TODO: Restore the test when the internal SDK is updated
-  it.skip('should fail for missing or invalid path for scheduled delay', async () => {
-    const template = await session.createTemplate({
-      steps: [
-        {
-          type: StepTypeEnum.DELAY,
-          content: '',
-          metadata: {
-            type: DelayTypeEnum.SCHEDULED,
-            delayPath: 'sendAt',
-          },
-        },
-        {
-          type: StepTypeEnum.SMS,
-          content: 'Hello world {{customVar}}' as string,
-        },
-      ],
-    });
-
-    const { result: result1 } = await novuClient.trigger({
-      workflowId: template.triggers[0].identifier,
-      to: [subscriber.subscriberId],
-      payload: {
-        customVar: 'Testing of User Name',
-      },
-    });
-
-    expect(result1.error?.[0]).to.equal('payload is missing required key(s) and type(s): sendAt (ISO Date)');
-
-    const { result: result2 } = await novuClient.trigger({
-      workflowId: template.triggers[0].identifier,
-      to: [subscriber.subscriberId],
-      payload: {
-        customVar: 'Testing of User Name',
-        sendAt: '20-09-2025',
-      },
-    });
-
-    expect(result2.error?.[0]).to.equal('payload is missing required key(s) and type(s): sendAt (ISO Date)');
-  });
-
   describe('Dynamic Delay', () => {
     it('should delay execution based on ISO-8601 timestamp from payload', async () => {
       const workflowBody: CreateWorkflowDto = {

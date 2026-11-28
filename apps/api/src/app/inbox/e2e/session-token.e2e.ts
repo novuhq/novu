@@ -225,6 +225,22 @@ describe('Session with a subscriber token - /inbox/session (POST) #novu-v2', () 
       await expectInvalidHash({ subscriberToken: token });
     });
 
+    it('with an unknown scope', async () => {
+      const { token } = new NovuTokens().sign(
+        'subscriberLogin',
+        {
+          iss: session.environment._id,
+          aud: 'novu',
+          sub: 'sub-scope',
+          scope: ['inbox:admin'],
+          jti: 'jti-scope',
+        } as never,
+        60
+      );
+
+      await expectInvalidHash({ subscriberToken: token });
+    });
+
     it('with an HS256 token signed with JWT_SECRET', async () => {
       const subscriberToken = jwt.sign(
         { iss: session.environment._id, aud: 'novu', sub: 'sub-hs256', scope: [], jti: 'jti-hs256' },
