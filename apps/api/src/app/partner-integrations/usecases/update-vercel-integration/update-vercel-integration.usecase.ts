@@ -70,6 +70,12 @@ export class UpdateVercelIntegration {
 
       const requestedProjectIds = orgIdsToProjectIds[organizationId] ?? [];
 
+      await this.validateProjectsNotLinkedToOtherOrganizations({
+        organizationId,
+        teamId: configuration.teamId,
+        projectIds: requestedProjectIds,
+      });
+
       await this.validateProjectsBelongToConfiguration({
         projectIds: requestedProjectIds,
         token: configuration.accessToken,
@@ -93,6 +99,10 @@ export class UpdateVercelIntegration {
 
       for (const env of environments) {
         const projectIds = orgIdsToProjectIds[env._organizationId];
+        if (!projectIds?.length) {
+          continue;
+        }
+
         await this.setEnvVariablesOnProjects({
           name: env.name,
           applicationIdentifier: env.identifier,
@@ -330,6 +340,41 @@ export class UpdateVercelIntegration {
         projectIds,
       },
     });
+  }
+
+  /**
+   * A Vercel project can only hold one organization's Novu keys. Linking a project that another
+   * organization already uses would overwrite that organization's keys while both stay linked.
+   */
+  private async validateProjectsNotLinkedToOtherOrganizations({
+    organizationId,
+    teamId,
+    projectIds,
+  }: {
+    organizationId: string;
+    teamId: string | null;
+    projectIds: string[];
+  }): Promise<void> {
+    if (projectIds.length === 0) {
+      return;
+    }
+
+    const conflictingOrganization = await this.organizationRepository.findOne(
+      {
+        _id: { $ne: organizationId },
+        partnerConfigurations: {
+          $elemMatch: {
+            teamId,
+            projectIds: { $in: projectIds },
+          },
+        },
+      },
+      '_id'
+    );
+
+    if (conflictingOrganization) {
+      throw new BadRequestException('One or more projects are already linked to another organization.');
+    }
   }
 
   private async validateProjectsBelongToConfiguration({

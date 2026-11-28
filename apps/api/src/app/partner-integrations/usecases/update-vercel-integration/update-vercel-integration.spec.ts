@@ -84,6 +84,7 @@ describe('UpdateVercelIntegration', () => {
       bulkUpdatePartnerConfiguration: stub().resolves(true),
       upsertPartnerConfiguration: stub().resolves({ matched: 1, modified: 1 }),
       update: stub().resolves({ matched: 1, modified: 1 }),
+      findOne: stub().resolves(null),
     };
 
     analyticsServiceMock = {
@@ -627,9 +628,91 @@ describe('UpdateVercelIntegration', () => {
     }
   });
 
-  it('should only unlink the configuration from the current organization when no projects are submitted', async () => {
+  it('should reject projects already linked to another organization', async () => {
+    organizationRepositoryMock.findOne.resolves({ _id: 'other-org-id' });
+
+    try {
+      await updateVercelIntegration.execute({
+        userId: session.user._id,
+        organizationId: 'org-id',
+        environmentId: session.environment._id,
+        configurationId: 'test-config-id',
+        data: {
+          'org-id': ['project-1'],
+        },
+      });
+      throw new Error('Should not reach here');
+    } catch (error) {
+      expect(error).to.be.instanceOf(BadRequestException);
+      expect(error.message).to.equal('One or more projects are already linked to another organization.');
+      assert.calledOnceWithExactly(
+        organizationRepositoryMock.findOne,
+        {
+          _id: { $ne: 'org-id' },
+          partnerConfigurations: {
+            $elemMatch: {
+              teamId: 'test-team-id',
+              projectIds: { $in: ['project-1'] },
+            },
+          },
+        },
+        '_id'
+      );
+      assert.notCalled(httpServiceMock.get);
+      assert.notCalled(httpServiceMock.post);
+      assert.notCalled(httpServiceMock.delete);
+      assert.notCalled(organizationRepositoryMock.upsertPartnerConfiguration);
+    }
+  });
+
+  it('should only clean up and unlink the current organization when no projects are submitted', async () => {
+    // The user belongs to two orgs that both use this configuration, each with its own linked project
+    organizationRepositoryMock.findByPartnerConfigurationId.resolves([
+      {
+        _id: 'org-id',
+        partnerConfigurations: [
+          {
+            configurationId: 'test-config-id',
+            accessToken: 'test-token',
+            teamId: 'test-team-id',
+            projectIds: ['project-1'],
+          },
+        ],
+      },
+      {
+        _id: 'other-org-id',
+        partnerConfigurations: [
+          {
+            configurationId: 'test-config-id',
+            accessToken: 'test-token',
+            teamId: 'test-team-id',
+            projectIds: ['project-2'],
+          },
+        ],
+      },
+    ]);
+
     httpServiceMock.get.reset();
-    httpServiceMock.get.callsFake(() => of({ data: { projects: [] } }));
+    httpServiceMock.get.callsFake((url) => {
+      if (url.includes('/v4/projects')) {
+        return of({
+          data: {
+            projects: [
+              {
+                id: 'project-1',
+                env: [{ id: 'env-current', key: 'NOVU_SECRET_KEY', target: ['production'] }],
+              },
+              {
+                id: 'project-2',
+                env: [{ id: 'env-other', key: 'NOVU_SECRET_KEY', target: ['production'] }],
+              },
+            ],
+          },
+        });
+      }
+
+      return of({ data: {} });
+    });
 
     const result = await updateVercelIntegration.execute({
       userId: session.user._id,
@@ -640,6 +723,18 @@ describe('UpdateVercelIntegration', () => {
     });
 
     expect(result.success).to.equal(true);
+
+    // Only the current org's project keys are deleted
+    assert.calledOnce(httpServiceMock.delete);
+    assert.calledWith(
+      httpServiceMock.delete,
+      `${process.env.VERCEL_BASE_URL}/v9/projects/project-1/env/env-current?teamId=test-team-id`
+    );
+    for (const call of httpServiceMock.delete.getCalls()) {
+      expect(call.args[0]).to.not.include('project-2');
+    }
+
+    // Only the current org's configuration is unlinked
     assert.calledOnceWithExactly(
       organizationRepositoryMock.update,
       { _id: 'org-id' },
@@ -647,5 +742,6 @@ describe('UpdateVercelIntegration', () => {
     );
     assert.notCalled(organizationRepositoryMock.upsertPartnerConfiguration);
     assert.notCalled(organizationRepositoryMock.bulkUpdatePartnerConfiguration);
+    assert.notCalled(httpServiceMock.post);
   });
 });
