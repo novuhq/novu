@@ -136,6 +136,55 @@ describe('CORS Configuration', () => {
       expect(callbackSpy.firstCall.lastArg.origin).to.equal('*');
     });
 
+    describe('DASHBOARD_URL', () => {
+      const selfHostedDashboard = 'https://novu-dashboard.internal.example.com';
+      const originalDashboardUrl = process.env.DASHBOARD_URL;
+
+      afterEach(() => {
+        if (originalDashboardUrl === undefined) {
+          delete process.env.DASHBOARD_URL;
+        } else {
+          process.env.DASHBOARD_URL = originalDashboardUrl;
+        }
+      });
+
+      function originsFor(url: string, requestOrigin: string) {
+        const callbackSpy = spy();
+
+        corsOptionsDelegate({ url, headers: { origin: requestOrigin } }, callbackSpy);
+
+        return callbackSpy.firstCall.lastArg.origin as string[];
+      }
+
+      it('allows the DASHBOARD_URL origin when FRONT_BASE_URL does not match it', () => {
+        process.env.DASHBOARD_URL = `${selfHostedDashboard}/`;
+
+        expect(originsFor('/v1/test', selfHostedDashboard)).to.deep.equal([selfHostedDashboard]);
+        expect(originsFor('/v1/better-auth/session', selfHostedDashboard)).to.deep.equal([selfHostedDashboard]);
+      });
+
+      it('does not allow other origins', () => {
+        process.env.DASHBOARD_URL = selfHostedDashboard;
+
+        expect(originsFor('/v1/test', 'https://evil.example.com')).to.deep.equal([]);
+        expect(originsFor('/v1/test', `${selfHostedDashboard}.evil.example.com`)).to.deep.equal([]);
+      });
+
+      it('does not list an origin twice when FRONT_BASE_URL already matches it', () => {
+        process.env.DASHBOARD_URL = dashboardOrigin;
+
+        expect(originsFor('/v1/test', dashboardOrigin)).to.deep.equal([dashboardOrigin]);
+      });
+
+      it('ignores an unset or invalid DASHBOARD_URL', () => {
+        delete process.env.DASHBOARD_URL;
+        expect(originsFor('/v1/test', 'https://evil.example.com')).to.deep.equal([]);
+
+        process.env.DASHBOARD_URL = 'not a url';
+        expect(originsFor('/v1/test', 'not a url')).to.deep.equal([]);
+      });
+    });
+
     describe('Human dashboard invite page', () => {
       const humanDashboardOrigin = 'https://agentinbox.md';
 

@@ -3,6 +3,7 @@ import {
   createThrowingEnvReporter,
   INBOUND_PARSE_RETRY_POLICY,
   isBullMqEnabled,
+  parseTlsFlagEnvValue,
   requiresStandaloneRedis,
 } from '@novu/application-generic';
 import {
@@ -12,8 +13,11 @@ import {
   QueueBackend,
   StringifyEnv,
 } from '@novu/shared';
-import { bool, CleanedEnv, cleanEnv, json, makeValidator, num, port, str, url, ValidatorSpec } from 'envalid';
+import { bool, CleanedEnv, cleanEnv, makeValidator, num, port, str, url, ValidatorSpec } from 'envalid';
 import { getRequiredWorkerTopics } from './worker-topics';
+
+// Accepts the same values the Redis providers parse (true/false, 1/0, yes/no, on/off).
+const tlsFlag = makeValidator(parseTlsFlagEnvValue);
 
 export function validateEnv() {
   const env = cleanEnv(process.env, envValidators, { reporter: createThrowingEnvReporter('worker') });
@@ -103,7 +107,7 @@ export const envValidators = {
         REDIS_PORT: str({ default: undefined }),
       }),
   REDIS_PASSWORD: str({ default: undefined }),
-  REDIS_TLS: json({ default: undefined }),
+  REDIS_TLS: tlsFlag({ default: undefined }),
   ...(isBullMqEnabled() ? { REDIS_DB_INDEX: num() } : { REDIS_DB_INDEX: num({ default: undefined }) }),
   REDIS_CACHE_SERVICE_HOST: str({ default: undefined }),
   REDIS_CACHE_SERVICE_PORT: str({ default: undefined }),
@@ -218,8 +222,5 @@ export const envValidators = {
   ...(['local', 'test'].includes(processEnv.NODE_ENV) && {
     NEW_RELIC_APP_NAME: str({ default: '' }),
     NEW_RELIC_LICENSE_KEY: str({ default: '' }),
-    REDIS_CACHE_SERVICE_HOST: str(),
-    REDIS_CACHE_SERVICE_PORT: str(),
-    REDIS_CACHE_PASSWORD: str(),
   }),
 } satisfies Record<string, ValidatorSpec<unknown>>;

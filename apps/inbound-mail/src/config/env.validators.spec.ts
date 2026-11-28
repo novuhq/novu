@@ -102,4 +102,35 @@ describe('inbound-mail env validators', () => {
       }
     );
   });
+
+  describe('REDIS_TLS', () => {
+    const accepted = ['true', 'false', 'FALSE', '0', '1', 'no', 'off', 'yes', 'on', '{"servername":"redis.internal"}'];
+
+    function cleanTlsEnv(value: string) {
+      let env: ReturnType<typeof cleanRedisEnv> | undefined;
+
+      withClusterFlags(
+        {
+          IS_IN_MEMORY_CLUSTER_MODE_ENABLED: undefined,
+          IN_MEMORY_CLUSTER_MODE_ENABLED: undefined,
+          QUEUE_BACKEND: 'sqs',
+        },
+        () => {
+          env = cleanRedisEnv({ QUEUE_BACKEND: 'sqs', REDIS_TLS: value });
+        }
+      );
+
+      return env;
+    }
+
+    for (const value of accepted) {
+      it(`accepts ${value}`, () => {
+        expect(cleanTlsEnv(value)).to.have.property('REDIS_TLS', value);
+      });
+    }
+
+    it('rejects a typo', () => {
+      expect(() => cleanTlsEnv('flase')).to.throw('REDIS_TLS');
+    });
+  });
 });
