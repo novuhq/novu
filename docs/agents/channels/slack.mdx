@@ -4,7 +4,7 @@ description: "Connect your agent to Slack: threading, typing indicators, plan ca
 sidebarTitle: Slack
 ---
 
-Use Slack as a messaging channel for your agent. Users can DM or @mention the bot. Novu keeps thread context, shows typing and plan cards during the turn, can attach files on replies, and can post Approve / Deny cards before gated tools run. Connect it from the [Setup](#setup) section.
+Use Slack as a messaging channel for your agent. Users can DM the bot or @mention it in a channel or group DM. Novu keeps thread context, shows typing and plan cards during the turn, can attach files on replies, and can post Approve / Deny cards before gated tools run. Connect it from the [Setup](#setup) section.
 
 ## Capabilities
 
@@ -37,6 +37,35 @@ A user @mentions the agent in a thread. Novu adds an eyes reaction, shows typing
 ### Tool approval
 
 When a tool is gated, Slack shows a native approval block (**Deny**, **Approve once**, **Always allow this tool**). The handler resumes after the user selects an option.
+
+## Where the agent replies
+
+The agent treats a 1:1 DM differently from a conversation with several people in it.
+
+- **1:1 DM:** the agent replies to every message.
+- **Channel or group DM:** the agent replies only to messages that @mention it, and it answers in a thread under that message. It ignores everything else. A group DM follows the channel rules because it has more than one person in it.
+
+The Slack app must be a member of the channel or group DM. Until you add it, the agent does not receive messages from that conversation.
+
+### Reply policy
+
+An @mention brings the agent into a thread. The reply policy then controls whether it answers follow-up messages in that thread without another @mention. It has no effect in 1:1 DMs.
+
+Set it in the dashboard under **Agent behavior** > **Reply policy**.
+
+| Reply policy | What the agent does in the thread |
+| --- | --- |
+| **Mention only** | Replies only to messages that @mention it. |
+| **Auto-reply in threads** | Replies to every message. |
+| **Smart** | Replies to every message while one person is talking to it. When a second person posts, it asks to be @mentioned and then replies only to @mentions. |
+
+**Smart** also falls back to @mentions when another agent joins the thread or the person @mentions a teammate.
+
+New agents default to **Smart**. Agents created before this setting existed use **Auto-reply in threads**.
+
+### Reply from your code
+
+Your handler does not need to know which kind of conversation it is in. `ctx.reply()` posts to the conversation that triggered the handler. To reply from another backend, call the [Send an agent reply](/api-reference/agents/send-an-agent-reply) API with the `conversationId`. Either way, Novu posts the reply in that conversation's Slack thread.
 
 ## Create a Slack app
 
