@@ -6,7 +6,7 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { cacheService, TracingModule } from '@novu/application-generic';
 import { Client, NovuClient, NovuModule } from '@novu/framework/nest';
 import { usageLimitsWorkflow, usageReportWorkflow } from '@novu/notifications';
-import { isClerkEnabled, isEEAuthEnabled } from '@novu/shared';
+import { isClerkEnabled } from '@novu/shared';
 import { SentryModule } from '@sentry/nestjs/setup';
 import packageJson from '../package.json';
 import { ActivityModule } from './app/activity/activity.module';
@@ -38,7 +38,6 @@ import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { InboxModule } from './app/inbox/inbox.module';
 import { IntegrationModule } from './app/integrations/integrations.module';
 import { InternalModule } from './app/internal/internal.module';
-import { InvitesModule } from './app/invites/invites.module';
 import { LayoutsV1Module } from './app/layouts-v1/layouts-v1.module';
 import { LayoutsV2Module } from './app/layouts-v2/layouts.module';
 import { MessagesModule } from './app/messages/messages.module';
@@ -183,15 +182,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
 
 const enterpriseModules = enterpriseImports();
 
-/*
- * The Community Edition has no RBAC: every member is an `admin`, so the community invite flow
- * invites as `admin`. Enterprise auth (Clerk, Better Auth) manages invitations and roles itself,
- * so the community invite routes must not be mounted there or they would bypass its RBAC.
- */
-if (!isEEAuthEnabled()) {
-  const communityModules = [InvitesModule];
-  baseModules.push(...communityModules);
-} else if (isClerkEnabled() && process.env.IS_SELF_HOSTED !== 'true') {
+if (isClerkEnabled() && process.env.IS_SELF_HOSTED !== 'true') {
   baseModules.push(PartnerIntegrationsModule);
 }
 
