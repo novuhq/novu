@@ -9,11 +9,12 @@ NOVU_API_URL="http://localhost:3000"
 # Display label surfaced by the `whoami` tool (e.g. "us", "eu", "local").
 NOVU_REGION="local"
 
-# Clerk OAuth issuer for this deployment. Leave empty to disable OAuth entirely
-# (API-key-only mode — the self-hosted story). Set it to a Clerk authorization
-# server your Novu API trusts to exercise the OAuth flow locally.
-CLERK_OAUTH_ISSUER=""
+# Keys of the Clerk instance your Novu API trusts. With both set, the server
+# offers OAuth: clients sign in with Clerk and every token is verified with
+# Clerk, audience included. Leave either empty for API-key-only mode (the
+# self-hosted story).
+CLERK_PUBLISHABLE_KEY=""
 
-# Secret key of the Clerk instance that stores agent feedback. When set, the
-# server registers Clerk's `submit_feedback` tool; leave empty to omit it.
+# Also stores agent feedback: when set, the server registers Clerk's
+# `submit_feedback` tool; leave empty to omit it.
 CLERK_SECRET_KEY=""
