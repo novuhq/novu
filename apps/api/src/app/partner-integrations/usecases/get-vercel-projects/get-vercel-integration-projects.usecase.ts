@@ -16,6 +16,7 @@ export class GetVercelIntegrationProjects {
     try {
       const configuration = await this.getCurrentOrgPartnerConfiguration({
         userId: command.userId,
+        organizationId: command.organizationId,
         configurationId: command.configurationId,
       });
 
@@ -34,24 +35,29 @@ export class GetVercelIntegrationProjects {
     }
   }
 
-  async getCurrentOrgPartnerConfiguration({ userId, configurationId }: { userId: string; configurationId: string }) {
+  async getCurrentOrgPartnerConfiguration({
+    userId,
+    organizationId,
+    configurationId,
+  }: {
+    userId: string;
+    organizationId: string;
+    configurationId: string;
+  }) {
     const orgsWithIntegration = await this.organizationRepository.findByPartnerConfigurationId({
       userId,
       configurationId,
     });
 
-    if (orgsWithIntegration.length === 0) {
+    // Only use a configuration that belongs to the organization the user is authenticated against.
+    const currentOrg = orgsWithIntegration.find((org) => String(org._id) === String(organizationId));
+    const configuration = currentOrg?.partnerConfigurations?.find(
+      (config) => config.configurationId === configurationId
+    );
+
+    if (!configuration) {
       throw new BadRequestException({
         message: 'No partner configuration found.',
-        type: 'vercel',
-      });
-    }
-
-    const firstOrg = orgsWithIntegration[0];
-    const configuration = firstOrg.partnerConfigurations?.find((config) => config.configurationId === configurationId);
-    if (!firstOrg.partnerConfigurations?.length || !configuration) {
-      throw new BadRequestException({
-        message: 'No partner configuration found',
         type: 'vercel',
       });
     }

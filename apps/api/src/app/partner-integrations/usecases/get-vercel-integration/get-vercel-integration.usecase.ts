@@ -20,6 +20,7 @@ export class GetVercelIntegration {
     return details.reduce(
       (acc, curr) => {
         if (
+          String(curr._id) === String(command.organizationId) &&
           curr.partnerConfigurations &&
           curr.partnerConfigurations.length >= 1 &&
           curr.partnerConfigurations[0].projectIds &&
