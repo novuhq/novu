@@ -52,10 +52,10 @@ describe('GetVercelIntegration', () => {
     restore();
   });
 
-  it('should get vercel configuration details', async () => {
+  it('should only return the configuration details of the current organization', async () => {
     const command = {
       userId: session.user._id,
-      organizationId: session.organization._id,
+      organizationId: 'org-id-1',
       environmentId: session.environment._id,
       configurationId: 'test-config-id',
     };
@@ -63,14 +63,12 @@ describe('GetVercelIntegration', () => {
     const result = await getVercelIntegration.execute(command);
 
     expect(result).to.be.an('array');
-    expect(result[0]).to.deep.equal({
-      organizationId: 'org-id-1',
-      projectIds: ['project-1', 'project-2'],
-    });
-    expect(result[1]).to.deep.equal({
-      organizationId: 'org-id-2',
-      projectIds: ['project-2', 'project-3'],
-    });
+    expect(result).to.deep.equal([
+      {
+        organizationId: 'org-id-1',
+        projectIds: ['project-1', 'project-2'],
+      },
+    ]);
 
     assert.calledOnceWithExactly(organizationRepositoryMock.findByPartnerConfigurationId, {
       userId: command.userId,

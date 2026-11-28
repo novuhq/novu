@@ -5,6 +5,7 @@ import {
   CommunityUserRepository,
   EnvironmentEntity,
   EnvironmentRepository,
+  IPartnerConfiguration,
   MemberRepository,
   OrganizationRepository,
 } from '@novu/dal';
@@ -24,9 +25,13 @@ interface ISetEnvironment {
 interface IRemoveEnvironment {
   token: string;
   teamId: string | null;
-  userId: string;
-  configurationId: string;
+  previousProjectIds: string[];
 }
+
+type VercelProject = {
+  id: string;
+  env?: { id: string; key: string; target: string[] }[];
+};
 
 type ProjectDetails = {
   projectId: string;
@@ -59,20 +64,34 @@ export class UpdateVercelIntegration {
 
       const configuration = await this.getCurrentOrgPartnerConfiguration({
         userId,
+        organizationId,
         configurationId,
+      });
+
+      const requestedProjectIds = orgIdsToProjectIds[organizationId] ?? [];
+
+      await this.validateProjectsNotLinkedToOtherOrganizations({
+        organizationId,
+        teamId: configuration.teamId,
+        projectIds: requestedProjectIds,
+      });
+
+      await this.validateProjectsBelongToConfiguration({
+        projectIds: requestedProjectIds,
+        token: configuration.accessToken,
+        teamId: configuration.teamId,
       });
 
       await this.removeEnvVariablesFromProjects({
         teamId: configuration.teamId,
         token: configuration.accessToken,
-        userId,
-        configurationId,
+        previousProjectIds: configuration.projectIds ?? [],
       });
 
-      await this.organizationRepository.bulkUpdatePartnerConfiguration({
-        userId,
-        data: orgIdsToProjectIds,
+      await this.updateOrganizationPartnerConfiguration({
+        organizationId,
         configuration,
+        projectIds: orgIdsToProjectIds[organizationId],
       });
 
       const organizationIds = Object.keys(orgIdsToProjectIds);
@@ -80,6 +99,10 @@ export class UpdateVercelIntegration {
 
       for (const env of environments) {
         const projectIds = orgIdsToProjectIds[env._organizationId];
+        if (!projectIds?.length) {
+          continue;
+        }
+
         await this.setEnvVariablesOnProjects({
           name: env.name,
           applicationIdentifier: env.identifier,
@@ -261,22 +284,28 @@ export class UpdateVercelIntegration {
     );
   }
 
-  async getCurrentOrgPartnerConfiguration({ userId, configurationId }: { userId: string; configurationId: string }) {
+  async getCurrentOrgPartnerConfiguration({
+    userId,
+    organizationId,
+    configurationId,
+  }: {
+    userId: string;
+    organizationId: string;
+    configurationId: string;
+  }): Promise<IPartnerConfiguration> {
     const orgsWithIntegration = await this.organizationRepository.findByPartnerConfigurationId({
       userId,
       configurationId,
     });
 
-    if (orgsWithIntegration.length === 0) {
-      throw new BadRequestException({
-        message: 'No partner configuration found.',
-        type: 'vercel',
-      });
-    }
+    // The configuration must belong to the organization the user is authenticated against,
+    // not just to any organization the user is a member of.
+    const currentOrg = orgsWithIntegration.find((org) => String(org._id) === String(organizationId));
+    const configuration = currentOrg?.partnerConfigurations?.find(
+      (config) => config.configurationId === configurationId
+    );
 
-    const firstOrg = orgsWithIntegration[0];
-    const configuration = firstOrg.partnerConfigurations?.find((config) => config.configurationId === configurationId);
-    if (!firstOrg.partnerConfigurations?.length || !configuration) {
+    if (!configuration) {
       throw new BadRequestException({
         message: 'No partner configuration found.',
         type: 'vercel',
@@ -284,6 +313,108 @@ export class UpdateVercelIntegration {
     }
 
     return configuration;
+  }
+
+  private async updateOrganizationPartnerConfiguration({
+    organizationId,
+    configuration,
+    projectIds,
+  }: {
+    organizationId: string;
+    configuration: IPartnerConfiguration;
+    projectIds: string[] | undefined;
+  }): Promise<void> {
+    if (!projectIds) {
+      await this.organizationRepository.update(
+        { _id: organizationId },
+        { $pull: { partnerConfigurations: { teamId: configuration.teamId } } }
+      );
+
+      return;
+    }
+
+    await this.organizationRepository.upsertPartnerConfiguration({
+      organizationId,
+      configuration: {
+        ...configuration,
+        projectIds,
+      },
+    });
+  }
+
+  /**
+   * A Vercel project can only hold one organization's Novu keys. Linking a project that another
+   * organization already uses would overwrite that organization's keys while both stay linked.
+   */
+  private async validateProjectsNotLinkedToOtherOrganizations({
+    organizationId,
+    teamId,
+    projectIds,
+  }: {
+    organizationId: string;
+    teamId: string | null;
+    projectIds: string[];
+  }): Promise<void> {
+    if (projectIds.length === 0) {
+      return;
+    }
+
+    const conflictingOrganization = await this.organizationRepository.findOne(
+      {
+        _id: { $ne: organizationId },
+        partnerConfigurations: {
+          $elemMatch: {
+            teamId,
+            projectIds: { $in: projectIds },
+          },
+        },
+      },
+      '_id'
+    );
+
+    if (conflictingOrganization) {
+      throw new BadRequestException('One or more projects are already linked to another organization.');
+    }
+  }
+
+  private async validateProjectsBelongToConfiguration({
+    projectIds,
+    token,
+    teamId,
+  }: {
+    projectIds: string[];
+    token: string;
+    teamId: string | null;
+  }): Promise<void> {
+    await Promise.all(
+      projectIds.map(async (projectId) => {
+        let project: { id?: string; accountId?: string } | undefined;
+
+        try {
+          const response = await lastValueFrom(
+            this.httpService.get(
+              `${process.env.VERCEL_BASE_URL}/v9/projects/${encodeURIComponent(projectId)}${
+                teamId ? `?teamId=${encodeURIComponent(teamId)}` : ''
+              }`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            )
+          );
+          project = response.data;
+        } catch {
+          project = undefined;
+        }
+
+        const belongsToTeam = !teamId || project?.accountId === teamId;
+
+        if (!project || project.id !== projectId || !belongsToTeam) {
+          throw new BadRequestException('One or more projects are not accessible.');
+        }
+      })
+    );
   }
 
   private async getVercelLinkedProjects(
@@ -298,7 +429,7 @@ export class UpdateVercelIntegration {
         },
       })
     );
-    const vercelProjects = response.data.projects as any[];
+    const vercelProjects = response.data.projects as VercelProject[];
     const filteredVercelProjects = vercelProjects.filter((project) => projectIds.includes(project.id));
 
     return ['production', 'development'].flatMap((vercelEnvironment) =>
@@ -334,21 +465,9 @@ export class UpdateVercelIntegration {
   private async removeEnvVariablesFromProjects({
     teamId,
     token,
-    userId,
-    configurationId,
+    previousProjectIds,
   }: IRemoveEnvironment): Promise<void> {
-    const orgsWithIntegration = await this.organizationRepository.findByPartnerConfigurationId({
-      userId,
-      configurationId,
-    });
-
-    const allOldProjectIds = [
-      ...new Set(
-        orgsWithIntegration.reduce<string[]>((acc, org) => {
-          return acc.concat(org.partnerConfigurations?.[0].projectIds || []);
-        }, [])
-      ),
-    ];
+    const allOldProjectIds = [...new Set(previousProjectIds)];
 
     if (allOldProjectIds.length === 0) {
       return;

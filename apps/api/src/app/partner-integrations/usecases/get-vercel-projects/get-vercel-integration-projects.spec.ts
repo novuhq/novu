@@ -61,6 +61,18 @@ describe('GetVercelIntegrationProjects', () => {
 
     session = new UserSession();
     await session.initialize();
+    organizationRepositoryMock.findByPartnerConfigurationId.resolves([
+      {
+        _id: session.organization._id,
+        partnerConfigurations: [
+          {
+            configurationId: 'test-config-id',
+            accessToken: 'test-token',
+            teamId: 'test-team-id',
+          },
+        ],
+      },
+    ]);
     getVercelIntegrationProjects = moduleRef.get<GetVercelIntegrationProjects>(GetVercelIntegrationProjects);
   });
 
@@ -133,6 +145,34 @@ describe('GetVercelIntegrationProjects', () => {
       expect(error).to.be.instanceOf(BadRequestException);
       expect(error.message).to.equal('HTTP Error');
       assert.called(httpServiceMock.get);
+    }
+  });
+  it('should not use a configuration that belongs to another organization of the user', async () => {
+    organizationRepositoryMock.findByPartnerConfigurationId.resolves([
+      {
+        _id: 'other-org-id',
+        partnerConfigurations: [
+          {
+            configurationId: 'test-config-id',
+            accessToken: 'other-org-token',
+            teamId: 'test-team-id',
+          },
+        ],
+      },
+    ]);
+
+    try {
+      await getVercelIntegrationProjects.execute({
+        userId: session.user._id,
+        organizationId: session.organization._id,
+        environmentId: session.environment._id,
+        configurationId: 'test-config-id',
+      });
+      throw new Error('Should not reach here');
+    } catch (error) {
+      expect(error).to.be.instanceOf(BadRequestException);
+      expect(error.message).to.equal('No partner configuration found.');
+      assert.notCalled(httpServiceMock.get);
     }
   });
 });
