@@ -255,6 +255,10 @@ Expand a channel below to browse supported providers.
 
 </details>
 
+## Community integrations
+
+- [Symfony Notifier for Novu](https://github.com/symfony/novu-notifier) - send Novu notifications from Symfony applications through the Symfony Notifier component.
+
 ## 📋 Read Our Code Of Conduct
 
 Before you begin coding and collaborating, please read our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md) thoroughly to understand the standards (that you are required to adhere to) for community engagement. As part of our open-source community, we hold ourselves and other contributors to a high standard of communication. As a participant and contributor to this project, you agree to abide by our [Code of Conduct](https://github.com/novuhq/novu/blob/main/CODE_OF_CONDUCT.md).
